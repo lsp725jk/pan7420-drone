@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>main.c 函数全表</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+  --sidebar-bg:#f6f8fa; --code-bg:#f6f8fa; --code-border:#d8dee4;
+  --accent:#0969da; --accent-soft:#ddf4ff;
+  --warn-bg:#fff8c5; --warn-border:#d4a72c;
+  --danger-bg:#ffebe9; --danger-border:#cf222e;
+  --ok-bg:#dafbe1; --ok-border:#1a7f37;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d;
+    --sidebar-bg:#161b22; --code-bg:#161b22; --code-border:#30363d;
+    --accent:#58a6ff; --accent-soft:#0c2d6b;
+    --warn-bg:#3a2d00; --warn-border:#9e6a03;
+    --danger-bg:#3d1418; --danger-border:#f85149;
+    --ok-bg:#0f2f1a; --ok-border:#3fb950;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,sans-serif;
+  font-size:16px; line-height:1.75;
+}
+/* ---------- 布局 ---------- */
+.wrap{display:flex; align-items:flex-start; max-width:1500px; margin:0 auto}
+nav{
+  position:sticky; top:0; flex:0 0 300px; height:100vh; overflow-y:auto;
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  padding:20px 0 60px;
+}
+nav .navtitle{
+  padding:0 20px 14px; font-weight:600; font-size:15px;
+  border-bottom:1px solid var(--border); margin-bottom:10px;
+}
+nav a{
+  display:block; padding:4px 20px; color:var(--muted);
+  text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+nav a:hover{color:var(--accent); background:var(--accent-soft)}
+nav a.h1{font-weight:600; color:var(--fg); margin-top:8px}
+nav a.h2{padding-left:32px}
+nav a.h3{padding-left:46px; font-size:12.5px}
+nav a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); font-weight:600}
+main{flex:1 1 auto; min-width:0; padding:32px 44px 120px}
+/* ---------- 页头 ---------- */
+header.page{
+  border-bottom:2px solid var(--border); padding-bottom:20px; margin-bottom:28px;
+}
+header.page h1{margin:0 0 6px; font-size:30px; line-height:1.3; border:0; padding:0}
+header.page .sub{color:var(--muted); font-size:15px}
+header.page .meta{color:var(--muted); font-size:12.5px; margin-top:10px}
+/* ---------- 标题 ---------- */
+h1,h2,h3,h4{line-height:1.35; font-weight:600; scroll-margin-top:16px}
+h1{font-size:26px; margin:44px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+h2{font-size:22px; margin:38px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border)}
+h3{font-size:18px; margin:28px 0 10px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--muted)}
+.anchor{color:var(--border); text-decoration:none; margin-left:8px; font-weight:400; opacity:0}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+/* ---------- 正文元素 ---------- */
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{margin:12px 0; padding-left:26px}
+li{margin:5px 0}
+li>ul,li>ol{margin:5px 0}
+hr{border:0; border-top:1px solid var(--border); margin:34px 0}
+strong{font-weight:600}
+/* 行内代码 */
+code{
+  background:var(--code-bg); border:1px solid var(--code-border);
+  border-radius:5px; padding:.15em .4em; font-size:.875em;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  word-break:break-word;
+}
+/* 代码块 */
+.codeblock{
+  position:relative; margin:16px 0; border:1px solid var(--code-border);
+  border-radius:8px; overflow:hidden; background:var(--code-bg); box-shadow:var(--shadow);
+}
+.codeblock .cbhead{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; background:var(--sidebar-bg); border-bottom:1px solid var(--code-border);
+  font-size:12px; color:var(--muted);
+}
+.codeblock .lang{font-weight:600; letter-spacing:.03em; text-transform:uppercase}
+.codeblock .copy{
+  cursor:pointer; border:1px solid var(--code-border); background:transparent;
+  color:var(--muted); border-radius:5px; padding:2px 9px; font-size:11.5px;
+  font-family:inherit;
+}
+.codeblock .copy:hover{color:var(--accent); border-color:var(--accent)}
+.codeblock pre{
+  margin:0; padding:12px 0; overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px; line-height:1.65;
+}
+.codeblock .line{display:flex; min-width:max-content}
+.codeblock .ln{
+  flex:0 0 auto; width:3.2em; padding-right:12px; text-align:right;
+  color:var(--border); user-select:none;
+}
+.codeblock .lc{padding-right:20px; white-space:pre}
+/* 示意图：不加行号、不换行（换行会毁掉 ASCII 图的列对齐，所以横向滚动） */
+.codeblock.art{background:var(--bg)}
+.codeblock.art .lang{color:var(--accent)}
+.codeblock .artpre{
+  margin:0; padding:14px 16px; overflow-x:auto; white-space:pre;
+  font-family:"Cascadia Mono",Consolas,"MS Gothic","Courier New",monospace;
+  font-size:13px; line-height:1.5; tab-size:4;
+}
+/* 表格 */
+.tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{border-bottom:1px solid var(--border); padding:9px 13px; text-align:left; vertical-align:top}
+th{background:var(--sidebar-bg); font-weight:600; white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sidebar-bg)}
+/* 引用块：按内容分色 */
+blockquote{
+  margin:16px 0; padding:12px 16px; border-left:4px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0;
+}
+blockquote p{margin:6px 0}
+blockquote.warn{border-left-color:var(--warn-border); background:var(--warn-bg)}
+blockquote.danger{border-left-color:var(--danger-border); background:var(--danger-bg)}
+blockquote.ok{border-left-color:var(--ok-border); background:var(--ok-bg)}
+/* 顶部工具条 */
+.toolbar{
+  position:fixed; right:20px; bottom:20px; display:flex; gap:8px; z-index:50;
+}
+.toolbar button{
+  border:1px solid var(--border); background:var(--bg); color:var(--muted);
+  border-radius:20px; padding:8px 16px; cursor:pointer; font-size:13px;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.toolbar button:hover{color:var(--accent); border-color:var(--accent)}
+/* 进度条 */
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; z-index:99}
+/* 窄屏 */
+@media (max-width:900px){
+  nav{display:none}
+  main{padding:20px 18px 100px}
+  .wrap{display:block}
+  body{font-size:15px}
+}
+@media print{
+  nav,.toolbar,#progress{display:none}
+  main{padding:0}
+  .codeblock,.tablewrap{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav>
+  <div class="navtitle">main.c 函数全表</div>
+  <a class="h2" href="#一-main-c-自己定义的函数" title="一、main.c 自己定义的函数">一、main.c 自己定义的函数</a>
+  <a class="h2" href="#二-main-c-调用的外部函数-33-个" title="二、main.c 调用的外部函数（33 个）">二、main.c 调用的外部函数（33 个）</a>
+  <a class="h3" href="#2-1-初始化阶段-main-c-220-261" title="2.1 初始化阶段（main.c:220~261）">2.1 初始化阶段（main.c:220~261）</a>
+  <a class="h3" href="#2-2-对码阶段-main-c-302-的-while-1-内" title="2.2 对码阶段（main.c:302 的 while(1) 内）">2.2 对码阶段（main.c:302 的 while(1) 内）</a>
+  <a class="h3" href="#2-3-对码成功后-读参数-切地址-起定时器-起狗" title="2.3 对码成功后（读参数、切地址、起定时器、起狗）">2.3 对码成功后（读参数、切地址、起定时器、起狗）</a>
+  <a class="h3" href="#2-4-主循环阶段-main-c-379-的-while-1-内" title="2.4 主循环阶段（main.c:379 的 while(1) 内）">2.4 主循环阶段（main.c:379 的 while(1) 内）</a>
+  <a class="h2" href="#三-按-周期-看-main-c-的调度-理解它的关键" title="三、按「周期」看 main.c 的调度（理解它的关键）">三、按「周期」看 main.c 的调度（理解它的关键）</a>
+  <a class="h2" href="#四-全局变量-main-c-用了哪些-谁定义的" title="四、全局变量：main.c 用了哪些、谁定义的">四、全局变量：main.c 用了哪些、谁定义的</a>
+  <a class="h2" href="#五-与现有资料的对照" title="五、与现有资料的对照">五、与现有资料的对照</a>
+</nav>
+<main>
+<header class="page">
+  <h1>main.c 函数全表</h1>
+  <div class="sub">main.c 里每个函数做什么、定义在哪个文件、按什么周期被调用</div>
+  <div class="meta">PAN 飞控工程 · PY32F030 (Cortex-M0+) · 由 build-gcc/tools/md_to_html.py 生成</div>
+</header>
+<blockquote class=""><p>这份文档回答：<strong><code>user/main.c</code> 里有哪些函数、各自负责什么、牵扯到哪些文件、
+与现有资料怎么对上。</strong></p></blockquote>
+<p>生成方式：<code>build-gcc/tools/gen_main_func_table.py</code> 从源码提取 （先识别并跳过注释行，避免把注释掉的代码算成真调用）。<strong>行号可在编辑器里直接跳转。</strong></p>
+<hr>
+<h2 id="一-main-c-自己定义的函数">一、main.c 自己定义的函数<a class="anchor" href="#一-main-c-自己定义的函数">#</a></h2>
+<p><code>main.c</code> 一共 <strong>4 个函数</strong>，其中 <code>assert_failed()</code> 只在 <code>USE_FULL_ASSERT</code> 打开时才编译。</p>
+<div class="tablewrap"><table><thead><tr><th>函数</th><th>行号</th><th>职责</th><th>被谁调用</th></tr></thead><tbody><tr><td><code>SystemClock_Config()</code></td><td><code>main.c:120</code></td><td>配置系统时钟：HSI 24MHz → PLL×2 → SYSCLK <strong>48MHz</strong>；AHB/PCLK1 均不分频。失败则进 <code>Error_Handler()</code></td><td><code>main()</code>（<code>main.c:223</code>）</td></tr><tr><td><code>main()</code></td><td><code>main.c:214</code></td><td>程序入口：时钟 → 全部外设初始化 → <strong>对码循环</strong> → 读 Flash 参数 → <strong>主循环调度</strong></td><td>启动文件 <code>Reset_Handler</code></td></tr><tr><td><code>Error_Handler()</code></td><td><code>main.c:512</code></td><td>错误陷阱：死循环。<strong>副作用才是关键</strong> —— 主循环不再喂狗，约 0.5s 后看门狗复位，相当于持续重试</td><td>本文件的 <code>SystemClock_Config()</code>；HAL 库内部也引用此函数名</td></tr><tr><td><code>assert_failed()</code></td><td><code>main.c:527</code></td><td><code>assert_param()</code> 失败时的钩子（本工程未实现内容，仅占位）</td><td>HAL 的 <code>assert_param()</code> 宏（未启用时不编译）</td></tr></tbody></table></div>
+<hr>
+<h2 id="二-main-c-调用的外部函数-33-个">二、main.c 调用的外部函数（33 个）<a class="anchor" href="#二-main-c-调用的外部函数-33-个">#</a></h2>
+<p>这才是 <code>main.c</code> 真正「负责的功能」的体现 —— 它自己不实现功能，只<strong>按时序编排</strong>这些函数。</p>
+<blockquote class=""><p>表里的「main.c 行」是该函数在 main.c 中<strong>所有出现位置</strong>；
+有些函数（如 <code>decode_pack</code>）在对码循环和主循环里各出现一次。</p></blockquote>
+<h3 id="2-1-初始化阶段-main-c-220-261">2.1 初始化阶段（<code>main.c:220~261</code>）<a class="anchor" href="#2-1-初始化阶段-main-c-220-261">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>函数</th><th>main.c 行</th><th>定义位置</th><th>一句话功能</th></tr></thead><tbody><tr><td><code>HAL_Init()</code></td><td>220</td><td><strong>HAL 库 / 标准库</strong></td><td>初始化 HAL 本身：Flash 预取、<strong>SysTick 1ms</strong>、NVIC 优先级分组</td></tr><tr><td><code>HAL_RCC_OscConfig()</code></td><td>157</td><td><strong>HAL 库 / 标准库</strong></td><td>按结构体配置振荡器（HSI / LSI / PLL）</td></tr><tr><td><code>HAL_RCC_ClockConfig()</code></td><td>170</td><td><strong>HAL 库 / 标准库</strong></td><td>配置 AHB/APB 分频与 Flash 等待周期</td></tr><tr><td><code>bsp_init()</code></td><td>227</td><td><code>drivers\bsp\bsp.c:92</code></td><td>板级外设初始化总入口（上电后按顺序把要用的外设都点一遍）</td></tr><tr><td><code>Led_Init()</code></td><td>229</td><td><code>user\led.c:401</code></td><td>初始化 LED 硬件（只配 LED4 的 GPIO；RGB 由 TIM1 的 PWM 初始化负责）</td></tr><tr><td><code>Led_SetState()</code></td><td>232、315</td><td><code>user\led.c:457</code></td><td>设置某盏灯的状态（灭/常亮/闪烁）并立即更新硬件</td></tr><tr><td><code>Timer17_UpdateIT_Init()</code></td><td>235</td><td><code>drivers\bsp\TIM16.c:289</code></td><td>配置并启动 TIM17 的 1ms 周期中断 —— 整个飞控的系统节拍源</td></tr><tr><td><code>Advanced_Timer1_PWM_Init()</code></td><td>239</td><td><code>user\led.c:275</code></td><td>初始化 TIM1 的三路 PWM，驱动 RGB 三色灯</td></tr><tr><td><code>Advanced_Timer3_PWM_Init()</code></td><td>244</td><td><code>user\bsp_pwm.c:85</code></td><td>初始化 TIM3 的四路 PWM 输出（PWM 模式 1），用于驱动四个电机</td></tr><tr><td><code>ADC_Init()</code></td><td>248</td><td><code>user\adc.c:125</code></td><td>初始化 ADC1（12bit、软件触发、连续转换），并校准</td></tr><tr><td><code>HAL_ADC_Start()</code></td><td>251</td><td><strong>HAL 库 / 标准库</strong></td><td>启动 ADC 转换（之后由 <code>get_voltage()</code> 轮询读结果）</td></tr><tr><td><code>accgyro_init()</code></td><td>255</td><td><code>imu\accgyro.c:46</code></td><td>初始化 ICM42688：配 SPI、量程（±8g / ±2000dps）、ODR（200Hz）、FIFO，并做一次零漂校准；填充全局 accgyro</td></tr><tr><td><code>imu_init()</code></td><td>258</td><td><code>imu\imu.c:452</code></td><td>IMU初始化</td></tr><tr><td><code>BMP390_init()</code></td><td>261</td><td><code>user\common.c:379</code></td><td>初始化 BMP390 并配置为 FORCED（单次强制测量）模式</td></tr></tbody></table></div>
+<h3 id="2-2-对码阶段-main-c-302-的-while-1-内">2.2 对码阶段（<code>main.c:302</code> 的 <code>while(1)</code> 内）<a class="anchor" href="#2-2-对码阶段-main-c-302-的-while-1-内">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>函数</th><th>main.c 行</th><th>定义位置</th><th>一句话功能</th></tr></thead><tbody><tr><td><code>Led_SetAlert()</code></td><td>274、313、472、494</td><td><code>user\led.c:113</code></td><td>登记或清除一条报警，然后重算灯语</td></tr><tr><td><code>Led_Process()</code></td><td>305、427</td><td><code>user\led.c:554</code></td><td>LED 灯语心跳：选颜色 + 非阻塞翻转（必须定期在主循环里调用）</td></tr><tr><td><code>decode_pack()</code></td><td>309、384</td><td><code>user\deal_pack.c:138</code></td><td>收一个射频包并解析（非阻塞：没收到就立刻返回）</td></tr><tr><td><code>bsp_pn298_write_reg()</code></td><td>317、318</td><td><code>drivers\bsp\bsp_pn298.c:133</code></td><td>向 PN298 的一个寄存器写入 1 个字节（最底层的“写寄存器”原语）</td></tr><tr><td><code>bsp_pn298_set_channel()</code></td><td>329</td><td><code>drivers\bsp\bsp_pn298.c:643</code></td><td>设置射频通信信道（频点）</td></tr><tr><td><code>HAL_GetTick()</code></td><td>323、330、470</td><td><strong>HAL 库 / 标准库</strong></td><td>返回 SysTick 毫秒计数（软定时器与失联判据都用它）</td></tr><tr><td><code>printf()</code></td><td>316、344</td><td><strong>HAL 库 / 标准库</strong></td><td>串口打印（重定向到 UART，见 <code>build-gcc/common/syscalls_stub.c</code> 的 <code>_write</code>）</td></tr></tbody></table></div>
+<h3 id="2-3-对码成功后-读参数-切地址-起定时器-起狗">2.3 对码成功后（读参数、切地址、起定时器、起狗）<a class="anchor" href="#2-3-对码成功后-读参数-切地址-起定时器-起狗">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>函数</th><th>main.c 行</th><th>定义位置</th><th>一句话功能</th></tr></thead><tbody><tr><td><code>flash_read()</code></td><td>336</td><td><code>user\flash.c:238</code></td><td>开机时从 Flash 读回参数到 pair_data</td></tr><tr><td><code>get_now_addr()</code></td><td>347</td><td><code>user\deal_pack.c:316</code></td><td>把 pair_data.paircode 的 5 字节拆成独立的地址数组 pair_addr_arr</td></tr><tr><td><code>bsp_pn298_change_addr()</code></td><td>349</td><td><code>drivers\bsp\bsp_pn298.c:1575</code></td><td>运行中切换通信地址与信道（对码成功后由 main.c 调用）</td></tr><tr><td><code>tim16_init()</code></td><td>352</td><td><code>drivers\bsp\TIM16.c:107</code></td><td>配置并启动 TIM16：一个 1 微秒一步的自由计数器（不开中断）</td></tr><tr><td><code>WDG_init()</code></td><td>355</td><td><code>user\WDG.c:63</code></td><td>初始化独立看门狗（IWDG），并立即开始计时</td></tr></tbody></table></div>
+<h3 id="2-4-主循环阶段-main-c-379-的-while-1-内">2.4 主循环阶段（<code>main.c:379</code> 的 <code>while(1)</code> 内）<a class="anchor" href="#2-4-主循环阶段-main-c-379-的-while-1-内">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>函数</th><th>main.c 行</th><th>定义位置</th><th>一句话功能</th></tr></thead><tbody><tr><td><code>decode_pack()</code></td><td>309、384</td><td><code>user\deal_pack.c:138</code></td><td>收一个射频包并解析（非阻塞：没收到就立刻返回）</td></tr><tr><td><code>annexCode()</code></td><td>392</td><td><code>imu\decode.c:20</code></td><td>把 fcCmd[]（-500~+500 的摇杆量）换算成 rcCommand[]（油门 1000~2000、目标角速度）</td></tr><tr><td><code>Mode_Controler()</code></td><td>402</td><td><code>user\flip.c:164</code></td><td>一键空翻状态机主函数（main.c 每约 4ms 调一次）</td></tr><tr><td><code>altitude_ctrl()</code></td><td>407</td><td><code>imu\altitude.c:412</code></td><td>功能：协调高度更新和高度控制处理</td></tr><tr><td><code>flight_ctrl()</code></td><td>410</td><td><code>imu\fc.c:76</code></td><td>飞控主控制链路：<strong>在主循环里被调用</strong>（main.c:410），每次跑姿态/位置 PID + 混控</td></tr><tr><td><code>HAL_IWDG_Refresh()</code></td><td>422</td><td><strong>HAL 库 / 标准库</strong></td><td><strong>喂狗</strong> —— 全工程唯一的喂狗点（<code>main.c:422</code>）</td></tr><tr><td><code>Led_Process()</code></td><td>305、427</td><td><code>user\led.c:554</code></td><td>LED 灯语心跳：选颜色 + 非阻塞翻转（必须定期在主循环里调用）</td></tr><tr><td><code>get_voltage()</code></td><td>457</td><td><code>user\adc.c:215</code></td><td>读一次电池电压并做低电保护（轮询方式，约每 1 秒被调用一次）</td></tr><tr><td><code>bsp_pn298_rx_mode()</code></td><td>478</td><td><code>drivers\bsp\bsp_pn298.c:479</code></td><td>把芯片切成“接收模式”（飞控绝大部分时间都在这个状态）</td></tr><tr><td><code>HAL_GetTick()</code></td><td>323、330、470</td><td><strong>HAL 库 / 标准库</strong></td><td>返回 SysTick 毫秒计数（软定时器与失联判据都用它）</td></tr><tr><td><code>Led_SetAlert()</code></td><td>274、313、472、494</td><td><code>user\led.c:113</code></td><td>登记或清除一条报警，然后重算灯语</td></tr></tbody></table></div>
+<hr>
+<h2 id="三-按-周期-看-main-c-的调度-理解它的关键">三、按「周期」看 main.c 的调度（理解它的关键）<a class="anchor" href="#三-按-周期-看-main-c-的调度-理解它的关键">#</a></h2>
+<p><code>main.c</code> 本体只是个<strong>调度器</strong>：TIM17 每 1ms 给几个计数器 +1，主循环比对阈值来决定该谁干活。</p>
+<div class="tablewrap"><table><thead><tr><th>触发条件</th><th>实际周期</th><th>跑哪些函数</th><th>归属文件</th></tr></thead><tbody><tr><td><code>_cnt10ms &gt;= 10</code></td><td>约 11ms</td><td><code>decode_pack()</code> + <code>annexCode()</code></td><td><code>user/deal_pack.c</code>、<code>imu/decode.c</code></td></tr><tr><td><code>_cnt4ms &gt;= 4</code></td><td>约 5ms</td><td><code>Mode_Controler()</code>（空翻状态机）</td><td><code>user/flip.c</code></td></tr><tr><td>每一圈</td><td>约 4.6ms</td><td><code>altitude_ctrl()</code>（2.1~3.9ms）+ <code>flight_ctrl()</code>（2.5~3.4ms）</td><td><code>imu/altitude.c</code>、<code>imu/fc.c</code></td></tr><tr><td><code>_cnt100ms &gt;= 100</code></td><td>约 101ms</td><td><strong>喂狗</strong> <code>HAL_IWDG_Refresh()</code> + <code>Led_Process()</code></td><td>HAL、<code>user/led.c</code></td></tr><tr><td><code>_cnt1s &gt;= 1000</code></td><td>约 1.001s</td><td><code>get_voltage()</code>（读电池电压）</td><td><code>user/adc.c</code></td></tr><tr><td>每一圈</td><td>—</td><td>失联检测（<code>&gt;5000ms</code>）→ 报警 + <code>bLanding=1</code> + <code>bsp_pn298_rx_mode()</code></td><td>HAL、<code>user/led.c</code>、<code>drivers/bsp/bsp_pn298.c</code></td></tr><tr><td>每一圈</td><td>—</td><td>油门低位且 <code>accData[2]&gt;6000</code> → 自动解锁（<code>motorArmed=1</code>）</td><td><code>imu/fc.c</code> 的 <code>fc</code> 结构</td></tr></tbody></table></div>
+<blockquote class=""><p><strong>两条最容易搞错的地方</strong>（已在 <code>术语解析手册.md</code> 11.6 节记录）：
+1. <strong>控制环不在 1ms 中断里</strong>，而在主循环；1ms 只是<strong>时基</strong>。实测主循环一圈约 <strong>4.6ms</strong>。
+2. 周期实际是 <strong>N+1 ms</strong>（判断是「先比较再清零」，而中断在同一毫秒内还会 +1）。</p></blockquote>
+<hr>
+<h2 id="四-全局变量-main-c-用了哪些-谁定义的">四、全局变量：main.c 用了哪些、谁定义的<a class="anchor" href="#四-全局变量-main-c-用了哪些-谁定义的">#</a></h2>
+<p><code>extern</code> 声明的变量虽然不在本文件定义，但<strong>理解 main.c 必须知道它们的归属</strong>。</p>
+<div class="tablewrap"><table><thead><tr><th>变量</th><th>类型</th><th>定义位置</th><th>在 main.c 里干什么</th></tr></thead><tbody><tr><td><code>accgyro</code></td><td><code>accgyro_s</code></td><td><code>imu/accgyro.c</code></td><td>① 把 Flash 读出的零偏写进去；② 用 <code>accData[2]</code> 判飞机是否平放</td></tr><tr><td><code>pair_addr_arr[]</code></td><td><code>uint8_t[5]</code></td><td><code>user/deal_pack.c</code></td><td>对码地址，由 <code>get_now_addr()</code> 拆出</td></tr><tr><td><code>pair_over_flag</code></td><td><code>uint8_t</code></td><td><code>user/deal_pack.c</code></td><td>对码完成标志，<code>decode_pack()</code> 置 1，主循环据此跳出</td></tr><tr><td><code>pair_data</code></td><td><code>Pair_Code_Config</code></td><td><code>user/flash.c</code></td><td>对码地址/信道/传感器零偏，<code>flash_read()</code> 填充</td></tr><tr><td><code>_cnt10ms</code> / <code>_cnt4ms</code> / <code>_cnt100ms</code></td><td><code>uint8_t</code></td><td><code>drivers/bsp/bsp_timer.c</code></td><td>软定时器计数（TIM17 中断里 +1）</td></tr><tr><td><code>_cnt1s</code></td><td><code>uint16_t</code></td><td><code>drivers/bsp/bsp_timer.c</code></td><td>1 秒节拍</td></tr><tr><td><code>fc</code></td><td>结构体</td><td><code>imu/fc.c</code></td><td>飞行状态：<code>flags.motorArmed</code> / <code>motorIdle</code> / <code>bLanding</code> / <code>uartCmdNew</code></td></tr><tr><td><code>rcCommand[]</code></td><td>数组</td><td><code>imu/decode.c</code></td><td>内部指令（油门 1000~2000、目标角速度）</td></tr><tr><td><code>IwdgHandle</code></td><td><code>IWDG_HandleTypeDef</code></td><td><code>user/WDG.c</code></td><td>喂狗时传给它</td></tr><tr><td><code>AdcHandle</code></td><td><code>ADC_HandleTypeDef</code></td><td><code>user/adc.c</code></td><td><code>HAL_ADC_Start(&amp;AdcHandle)</code></td></tr><tr><td><code>ch_change_arr[2]</code></td><td><code>uint8_t[2]</code></td><td><strong>本文件</strong>（<code>main.c:80</code>）</td><td>对码候选信道。定义 <code>{36,36}</code>，但 <code>main.c:265</code> 会改成 <code>{36,0}</code>（见勘误汇总）</td></tr><tr><td><code>youmen</code></td><td><code>uint8_t</code></td><td><strong>本文件</strong>（<code>main.c:212</code>）</td><td>历史遗留：只在被注释掉的代码里出现，<strong>当前无作用</strong></td></tr></tbody></table></div>
+<hr>
+<h2 id="五-与现有资料的对照">五、与现有资料的对照<a class="anchor" href="#五-与现有资料的对照">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>想深入了解哪一块</th><th>看哪份资料</th></tr></thead><tbody><tr><td>术语含义（时钟 / 中断 / 寄存器 / 射频 / 看门狗 / 对码 / 姿态 / 滤波）</td><td><code>术语解析手册.md</code></td></tr><tr><td>这些术语<strong>为什么长这样</strong>、有哪几种实现方法</td><td><code>术语伴读01-03</code> / <code>04-06</code> / <code>07-08</code>、<code>飞控技术演进总纲.md</code></td></tr><tr><td>已被纠正的错误说法（含 <code>main.c</code> 自己的注释）</td><td><code>_术语伴读_勘误汇总.md</code></td></tr><tr><td><code>main.c</code> 里出现的 C 关键字（<code>volatile</code> / <code>static</code> / <code>extern</code> …）</td><td><code>C_KEYWORDS_GUIDE.md</code></td></tr><tr><td>传感器接口（ICM42688 / BMP390）</td><td><code>传感器驱动API中文对照.md</code></td></tr><tr><td>怎么编译、烧录、调试</td><td><code>VSCODE_使用说明.md</code></td></tr><tr><td>写注释的规范</td><td><code>COMMENT_STANDARD.md</code></td></tr></tbody></table></div>
+</main>
+</div>
+<div class="toolbar">
+  <button id="totop">↑ 回到顶部</button>
+</div>
+<script>
+// 代码复制按钮
+document.querySelectorAll('.codeblock').forEach(function(box){
+  var btn = box.querySelector('.copy');
+  var code = box.querySelector('pre');
+  if(!btn || !code) return;
+  btn.addEventListener('click', function(){
+    // 代码块：逐行取 .lc（去掉行号）；示意图：直接取 pre 的文本
+    var rows = code.querySelectorAll('.lc');
+    var text = rows.length
+      ? Array.prototype.map.call(rows, function(l){ return l.textContent; }).join('\n')
+      : code.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+    }).catch(function(){ btn.textContent = '复制失败'; setTimeout(function(){ btn.textContent='复制'; }, 1200); });
+  });
+});
+// 滚动高亮当前目录项
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 120, best = 0;
+    for(var i=0;i<targets.length;i++){ if(targets[i] && targets[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+    var h = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+// 回到顶部
+document.getElementById('totop').addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+</script>
+</body>
+</html>

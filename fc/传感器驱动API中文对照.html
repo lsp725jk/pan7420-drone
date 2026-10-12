@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>传感器驱动 API 中文对照</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+  --sidebar-bg:#f6f8fa; --code-bg:#f6f8fa; --code-border:#d8dee4;
+  --accent:#0969da; --accent-soft:#ddf4ff;
+  --warn-bg:#fff8c5; --warn-border:#d4a72c;
+  --danger-bg:#ffebe9; --danger-border:#cf222e;
+  --ok-bg:#dafbe1; --ok-border:#1a7f37;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d;
+    --sidebar-bg:#161b22; --code-bg:#161b22; --code-border:#30363d;
+    --accent:#58a6ff; --accent-soft:#0c2d6b;
+    --warn-bg:#3a2d00; --warn-border:#9e6a03;
+    --danger-bg:#3d1418; --danger-border:#f85149;
+    --ok-bg:#0f2f1a; --ok-border:#3fb950;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,sans-serif;
+  font-size:16px; line-height:1.75;
+}
+/* ---------- 布局 ---------- */
+.wrap{display:flex; align-items:flex-start; max-width:1500px; margin:0 auto}
+nav{
+  position:sticky; top:0; flex:0 0 300px; height:100vh; overflow-y:auto;
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  padding:20px 0 60px;
+}
+nav .navtitle{
+  padding:0 20px 14px; font-weight:600; font-size:15px;
+  border-bottom:1px solid var(--border); margin-bottom:10px;
+}
+nav a{
+  display:block; padding:4px 20px; color:var(--muted);
+  text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+nav a:hover{color:var(--accent); background:var(--accent-soft)}
+nav a.h1{font-weight:600; color:var(--fg); margin-top:8px}
+nav a.h2{padding-left:32px}
+nav a.h3{padding-left:46px; font-size:12.5px}
+nav a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); font-weight:600}
+main{flex:1 1 auto; min-width:0; padding:32px 44px 120px}
+/* ---------- 页头 ---------- */
+header.page{
+  border-bottom:2px solid var(--border); padding-bottom:20px; margin-bottom:28px;
+}
+header.page h1{margin:0 0 6px; font-size:30px; line-height:1.3; border:0; padding:0}
+header.page .sub{color:var(--muted); font-size:15px}
+header.page .meta{color:var(--muted); font-size:12.5px; margin-top:10px}
+/* ---------- 标题 ---------- */
+h1,h2,h3,h4{line-height:1.35; font-weight:600; scroll-margin-top:16px}
+h1{font-size:26px; margin:44px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+h2{font-size:22px; margin:38px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border)}
+h3{font-size:18px; margin:28px 0 10px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--muted)}
+.anchor{color:var(--border); text-decoration:none; margin-left:8px; font-weight:400; opacity:0}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+/* ---------- 正文元素 ---------- */
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{margin:12px 0; padding-left:26px}
+li{margin:5px 0}
+li>ul,li>ol{margin:5px 0}
+hr{border:0; border-top:1px solid var(--border); margin:34px 0}
+strong{font-weight:600}
+/* 行内代码 */
+code{
+  background:var(--code-bg); border:1px solid var(--code-border);
+  border-radius:5px; padding:.15em .4em; font-size:.875em;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  word-break:break-word;
+}
+/* 代码块 */
+.codeblock{
+  position:relative; margin:16px 0; border:1px solid var(--code-border);
+  border-radius:8px; overflow:hidden; background:var(--code-bg); box-shadow:var(--shadow);
+}
+.codeblock .cbhead{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; background:var(--sidebar-bg); border-bottom:1px solid var(--code-border);
+  font-size:12px; color:var(--muted);
+}
+.codeblock .lang{font-weight:600; letter-spacing:.03em; text-transform:uppercase}
+.codeblock .copy{
+  cursor:pointer; border:1px solid var(--code-border); background:transparent;
+  color:var(--muted); border-radius:5px; padding:2px 9px; font-size:11.5px;
+  font-family:inherit;
+}
+.codeblock .copy:hover{color:var(--accent); border-color:var(--accent)}
+.codeblock pre{
+  margin:0; padding:12px 0; overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px; line-height:1.65;
+}
+.codeblock .line{display:flex; min-width:max-content}
+.codeblock .ln{
+  flex:0 0 auto; width:3.2em; padding-right:12px; text-align:right;
+  color:var(--border); user-select:none;
+}
+.codeblock .lc{padding-right:20px; white-space:pre}
+/* 示意图：不加行号、不换行（换行会毁掉 ASCII 图的列对齐，所以横向滚动） */
+.codeblock.art{background:var(--bg)}
+.codeblock.art .lang{color:var(--accent)}
+.codeblock .artpre{
+  margin:0; padding:14px 16px; overflow-x:auto; white-space:pre;
+  font-family:"Cascadia Mono",Consolas,"MS Gothic","Courier New",monospace;
+  font-size:13px; line-height:1.5; tab-size:4;
+}
+/* 表格 */
+.tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{border-bottom:1px solid var(--border); padding:9px 13px; text-align:left; vertical-align:top}
+th{background:var(--sidebar-bg); font-weight:600; white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sidebar-bg)}
+/* 引用块：按内容分色 */
+blockquote{
+  margin:16px 0; padding:12px 16px; border-left:4px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0;
+}
+blockquote p{margin:6px 0}
+blockquote.warn{border-left-color:var(--warn-border); background:var(--warn-bg)}
+blockquote.danger{border-left-color:var(--danger-border); background:var(--danger-bg)}
+blockquote.ok{border-left-color:var(--ok-border); background:var(--ok-bg)}
+/* 顶部工具条 */
+.toolbar{
+  position:fixed; right:20px; bottom:20px; display:flex; gap:8px; z-index:50;
+}
+.toolbar button{
+  border:1px solid var(--border); background:var(--bg); color:var(--muted);
+  border-radius:20px; padding:8px 16px; cursor:pointer; font-size:13px;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.toolbar button:hover{color:var(--accent); border-color:var(--accent)}
+/* 进度条 */
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; z-index:99}
+/* 窄屏 */
+@media (max-width:900px){
+  nav{display:none}
+  main{padding:20px 18px 100px}
+  .wrap{display:block}
+  body{font-size:15px}
+}
+@media print{
+  nav,.toolbar,#progress{display:none}
+  main{padding:0}
+  .codeblock,.tablewrap{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav>
+  <div class="navtitle">传感器驱动 API 中文对照</div>
+  <a class="h2" href="#一-两张对照总表-先看这个" title="一、两张对照总表（先看这个）">一、两张对照总表（先看这个）</a>
+  <a class="h3" href="#1-1-BMP390-气压计-Bosch-在-user-common-c-里被调用" title="1.1 BMP390 气压计（Bosch）—— 在 user/common.c 里被调用">1.1 BMP390 气压计（Bosch）—— 在 user/common.c 里被调用</a>
+  <a class="h3" href="#1-2-ICM42688-姿态传感器-ARM-InvenSense-在-bsp-c-helperClockCalib-c-里被调用" title="1.2 ICM42688 姿态传感器（ARM/InvenSense）—— 在 bsp.c / helperClockCalib.c 里被调用">1.2 ICM42688 姿态传感器（ARM/InvenSense）—— 在 bsp.c / helperClockCalib.c 里被调用</a>
+  <a class="h2" href="#二-回调-是什么-驱动反过来调用你的代码" title="二、&quot;回调&quot;是什么：驱动反过来调用你的代码">二、&quot;回调&quot;是什么：驱动反过来调用你的代码</a>
+  <a class="h2" href="#三-术语对照-英文-中文-读驱动注释时最常撞到的词" title="三、术语对照：英文 → 中文（读驱动注释时最常撞到的词）">三、术语对照：英文 → 中文（读驱动注释时最常撞到的词）</a>
+  <a class="h3" href="#3-1-传感器相关" title="3.1 传感器相关">3.1 传感器相关</a>
+  <a class="h3" href="#3-2-通信与硬件相关" title="3.2 通信与硬件相关">3.2 通信与硬件相关</a>
+  <a class="h3" href="#3-3-状态与返回值相关" title="3.3 状态与返回值相关">3.3 状态与返回值相关</a>
+  <a class="h2" href="#四-如果你确实需要翻译某个原厂文件" title="四、如果你确实需要翻译某个原厂文件">四、如果你确实需要翻译某个原厂文件</a>
+</nav>
+<main>
+<header class="page">
+  <h1>传感器驱动 API 中文对照</h1>
+  <div class="sub">把 ICM42688 与 BMP390 原厂驱动的英文接口翻译成中文，只讲你真正调用的那二十几个</div>
+  <div class="meta">PAN 飞控工程 · PY32F030 (Cortex-M0+) · 由 build-gcc/tools/md_to_html.py 生成</div>
+</header>
+<blockquote class=""><p><strong>为什么单独做这份文档</strong>：工程里的 ICM42688（ARM/InvenSense 原厂）和
+BMP390（Bosch 原厂）驱动带 <strong>11,000 多行英文注释</strong>。
+逐行翻译既不现实、也会把你自己的代码淹没（光 <code>Icm426xxDefs.h</code> 一个文件
+就 2425 行，全是寄存器定义，日常根本不会去翻）。</p><p>所以这里换一个角度：<strong>只翻译你工程真正调用的那二十几个接口</strong>，
+按"中文叫法 → 干什么 → 参数怎么填 → 你的代码在哪用它"组织。
+这样你读自己的代码时，遇到的英文函数名都能在这里查到。</p><p>配套文档：<code>术语解析手册.md</code>（概念）、<code>C_KEYWORDS_GUIDE.md</code>（语言）。</p></blockquote>
+<hr>
+<h2 id="一-两张对照总表-先看这个">一、两张对照总表（先看这个）<a class="anchor" href="#一-两张对照总表-先看这个">#</a></h2>
+<h3 id="1-1-BMP390-气压计-Bosch-在-user-common-c-里被调用">1.1 BMP390 气压计（Bosch）—— 在 <code>user/common.c</code> 里被调用<a class="anchor" href="#1-1-BMP390-气压计-Bosch-在-user-common-c-里被调用">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>英文函数名</th><th>中文叫法</th><th>一句话作用</th><th>调用位置</th></tr></thead><tbody><tr><td><code>bmp3_interface_init</code></td><td>初始化接口</td><td>把读写函数指针挂到驱动上（抽象的"总线接口"）</td><td><code>common.c:292</code></td></tr><tr><td><code>bmp3_i2c_read</code> / <code>bmp3_i2c_write</code></td><td>I2C 读 / 写</td><td>项目自己实现的 I2C 收发（本工程实际走 SPI）</td><td><code>common.c:112/126</code></td></tr><tr><td><code>bmp3_spi_read</code> / <code>bmp3_spi_write</code></td><td>SPI 读 / 写</td><td>项目自己实现的 SPI 收发（真正在用的）</td><td><code>common.c:153/185</code></td></tr><tr><td><code>bmp3_delay_us</code></td><td>微秒延时</td><td>驱动内部需要的短延时</td><td><code>common.c:215</code></td></tr><tr><td><code>bmp3_init</code></td><td>初始化</td><td>读芯片 ID、读出厂校准系数、软复位</td><td><code>common.c:388</code></td></tr><tr><td><code>bmp3_check_rslt</code></td><td>检查返回值</td><td>包装"出错就打印"，省掉到处写 if</td><td><code>common.c:233</code></td></tr><tr><td><code>bmp3_set_sensor_settings</code></td><td>设置传感器参数</td><td>一次配好过采样、滤波、ODR</td><td><code>common.c:410</code></td></tr><tr><td><code>bmp3_set_op_mode</code></td><td>设置工作模式</td><td>切睡眠 / 强制单次 / 连续测量</td><td><code>common.c:415</code>（切 FORCED）</td></tr><tr><td><code>bmp3_get_status</code></td><td>读状态</td><td>查"数据准备好了没"（drdy 标志）</td><td><code>common.c:506</code></td></tr><tr><td><code>bmp3_get_sensor_data</code></td><td>读测量数据</td><td>读出气压与温度，<strong>驱动内部已做二阶补偿</strong></td><td><code>common.c:527</code></td></tr><tr><td><code>bmp3_soft_reset</code></td><td>软复位</td><td>恢复出厂寄存器状态</td><td>（备用）</td></tr><tr><td><code>bmp3_get_sensor_settings</code></td><td>读回参数</td><td>反查当前配置（调试用）</td><td>（备用）</td></tr><tr><td><code>bmp3_fifo_*</code> 系列</td><td>FIFO 相关</td><td>批处理模式相关，<strong>本工程没用</strong></td><td>—</td></tr></tbody></table></div>
+<p><strong>你工程用到的最小组合（读一次气压的完整流程）</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">bmp3_set_op_mode(FORCED)      /* ① 命令它测一次 */
+   ↓ 等一会儿
+bmp3_get_status()             /* ② 问：好了没？看 drdy 标志 */
+   ↓ 好了
+bmp3_get_sensor_data()        /* ③ 取数（驱动已做温度补偿、二阶补偿） */</pre></div>
+<p>这个三步走正是 <code>术语解析手册.md</code> 第 11 节讲的气压计状态机。</p>
+<h3 id="1-2-ICM42688-姿态传感器-ARM-InvenSense-在-bsp-c-helperClockCalib-c-里被调用">1.2 ICM42688 姿态传感器（ARM/InvenSense）—— 在 <code>bsp.c</code> / <code>helperClockCalib.c</code> 里被调用<a class="anchor" href="#1-2-ICM42688-姿态传感器-ARM-InvenSense-在-bsp-c-helperClockCalib-c-里被调用">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>英文函数名</th><th>中文叫法</th><th>一句话作用</th><th>调用位置</th></tr></thead><tbody><tr><td><code>inv_icm426xx_init</code></td><td>初始化</td><td>复位、校验 WHO_AM_I、配置接口与传感器</td><td><code>icm42688.c</code></td></tr><tr><td><code>inv_icm426xx_configure_serial_interface</code></td><td>配置串行接口</td><td>告诉驱动走 SPI 还是 I2C、几线模式</td><td><code>icm42688.c</code></td></tr><tr><td><code>inv_icm426xx_read_reg</code> / <code>write_reg</code></td><td>读 / 写寄存器</td><td>最底层操作，<strong>最终会调到你的 SPI 函数</strong></td><td><code>helperClockCalib.c:46</code> 等</td></tr><tr><td><code>inv_icm426xx_get_who_am_i</code></td><td>读芯片 ID</td><td>确认"你确实是我以为的那颗芯片"</td><td>初始化时</td></tr><tr><td><code>inv_icm426xx_device_reset</code></td><td>器件复位</td><td>软复位芯片</td><td>初始化时</td></tr><tr><td><code>inv_icm426xx_set_accel_fsr</code> / <code>set_gyro_fsr</code></td><td>设置量程</td><td>加速度计/陀螺仪的量程（如 ±4g、±2000dps）</td><td>初始化时</td></tr><tr><td><code>inv_icm426xx_set_accel_frequency</code> / <code>set_gyro_frequency</code></td><td>设置采样率</td><td>ODR（每秒采样多少次）</td><td>初始化时</td></tr><tr><td><code>inv_icm426xx_enable_accel_low_noise_mode</code></td><td>使能加速度计（低噪声）</td><td>开始以低噪声模式采集</td><td>初始化时</td></tr><tr><td><code>inv_icm426xx_enable_gyro_low_noise_mode</code></td><td>使能陀螺仪（低噪声）</td><td>同上</td><td>初始化时</td></tr><tr><td><code>inv_icm426xx_get_data_from_registers</code></td><td>从寄存器读数据</td><td>读一次三轴加速度+角速度（非 FIFO 方式）</td><td><code>accgyro.c</code></td></tr><tr><td><code>inv_icm426xx_get_data_from_fifo</code></td><td>从 FIFO 读数据</td><td>批量读取（FIFO 方式）</td><td>备用</td></tr><tr><td><code>inv_icm426xx_get_time_us</code></td><td>取当前时间（微秒）</td><td><strong>回调你把系统微秒时间给它</strong></td><td><code>bsp.c:192</code></td></tr><tr><td><code>inv_icm426xx_sleep_us</code></td><td>睡眠（微秒）</td><td><strong>回调你做微秒延时</strong></td><td><code>bsp.c:168</code></td></tr><tr><td><code>inv_icm426xx_get_current_timestamp</code></td><td>读芯片时间戳</td><td>芯片内部计数器的当前值</td><td><code>helperClockCalib.c:248</code></td></tr><tr><td><code>inv_icm426xx_convert_odr_bitfield_to_us</code></td><td>ODR 位域转微秒</td><td>把寄存器里的 ODR 编码换算成时间</td><td><code>helperClockCalib.c:193</code></td></tr><tr><td><code>inv_icm426xx_enable_timestamp_to_register</code></td><td>使能时间戳寄存器</td><td>让时间戳可以被读出</td><td><code>helperClockCalib.c:282</code></td></tr><tr><td><code>inv_icm426xx_get_fifo_timestamp_resolution_us_q24</code></td><td>取 FIFO 时间戳分辨率</td><td>时钟校准用，Q24 定点</td><td><code>helperClockCalib.c:100</code></td></tr><tr><td><code>inv_icm426xx_get_reg_timestamp_resolution_us_q24</code></td><td>取寄存器时间戳分辨率</td><td>同上</td><td><code>helperClockCalib.c:105</code></td></tr><tr><td><code>inv_icm426xx_get_clkin_rtc_status</code></td><td>查外部时钟状态</td><td>判断有没有外接 32kHz 时钟源</td><td><code>helperClockCalib.c:127</code></td></tr><tr><td><code>inv_icm426xx_force_clock_source</code></td><td>强制时钟源</td><td>时钟校准过程中用</td><td><code>helperClockCalib.c</code></td></tr><tr><td><code>inv_icm426xx_configure_timestamp_resolution</code></td><td>配置时间戳分辨率</td><td>同上</td><td><code>helperClockCalib.c</code></td></tr><tr><td><strong><code>*-apex-*</code> 和 <code>*-dmp-*</code> 一大票函数</strong></td><td>（计步、敲击、跌倒、自由落体、DMP 协处理器…）</td><td><strong>本工程完全没用</strong>。它们能编译进来只是因为在同一个驱动文件里</td><td>—</td></tr></tbody></table></div>
+<blockquote class=""><p><strong>⚠ 读代码时最该注意的一点</strong>：上面那些 <code>inv_icm426xx_*</code> 函数<strong>不是你写的</strong>，
+也不要试图修改它们。你真正需要看懂的是：
+- <code>bsp.c</code> 里<strong>注册进去的两个回调</strong>（<code>get_time_us</code> 和 <code>sleep_us</code>）——
+  这是驱动"反过来调用你的代码"的地方；
+- <code>user/spi.c</code> 里的 <code>inv_io_hal_read_reg</code> / <code>inv_io_hal_write_reg</code> ——
+  驱动的每一次寄存器读写最终都落到这两个函数上。</p></blockquote>
+<hr>
+<h2 id="二-回调-是什么-驱动反过来调用你的代码">二、"回调"是什么：驱动反过来调用你的代码<a class="anchor" href="#二-回调-是什么-驱动反过来调用你的代码">#</a></h2>
+<p>这是读驱动代码最容易困惑的地方，单独讲清楚。</p>
+<p><strong>问题</strong>：驱动作者写 ICM42688 驱动时，<strong>不知道</strong>你用的是 SPI 还是 I2C、 也不知道你的芯片跑多快。他只在文档里写"请把读写函数给我"。</p>
+<p><strong>解决方式</strong>：他定义一组<strong>函数指针</strong>，让你在初始化时把自己写的函数"挂"上去。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* 你工程里实际做的（bsp.c:246-247，示意） */
+icm_serif-&gt;read_reg  = inv_io_hal_read_reg;    /* ← 把你的读函数挂上去 */
+icm_serif-&gt;write_reg = inv_io_hal_write_reg;   /* ← 把你的写函数挂上去 */
+icm_serif-&gt;context   = 0;                      /* 附带一个上下文指针 */</pre></div>
+<p>之后驱动内部所有 <code>serif-&gt;read_reg(...)</code> 实际执行的都是<strong>你的</strong> <code>inv_io_hal_read_reg</code>。</p>
+<p><strong>这叫"回调（callback）"或"钩子（hook）"</strong>：</p>
+<ul><li>好处：驱动与硬件解耦，同一份驱动能跑在 SPI/I2C、任意 MCU 上；</li><li>代价：读代码时"跳转链条变长"，你看到 <code>read_reg</code> 不能立刻知道读到哪去了。</li></ul>
+<p><strong>本工程的完整调用链</strong>（记住这一条，读传感器代码就不会迷路）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">imu/accgyro.c
+  → icm42688.c（项目封装层）
+    → Icm426xxDriver_HL.c（原厂驱动）
+      → serif-&gt;read_reg（函数指针）
+        → user/spi.c: inv_io_hal_read_reg（你的实现）
+          → HAL_SPI_TransmitReceive()（HAL 库）
+            → SPI1 硬件 → ICM42688 芯片</pre></div>
+<p><strong>同理，时间也是回调</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">inv_icm426xx_sleep_us  ← 挂到 bsp.c 的实现（调你的 delay_us）
+inv_icm426xx_get_time_us ← 挂到 bsp.c 的实现（调 micros32() 等）</pre></div>
+<p>驱动内部要"等 200ms"或"取当前时间戳"时，执行的是你的代码 —— 所以<strong>你的延时函数不准，驱动的时序就不准</strong>。 这也解释了为什么 <code>bsp_delay.h</code> 里那个 <code>delay_us</code> 实际偏 2 倍的问题 （见 <code>术语解析手册.md</code> 第 11 节）值得关注：它同时影响射频和传感器的时序。</p>
+<hr>
+<h2 id="三-术语对照-英文-中文-读驱动注释时最常撞到的词">三、术语对照：英文 → 中文（读驱动注释时最常撞到的词）<a class="anchor" href="#三-术语对照-英文-中文-读驱动注释时最常撞到的词">#</a></h2>
+<h3 id="3-1-传感器相关">3.1 传感器相关<a class="anchor" href="#3-1-传感器相关">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>英文</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>IMU</td><td>惯性测量单元</td><td>加速度计 + 陀螺仪（有的含磁力计）</td></tr><tr><td>Accelerometer / Accel</td><td>加速度计</td><td>测加速度（含重力）</td></tr><tr><td>Gyroscope / Gyro</td><td>陀螺仪</td><td>测角速度</td></tr><tr><td>Barometer / Baro</td><td>气压计</td><td>测大气压 → 换算高度</td></tr><tr><td>FSR (Full Scale Range)</td><td>满量程</td><td>能测的最大值，如 ±4g / ±2000dps</td></tr><tr><td>ODR (Output Data Rate)</td><td>输出数据速率</td><td>每秒采样多少次</td></tr><tr><td>LSB (Least Significant Bit)</td><td>最低有效位</td><td>分辨率单位，如 2048 LSB/g</td></tr><tr><td>Bias / Offset</td><td>零偏</td><td>静止时输出不为 0 的那部分</td></tr><tr><td>Calibration</td><td>校准</td><td>测量并记住零偏</td></tr><tr><td>Sensitivity</td><td>灵敏度</td><td>每个数字量对应多少物理量</td></tr><tr><td>Self-test</td><td>自检</td><td>芯片自己验证传感器是否正常</td></tr><tr><td>DMP</td><td>数字运动处理器</td><td>芯片内部的协处理器（本工程未用）</td></tr><tr><td>APEX</td><td>（InvenSense 的功能集名）</td><td>计步/敲击/跌倒检测等（本工程未用）</td></tr><tr><td>FIFO</td><td>先进先出缓冲</td><td>芯片内部的数据队列，可批量读取</td></tr><tr><td>WOM (Wake On Motion)</td><td>运动唤醒</td><td>有运动时才唤醒（省电，本工程未用）</td></tr><tr><td>SMD (Significant Motion Detection)</td><td>显著运动检测</td><td>同上</td></tr><tr><td>Temp compensation</td><td>温度补偿</td><td>用片上温度修正读数</td></tr><tr><td>Power-on reset (POR)</td><td>上电复位</td><td>—</td></tr></tbody></table></div>
+<h3 id="3-2-通信与硬件相关">3.2 通信与硬件相关<a class="anchor" href="#3-2-通信与硬件相关">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>英文</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>Serial interface / Serif</td><td>串行接口</td><td>指 SPI 或 I2C</td></tr><tr><td>Register / Reg</td><td>寄存器</td><td>读写硬件的地方</td></tr><tr><td>Bitfield</td><td>位域</td><td>一个字节里划分的几段</td></tr><tr><td>Mask</td><td>掩码</td><td>用来只取某几位</td></tr><tr><td>Read-modify-write</td><td>读-改-写</td><td>改寄存器某几位而不动其它位</td></tr><tr><td>Burst read/write</td><td>连续读/写</td><td>一次传输多个字节</td></tr><tr><td>Chip Select (CS / NSS)</td><td>片选</td><td>拉低表示"我在跟你说话"</td></tr><tr><td>Clock polarity / phase (CPOL/CPHA)</td><td>时钟极性/相位</td><td>SPI 模式 0~3</td></tr><tr><td>MISO / MOSI / SCK</td><td>主入从出 / 主出从入 / 时钟</td><td>SPI 的四根线（另加 CS）</td></tr><tr><td>Interrupt (INT1/INT2)</td><td>中断引脚</td><td>芯片有事件时通知 MCU</td></tr><tr><td>IBI (Interrupt Based Interface?)</td><td>中断方式接口</td><td>用中断而非轮询</td></tr><tr><td>Timestamp</td><td>时间戳</td><td>芯片内部计时值</td></tr><tr><td>Clock source</td><td>时钟源</td><td>内部 RC / 外部晶振</td></tr><tr><td>PLL</td><td>锁相环</td><td>倍频电路</td></tr><tr><td>RC oscillator</td><td>RC 振荡器</td><td>精度差的内部时钟</td></tr><tr><td>Roll-over</td><td>回绕</td><td>计数器数满后归零</td></tr></tbody></table></div>
+<h3 id="3-3-状态与返回值相关">3.3 状态与返回值相关<a class="anchor" href="#3-3-状态与返回值相关">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>英文</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td>Status / Return code</td><td>状态 / 返回码</td><td>函数返回的成败标识</td></tr><tr><td><code>INV_ERROR_*</code></td><td>（原厂错误码）</td><td>如 <code>INV_ERROR_UNEXPECTED</code> 意外错误</td></tr><tr><td><code>BMP3_OK</code></td><td>成功</td><td>Bosch 的成功码</td></tr><tr><td><code>BMP3_E_*</code></td><td>（Bosch 错误码）</td><td>如 <code>BMP3_E_DEV_NOT_FOUND</code> 找不到器件</td></tr><tr><td>drdy (data ready)</td><td>数据就绪</td><td>测量完成的标志</td></tr><tr><td>Self test result</td><td>自检结果</td><td>—</td></tr><tr><td>Timeout</td><td>超时</td><td>—</td></tr></tbody></table></div>
+<hr>
+<h2 id="四-如果你确实需要翻译某个原厂文件">四、如果你确实需要翻译某个原厂文件<a class="anchor" href="#四-如果你确实需要翻译某个原厂文件">#</a></h2>
+<p>说清楚实际情况，方便你决定：</p>
+<div class="tablewrap"><table><thead><tr><th>文件</th><th>行数</th><th>内容性质</th><th>建议</th></tr></thead><tbody><tr><td><code>Icm426xxDefs.h</code></td><td>2425</td><td>寄存器/位域定义大全</td><td><strong>不建议翻译</strong>。它是"字典"，需要时查具体寄存器即可</td></tr><tr><td><code>Icm426xxDriver_HL.c</code></td><td>2145</td><td>驱动实现</td><td>不建议逐行翻译。有需要就针对具体函数问</td></tr><tr><td><code>bmp3.c</code></td><td>2976</td><td>Bosch 驱动实现</td><td>同上</td></tr><tr><td><code>bmp3_defs.h</code> / <code>bmp3.h</code></td><td>921 / 549</td><td>类型与宏定义</td><td>同上</td></tr><tr><td><code>Icm426xxDriver_HL_apex.c</code></td><td>789</td><td>DMP/APEX 功能，<strong>本工程未用</strong></td><td>完全不用看</td></tr><tr><td><code>icm42688.c</code> / <code>helperClockCalib.c</code></td><td>546 / 501</td><td><strong>项目自己的封装层</strong></td><td>✅ 已有中文注释，重点看这个</td></tr></tbody></table></div>
+<p><strong>结论</strong>：这五个"字典型"文件（合计约 7,000 行）翻译的价值很低， 因为里面 90% 的内容你一辈子不会用到。真正值得读的是 <code>icm42688.c</code>、<code>helperClockCalib.c</code>、<code>user/spi.c</code>、<code>user/common.c</code> ——<strong>这四个都已经是中文注释了</strong>。</p>
+<p>如果你在某个具体场景下撞到看不懂的英文函数（比如想看 <code>inv_icm426xx_configure_fifo</code> 到底配了什么）， <strong>直接把函数名告诉我，我针对那一个给你讲透</strong>，比通篇翻译高效得多。</p>
+</main>
+</div>
+<div class="toolbar">
+  <button id="totop">↑ 回到顶部</button>
+</div>
+<script>
+// 代码复制按钮
+document.querySelectorAll('.codeblock').forEach(function(box){
+  var btn = box.querySelector('.copy');
+  var code = box.querySelector('pre');
+  if(!btn || !code) return;
+  btn.addEventListener('click', function(){
+    // 代码块：逐行取 .lc（去掉行号）；示意图：直接取 pre 的文本
+    var rows = code.querySelectorAll('.lc');
+    var text = rows.length
+      ? Array.prototype.map.call(rows, function(l){ return l.textContent; }).join('\n')
+      : code.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+    }).catch(function(){ btn.textContent = '复制失败'; setTimeout(function(){ btn.textContent='复制'; }, 1200); });
+  });
+});
+// 滚动高亮当前目录项
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 120, best = 0;
+    for(var i=0;i<targets.length;i++){ if(targets[i] && targets[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+    var h = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+// 回到顶部
+document.getElementById('totop').addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+</script>
+</body>
+</html>

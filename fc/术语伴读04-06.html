@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>术语伴读：射频、看门狗与对码的来龙去脉</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+  --sidebar-bg:#f6f8fa; --code-bg:#f6f8fa; --code-border:#d8dee4;
+  --accent:#0969da; --accent-soft:#ddf4ff;
+  --warn-bg:#fff8c5; --warn-border:#d4a72c;
+  --danger-bg:#ffebe9; --danger-border:#cf222e;
+  --ok-bg:#dafbe1; --ok-border:#1a7f37;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d;
+    --sidebar-bg:#161b22; --code-bg:#161b22; --code-border:#30363d;
+    --accent:#58a6ff; --accent-soft:#0c2d6b;
+    --warn-bg:#3a2d00; --warn-border:#9e6a03;
+    --danger-bg:#3d1418; --danger-border:#f85149;
+    --ok-bg:#0f2f1a; --ok-border:#3fb950;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,sans-serif;
+  font-size:16px; line-height:1.75;
+}
+/* ---------- 布局 ---------- */
+.wrap{display:flex; align-items:flex-start; max-width:1500px; margin:0 auto}
+nav{
+  position:sticky; top:0; flex:0 0 300px; height:100vh; overflow-y:auto;
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  padding:20px 0 60px;
+}
+nav .navtitle{
+  padding:0 20px 14px; font-weight:600; font-size:15px;
+  border-bottom:1px solid var(--border); margin-bottom:10px;
+}
+nav a{
+  display:block; padding:4px 20px; color:var(--muted);
+  text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+nav a:hover{color:var(--accent); background:var(--accent-soft)}
+nav a.h1{font-weight:600; color:var(--fg); margin-top:8px}
+nav a.h2{padding-left:32px}
+nav a.h3{padding-left:46px; font-size:12.5px}
+nav a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); font-weight:600}
+main{flex:1 1 auto; min-width:0; padding:32px 44px 120px}
+/* ---------- 页头 ---------- */
+header.page{
+  border-bottom:2px solid var(--border); padding-bottom:20px; margin-bottom:28px;
+}
+header.page h1{margin:0 0 6px; font-size:30px; line-height:1.3; border:0; padding:0}
+header.page .sub{color:var(--muted); font-size:15px}
+header.page .meta{color:var(--muted); font-size:12.5px; margin-top:10px}
+/* ---------- 标题 ---------- */
+h1,h2,h3,h4{line-height:1.35; font-weight:600; scroll-margin-top:16px}
+h1{font-size:26px; margin:44px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+h2{font-size:22px; margin:38px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border)}
+h3{font-size:18px; margin:28px 0 10px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--muted)}
+.anchor{color:var(--border); text-decoration:none; margin-left:8px; font-weight:400; opacity:0}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+/* ---------- 正文元素 ---------- */
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{margin:12px 0; padding-left:26px}
+li{margin:5px 0}
+li>ul,li>ol{margin:5px 0}
+hr{border:0; border-top:1px solid var(--border); margin:34px 0}
+strong{font-weight:600}
+/* 行内代码 */
+code{
+  background:var(--code-bg); border:1px solid var(--code-border);
+  border-radius:5px; padding:.15em .4em; font-size:.875em;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  word-break:break-word;
+}
+/* 代码块 */
+.codeblock{
+  position:relative; margin:16px 0; border:1px solid var(--code-border);
+  border-radius:8px; overflow:hidden; background:var(--code-bg); box-shadow:var(--shadow);
+}
+.codeblock .cbhead{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; background:var(--sidebar-bg); border-bottom:1px solid var(--code-border);
+  font-size:12px; color:var(--muted);
+}
+.codeblock .lang{font-weight:600; letter-spacing:.03em; text-transform:uppercase}
+.codeblock .copy{
+  cursor:pointer; border:1px solid var(--code-border); background:transparent;
+  color:var(--muted); border-radius:5px; padding:2px 9px; font-size:11.5px;
+  font-family:inherit;
+}
+.codeblock .copy:hover{color:var(--accent); border-color:var(--accent)}
+.codeblock pre{
+  margin:0; padding:12px 0; overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px; line-height:1.65;
+}
+.codeblock .line{display:flex; min-width:max-content}
+.codeblock .ln{
+  flex:0 0 auto; width:3.2em; padding-right:12px; text-align:right;
+  color:var(--border); user-select:none;
+}
+.codeblock .lc{padding-right:20px; white-space:pre}
+/* 示意图：不加行号、不换行（换行会毁掉 ASCII 图的列对齐，所以横向滚动） */
+.codeblock.art{background:var(--bg)}
+.codeblock.art .lang{color:var(--accent)}
+.codeblock .artpre{
+  margin:0; padding:14px 16px; overflow-x:auto; white-space:pre;
+  font-family:"Cascadia Mono",Consolas,"MS Gothic","Courier New",monospace;
+  font-size:13px; line-height:1.5; tab-size:4;
+}
+/* 表格 */
+.tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{border-bottom:1px solid var(--border); padding:9px 13px; text-align:left; vertical-align:top}
+th{background:var(--sidebar-bg); font-weight:600; white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sidebar-bg)}
+/* 引用块：按内容分色 */
+blockquote{
+  margin:16px 0; padding:12px 16px; border-left:4px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0;
+}
+blockquote p{margin:6px 0}
+blockquote.warn{border-left-color:var(--warn-border); background:var(--warn-bg)}
+blockquote.danger{border-left-color:var(--danger-border); background:var(--danger-bg)}
+blockquote.ok{border-left-color:var(--ok-border); background:var(--ok-bg)}
+/* 顶部工具条 */
+.toolbar{
+  position:fixed; right:20px; bottom:20px; display:flex; gap:8px; z-index:50;
+}
+.toolbar button{
+  border:1px solid var(--border); background:var(--bg); color:var(--muted);
+  border-radius:20px; padding:8px 16px; cursor:pointer; font-size:13px;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.toolbar button:hover{color:var(--accent); border-color:var(--accent)}
+/* 进度条 */
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; z-index:99}
+/* 窄屏 */
+@media (max-width:900px){
+  nav{display:none}
+  main{padding:20px 18px 100px}
+  .wrap{display:block}
+  body{font-size:15px}
+}
+@media print{
+  nav,.toolbar,#progress{display:none}
+  main{padding:0}
+  .codeblock,.tablewrap{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav>
+  <div class="navtitle">术语伴读：射频、看门狗与对码的来龙去脉</div>
+  <a class="h2" href="#本文件的证据分级-沿用-_术语事实清单-md-的一套标记" title="本文件的证据分级（沿用 _术语事实清单.md 的一套标记）">本文件的证据分级（沿用 _术语事实清单.md 的一套标记）</a>
+  <a class="h1" href="#第-4-章-射频-RF-Radio-Frequency-信道-地址-载荷-ACK" title="第 4 章　射频（RF, Radio Frequency）、信道、地址、载荷、ACK">第 4 章　射频（RF, Radio Frequency）、信道、地址、载荷、ACK</a>
+  <a class="h2" href="#4A-主线图-一条-2-4G-遥控链路-到底约定了什么" title="4A　主线图：一条 2.4G 遥控链路，到底约定了什么">4A　主线图：一条 2.4G 遥控链路，到底约定了什么</a>
+  <a class="h2" href="#4-1-射频-RF-为什么是-2-4GHz-以及它带来了什么代价" title="4.1　射频（RF）：为什么是 2.4GHz，以及它带来了什么代价">4.1　射频（RF）：为什么是 2.4GHz，以及它带来了什么代价</a>
+  <a class="h3" href="#①-它是怎么出现的" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图" title="③ 我该怎么理解它（图）">③ 我该怎么理解它（图）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#4-2-信道-Channel-为什么分格子-以及-36-到底是多少-MHz" title="4.2　信道（Channel）：为什么分格子，以及&quot;36&quot;到底是多少 MHz">4.2　信道（Channel）：为什么分格子，以及&quot;36&quot;到底是多少 MHz</a>
+  <a class="h3" href="#①-它是怎么出现的-2" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-2" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-信道频率换算" title="③ 我该怎么理解它（图）—— 信道频率换算">③ 我该怎么理解它（图）—— 信道频率换算</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-2" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#4-3-并入-4-2-信道切换-ch_change_arr-那两行到底做了什么" title="4.3　（并入 4.2）信道切换：ch_change_arr 那两行到底做了什么">4.3　（并入 4.2）信道切换：ch_change_arr 那两行到底做了什么</a>
+  <a class="h2" href="#4-4-地址与管道-Address-Pipe-同信道上还有别人怎么办" title="4.4　地址与管道（Address / Pipe）：同信道上还有别人怎么办">4.4　地址与管道（Address / Pipe）：同信道上还有别人怎么办</a>
+  <a class="h3" href="#①-它是怎么出现的-3" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-3" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-星状网络与地址的-三重一致" title="③ 我该怎么理解它（图）—— 星状网络与地址的&quot;三重一致&quot;">③ 我该怎么理解它（图）—— 星状网络与地址的&quot;三重一致&quot;</a>
+  <a class="h2" href="#4-5-数据包-Packet-与载荷-Payload-为什么要有-包" title="4.5　数据包（Packet）与载荷（Payload）：为什么要有&quot;包&quot;">4.5　数据包（Packet）与载荷（Payload）：为什么要有&quot;包&quot;</a>
+  <a class="h3" href="#①-它是怎么出现的-4" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#PID-这一节里最容易被忽略-但很关键的一个字段" title="PID：这一节里最容易被忽略、但很关键的一个字段">PID：这一节里最容易被忽略、但很关键的一个字段</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-4" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-本工程-12-字节载荷的字节级布局" title="③ 我该怎么理解它（图）—— 本工程 12 字节载荷的字节级布局">③ 我该怎么理解它（图）—— 本工程 12 字节载荷的字节级布局</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-3" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#4-6-ACK-与自动重传-发送方怎么知道对方收到了" title="4.6　ACK 与自动重传：发送方怎么知道对方收到了">4.6　ACK 与自动重传：发送方怎么知道对方收到了</a>
+  <a class="h3" href="#①-它是怎么出现的-5" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-5" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-ACK-重传时序-含-ARD-250µs" title="③ 我该怎么理解它（图）—— ACK / 重传时序，含 ARD 250µs">③ 我该怎么理解它（图）—— ACK / 重传时序，含 ARD 250µs</a>
+  <a class="h3" href="#丢包可观测性-OBSERVE_TX" title="丢包可观测性：OBSERVE_TX">丢包可观测性：OBSERVE_TX</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-4" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#4-7-收发模式与-CE-Chip-Enable-芯片使能-半双工与那个不存在的引脚" title="4.7　收发模式与 CE（Chip Enable，芯片使能）：半双工与那个不存在的引脚">4.7　收发模式与 CE（Chip Enable，芯片使能）：半双工与那个不存在的引脚</a>
+  <a class="h3" href="#①-它是怎么出现的-6" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-6" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-半双工切换时序-本工程的特殊做法" title="③ 我该怎么理解它（图）—— 半双工切换时序 + 本工程的特殊做法">③ 我该怎么理解它（图）—— 半双工切换时序 + 本工程的特殊做法</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-5" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#4-8-软件模拟-SPI-Bit-Banging-为什么放着硬件外设不用" title="4.8　软件模拟 SPI（Bit-Banging）：为什么放着硬件外设不用">4.8　软件模拟 SPI（Bit-Banging）：为什么放着硬件外设不用</a>
+  <a class="h3" href="#①-它是怎么出现的-7" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-为什么要这样做" title="② 它要解决什么问题（为什么要这样做）">② 它要解决什么问题（为什么要这样做）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-bit-banging-的本质" title="③ 我该怎么理解它（图）—— bit-banging 的本质">③ 我该怎么理解它（图）—— bit-banging 的本质</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-6" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h1" href="#第-5-章-看门狗-Watchdog-WDG" title="第 5 章　看门狗（Watchdog, WDG）">第 5 章　看门狗（Watchdog, WDG）</a>
+  <a class="h2" href="#5A-主线图-看门狗在系统里的位置" title="5A　主线图：看门狗在系统里的位置">5A　主线图：看门狗在系统里的位置</a>
+  <a class="h2" href="#5-1-看门狗定义-它监控的是什么" title="5.1　看门狗定义：它监控的是什么">5.1　看门狗定义：它监控的是什么</a>
+  <a class="h3" href="#①-它是怎么出现的-8" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-7" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-2" title="③ 我该怎么理解它（图）">③ 我该怎么理解它（图）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-7" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#5-2-两种看门狗-IWDG-与-WWDG-的本质区别" title="5.2　两种看门狗：IWDG 与 WWDG 的本质区别">5.2　两种看门狗：IWDG 与 WWDG 的本质区别</a>
+  <a class="h3" href="#①-它是怎么出现的-9" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-8" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-3" title="③ 我该怎么理解它（图）">③ 我该怎么理解它（图）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-8" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#5-3-超时时间怎么算-0-5-秒背后的-20" title="5.3　超时时间怎么算：0.5 秒背后的 ±20%">5.3　超时时间怎么算：0.5 秒背后的 ±20%</a>
+  <a class="h3" href="#①-它是怎么出现的-10" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-9" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-余量怎么算" title="③ 我该怎么理解它（图）—— 余量怎么算">③ 我该怎么理解它（图）—— 余量怎么算</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-9" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#5-4-喂狗位置的选择-为什么-在中断里喂狗-是错的" title="5.4　喂狗位置的选择：为什么&quot;在中断里喂狗&quot;是错的">5.4　喂狗位置的选择：为什么&quot;在中断里喂狗&quot;是错的</a>
+  <a class="h3" href="#①-它是怎么出现的-11" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-10" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-复位源识别与调试" title="③ 我该怎么理解它（图）—— 复位源识别与调试">③ 我该怎么理解它（图）—— 复位源识别与调试</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-10" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h1" href="#第-6-章-对码-配对-Pairing" title="第 6 章　对码 / 配对（Pairing）">第 6 章　对码 / 配对（Pairing）</a>
+  <a class="h2" href="#6A-主线图-对码交换了哪些东西" title="6A　主线图：对码交换了哪些东西">6A　主线图：对码交换了哪些东西</a>
+  <a class="h2" href="#6-1-为什么需要-对码" title="6.1　为什么需要&quot;对码&quot;">6.1　为什么需要&quot;对码&quot;</a>
+  <a class="h3" href="#①-它是怎么出现的-12" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-11" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-本质是-交换-协商标识" title="③ 我该怎么理解它（图）—— 本质是&quot;交换/协商标识&quot;">③ 我该怎么理解它（图）—— 本质是&quot;交换/协商标识&quot;</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-11" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#6-2-对码流程-本工程的实际逻辑-逐行" title="6.2　对码流程：本工程的实际逻辑（逐行）">6.2　对码流程：本工程的实际逻辑（逐行）</a>
+  <a class="h3" href="#①-它是怎么出现的-13" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-12" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-字节级流向" title="③ 我该怎么理解它（图）—— 字节级流向">③ 我该怎么理解它（图）—— 字节级流向</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-12" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#6-3-对码循环为什么是-while-1" title="6.3　对码循环为什么是 while(1)">6.3　对码循环为什么是 while(1)</a>
+  <a class="h3" href="#①-它是怎么出现的-14" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-失效保护怎么办" title="② 它要解决什么问题（没有它会怎样）—— 失效保护怎么办">② 它要解决什么问题（没有它会怎样）—— 失效保护怎么办</a>
+  <a class="h3" href="#③-我该怎么理解它-图-4" title="③ 我该怎么理解它（图）">③ 我该怎么理解它（图）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-13" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#6-4-跳频与对码的关系" title="6.4　跳频与对码的关系">6.4　跳频与对码的关系</a>
+  <a class="h3" href="#①-它是怎么出现的-15" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-13" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-图-本工程的实际行为" title="③ 我该怎么理解它（图）—— 本工程的实际行为">③ 我该怎么理解它（图）—— 本工程的实际行为</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-14" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h1" href="#第-5-节-阅读正文时发现的事实问题-只指出-未修改正文" title="第 5 节　阅读正文时发现的事实问题（只指出，未修改正文）">第 5 节　阅读正文时发现的事实问题（只指出，未修改正文）</a>
+  <a class="h3" href="#问题-1-正文-6-4-的结论与正文-4-3-直接矛盾-且与执行顺序不符" title="【问题 1】🔴 正文 6.4 的结论与正文 4.3 直接矛盾，且与执行顺序不符">【问题 1】🔴 正文 6.4 的结论与正文 4.3 直接矛盾，且与执行顺序不符</a>
+  <a class="h3" href="#问题-2-正文与任务说明里引用的行号-main-c-249-是错的" title="【问题 2】🟡 正文与任务说明里引用的行号 main.c:249 是错的">【问题 2】🟡 正文与任务说明里引用的行号 main.c:249 是错的</a>
+  <a class="h3" href="#问题-3-正文-5-2-表格里-WWDG-那一行与代码不符" title="【问题 3】🟢 正文 5.2 表格里&quot;WWDG&quot;那一行与代码不符">【问题 3】🟢 正文 5.2 表格里&quot;WWDG&quot;那一行与代码不符</a>
+  <a class="h3" href="#问题-4-正文-4-3-说-注释是错的-但代码注释在-刷新板-上是-对的" title="【问题 4】🟡 正文 4.3 说&quot;注释是错的&quot;，但代码注释在刷新板上是对的">【问题 4】🟡 正文 4.3 说&quot;注释是错的&quot;，但代码注释在刷新板上是对的</a>
+  <a class="h3" href="#问题-5-正文-5-3-的余量口径前后不一致-4-倍-vs-5-倍" title="【问题 5】🟡 正文 5.3 的余量口径前后不一致（4 倍 vs 5 倍）">【问题 5】🟡 正文 5.3 的余量口径前后不一致（4 倍 vs 5 倍）</a>
+  <a class="h3" href="#问题-6-正文-4-2-里-64-偏移是芯片的信道编码要求-这个说法没有手册依据" title="【问题 6】🟡 正文 4.2 里&quot;+64 偏移是芯片的信道编码要求&quot;这个说法没有手册依据">【问题 6】🟡 正文 4.2 里&quot;+64 偏移是芯片的信道编码要求&quot;这个说法没有手册依据</a>
+  <a class="h3" href="#问题-7-正文-4-5-讲包结构时-没有提到收发两侧的-位序-字节序镜像" title="【问题 7】🟡 正文 4.5 讲包结构时，没有提到收发两侧的&quot;位序/字节序镜像&quot;">【问题 7】🟡 正文 4.5 讲包结构时，没有提到收发两侧的&quot;位序/字节序镜像&quot;</a>
+  <a class="h3" href="#问题-8-正文-4-6-未提到-重传失败后必须清-TX-FIFO" title="【问题 8】🟡 正文 4.6 未提到&quot;重传失败后必须清 TX FIFO&quot;">【问题 8】🟡 正文 4.6 未提到&quot;重传失败后必须清 TX FIFO&quot;</a>
+  <a class="h3" href="#问题-9-正文-6-2-说-遥控器靠收到-ACK-才知道有人接住了-与遥控器代码不符" title="【问题 9】🟠 正文 6.2 说&quot;遥控器靠收到 ACK 才知道有人接住了&quot;——与遥控器代码不符">【问题 9】🟠 正文 6.2 说&quot;遥控器靠收到 ACK 才知道有人接住了&quot;——与遥控器代码不符</a>
+  <a class="h3" href="#问题清单汇总" title="问题清单汇总">问题清单汇总</a>
+  <a class="h1" href="#附录-A-本文件的示意图清单-按出现顺序" title="附录 A　本文件的示意图清单（按出现顺序）">附录 A　本文件的示意图清单（按出现顺序）</a>
+  <a class="h1" href="#附录-B-本文件-故意省略-的内容" title="附录 B　本文件故意省略的内容">附录 B　本文件故意省略的内容</a>
+  <a class="h1" href="#附录-C-一句话总结" title="附录 C　一句话总结">附录 C　一句话总结</a>
+</nav>
+<main>
+<header class="page">
+  <h1>术语伴读：射频、看门狗与对码的来龙去脉</h1>
+  <div class="sub">2.4G 射频/信道/地址/载荷/ACK/CE/软件 SPI、两种看门狗与喂狗位置、对码与跳频</div>
+  <div class="meta">PAN 飞控工程 · PY32F030 (Cortex-M0+) · 由 build-gcc/tools/md_to_html.py 生成</div>
+</header>
+<blockquote class=""><p><strong>这份文档是什么</strong>：《术语解析手册》第 4～6 章讲的是「<strong>这些术语是什么意思、在本工程里怎么用</strong>」；
+这份伴读补的是「<strong>它为什么存在、当初要解决什么麻烦、有哪几条路可选</strong>」。
+正文照旧是主教材，本文件是它的背景注释，<strong>不替代正文</strong>。</p><p><strong>怎么读</strong>：每个术语按同样四个问题展开 ——
+<strong>① 它是怎么出现的　② 它要解决什么问题（没有它会怎样）　③ 我该怎么理解它（配图）　④ 实现方法有哪些（取舍对照表 + 本工程用的是哪种）</strong>。
+只想知道"代码里写的是啥"的读者，看正文就够了；想知道"为什么长这样"的读者，看这里。</p></blockquote>
+<h2 id="本文件的证据分级-沿用-_术语事实清单-md-的一套标记">本文件的证据分级（沿用 <code>_术语事实清单.md</code> 的一套标记）<a class="anchor" href="#本文件的证据分级-沿用-_术语事实清单-md-的一套标记">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>标记</th><th>含义</th><th>读者该怎么用</th></tr></thead><tbody><tr><td>🟢 <strong>确证</strong></td><td>有手册页码 / 寄存器文档 / 本机代码逐行核对支撑</td><td>可以直接引用、可以据此改代码</td></tr><tr><td>🟡 <strong>通说</strong></td><td>业界广泛记载或可由物理原理推证，方向可靠，<strong>具体细节可能有出入</strong></td><td>当作背景理解，不要当法条引用</td></tr><tr><td>🟠 <strong>说法</strong></td><td>没有把握，或流传的版本互相矛盾</td><td><strong>请自行查证</strong>，不要写进正式设计文档</td></tr></tbody></table></div>
+<p><strong>本文件的引用规则</strong>：</p>
+<ul><li>凡涉及 <strong>PN298 射频芯片规格</strong>，一律引《PN298 用户手册 V1.0》并标 🟢 + 页码，</li></ul>
+<p>数值取自 <code>_术语事实清单.md</code>（该文件已把手册页码级事实固化下来），本文件不另写一套。</p>
+<ul><li>凡涉及 <strong>PY32F030 芯片行为</strong>，引《PY32F030 datasheet Rev.1.4》或《PY32F030 Reference manual v0.7》并标页码。</li><li>凡涉及 <strong>本工程实际配置</strong>，引 <code>文件名:行号</code>，方便逐行核对。</li><li>凡是从物理原理推出的设计动机，标 🟡 并写清推理链条。</li></ul>
+<blockquote class=""><p>### ⚠️ 历史/动机叙述的定位（请先读这一句）</p><p><strong>本文件里的历史与技术演进叙述只用于建立直觉；技术结论一律以手册原文和本机代码事实为准。</strong>
+判断某段代码对不对，依据应当是手册条款、寄存器默认值和你在板子上的实测，
+而不是本文件里的任何一个"因为当年……所以现在……"式的推理。</p><p><strong>本文件不出现</strong>：未经核实的人名、年份、公司并购故事、引文、"某人当年拍板"式的决策细节。
+需要时说清"本文件不写"。第五节列出了故意省略的清单。</p></blockquote>
+<hr>
+<h1 id="第-4-章-射频-RF-Radio-Frequency-信道-地址-载荷-ACK">第 4 章　射频（RF, Radio Frequency）、信道、地址、载荷、ACK<a class="anchor" href="#第-4-章-射频-RF-Radio-Frequency-信道-地址-载荷-ACK">#</a></h1>
+<blockquote class=""><p><strong>本章主线</strong>：把一个"能通"的无线链路拆成五件必须同时成立的事 ——
+<strong>频率对得上（信道）、名字对得上（地址）、长度对得上（载荷）、收到了要回话（ACK）、谁来按发射键（CE）</strong>。
+这五件事任何一件不成立，表现都是同一句话：<strong>收不到包</strong>。
+所以本章的重点不是"每个术语什么意思"，而是<strong>"出问题时怎么把这五件事逐个排除"</strong>。</p></blockquote>
+<hr>
+<h2 id="4A-主线图-一条-2-4G-遥控链路-到底约定了什么">4A　主线图：一条 2.4G 遥控链路，到底约定了什么<a class="anchor" href="#4A-主线图-一条-2-4G-遥控链路-到底约定了什么">#</a></h2>
+<p>这一节回答一个问题：<strong>第 4 章的七个知识点之间是什么关系？</strong></p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">┌────────────────────────────────────────────────────────────────────────────┐
+│  物理层：凭什么能在空气里传比特                                             │
+│                                                                            │
+│   ① 4.1 射频  RF      —— 用 2.4GHz 电磁波当载体（ISM 频段，免许可）        │
+│   ② 4.2 信道  Channel —— 在 2400~2483MHz 里挑一个 1MHz 宽的"格子"站进去    │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  链路层：一堆设备都在喊，怎么只听见我的                                        │
+│                                                                            │
+│   ③ 4.4 地址 / 管道  Address / Pipe                                        │
+│        —— 同一信道上有别人的包，用 5 字节"姓名"筛掉                          │
+│   ④ 4.5 数据包 / 载荷  Packet / Payload                                     │
+│        —— 有了姓名还要有"信封格式"：前导+地址+长度+PID+数据+CRC              │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  可靠性层：空中会丢包，怎么知道对方收到了                                     │
+│                                                                            │
+│   ⑤ 4.6 ACK 与自动重传  —— 芯片硬件替你做"收到请回答"，MCU 不用管           │
+│   ⑥ 4.7 收发模式与 CE   —— 半双工：同一套射频前端，要么在喊要么在听          │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  怎么跟芯片说话                                                             │
+│                                                                            │
+│   ⑦ 4.8 软件模拟 SPI（bit-banging）—— 用 4 根普通 GPIO 手动翻时钟          │
+└────────────────────────────────────────────────────────────────────────────┘</pre></div>
+<p><strong>读法</strong>：从上往下，每一层都在解决上一层留下的新问题。 现实中最常见的误判是"<strong>收不到包就去改频率</strong>"——其实频率、地址、载荷长度、CE 时序 任何一处错了，现象都是"收不到"。排查顺序应当<strong>从下往上</strong>、每次只改一个变量。</p>
+<hr>
+<h2 id="4-1-射频-RF-为什么是-2-4GHz-以及它带来了什么代价">4.1　射频（RF）：为什么是 2.4GHz，以及它带来了什么代价<a class="anchor" href="#4-1-射频-RF-为什么是-2-4GHz-以及它带来了什么代价">#</a></h2>
+<p>这一节回答一个问题：<strong>遥控为什么用 2.4GHz 而不是更低的频段？这个选择又要付什么代价？</strong></p>
+<h3 id="①-它是怎么出现的">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的">#</a></h3>
+<p>🟢 <strong>确证</strong>：本工程用的 PN298 工作在 <strong>2400MHz ~ 2483MHz 的通用 ISM 频段</strong> （《PN298 用户手册 V1.0》第 8 页 第 1 节"概述"）。</p>
+<p>🟢 <strong>确证</strong>：同一页写明 PN298 <strong>集成发射机、接收机、频率发生器、GFSK 调制解调器</strong>， 发射机"支持功率可调（<strong>最大可达 10dBm</strong>）"，通信<strong>兼容 XN297L 数据包</strong>。 本工程选的就是 XN297L 增强模式（<code>config_rf.h:179</code> 的 <code>__PN298_MODE = 0x0001</code>）。</p>
+<p>🟢 <strong>确证</strong>：手册第 8 页还写明"只需要 MCU 通过 <strong>SPI / I2C</strong> 外设接口对芯片少数几个寄存器 配置，即可实现数据的收发通信"。</p>
+<p>🟡 <strong>通说</strong>：<strong>ISM</strong>（Industrial, Scientific and Medical，工业/科学/医疗）频段指 各国无线电管理机构开放给<strong>免许可</strong>低功率设备使用的一段频谱；2.4GHz 那一段 （约 2.400~2.4835GHz）在主要经济体都是免许可的，这是 WiFi、蓝牙、Zigbee 和 大量遥控器都挤在这里的直接原因。<strong>具体的管理机构名称、功率上限与许可条款各国不同，本文件不逐条引用。</strong></p>
+<h3 id="②-它要解决什么问题-没有它会怎样">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样">#</a></h3>
+<p>先看<strong>老频段</strong>这条路为什么走不通了。遥控模型早期用 27MHz / 40MHz / 72MHz 一类的 低频段（🟡 通说：这些频段在不同国家分给模型遥控的用途各不相同，有的需要申请、 有的是"次要用户"）。低频段有两个硬伤，<strong>都可以从物理直接算出来</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【硬伤 1：天线尺寸 ∝ 波长】
+
+  偶极天线（dipole）的谐振长度 ≈ 半波长 λ/2；单极（monopole）≈ 四分之一波长 λ/4。
+  波长 λ = c / f，c ≈ 3×10^8 m/s。
+
+  ┌──────────┬──────────────┬─────────────┬────────────────────────────────┐
+  │ 频段     │ 波长 λ       │ λ/4（单极） │ 现实含义                        │
+  ├──────────┼──────────────┼─────────────┼────────────────────────────────┤
+  │ 27 MHz   │ 11.1 m       │ 2.78 m      │ 只能做"拉杆天线"，还要加感缩短   │
+  │ 40 MHz   │ 7.50 m       │ 1.87 m      │ 同上                            │
+  │ 72 MHz   │ 4.17 m       │ 1.04 m      │ 约 1 米鞭状天线，机器上伸一根    │
+  │ 2400 MHz │ 0.125 m      │ 0.031 m     │ 约 3.1 cm —— 板载印刷天线/陶瓷  │
+  │          │ (12.5 cm)    │ (3.1 cm)    │ 天线即可，能塞进手柄内部         │
+  └──────────┴──────────────┴─────────────┴────────────────────────────────┘
+
+  🟡 通说：低频段的缩短型天线（加电感做电小天线）辐射效率很低，
+     通常只有百分之几 —— 换句话说"发射功率大部分变成了天线里的热"。
+     ✅ 这一条是本文件唯一一处靠"可观测事实"支撑的通说：
+     公式本身 🟢（物理定义），"效率只有百分之几"的**具体数字**属 🟡，不要当设计依据。
+
+【硬伤 2：低频段的可用带宽窄，容纳不了高刷新率】
+
+  27MHz 频段总宽度往往只有几百 kHz 量级；2.4GHz ISM 有 83.5MHz。
+  带宽 ÷ 每包比特数 = 每秒能塞多少包。
+  遥控要 50Hz 刷新（本工程遥控器侧 `遥控器/user/main.c:224`
+  用 loop50HzFlag 触发发送），一包 176 比特（见 4.5 的计算），
+  再乘上 ACK 与重传，低频段会非常局促。
+  🟡 这一段是从"带宽/包长/刷新率"三者关系推出来的，具体老频段的分配细则本文件不引用。</pre></div>
+<p><strong>2.4GHz 解决了这两件事</strong>，但<strong>同时引入了两个新代价</strong>，这正是本节的标题所指：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【代价 1：波长只有 12.5cm —— 绕射能力差】
+
+  🟡 通说（电磁波传播）：障碍物尺寸 &gt;&gt; 波长时，波几乎是"直线传播 + 反射"，
+     绕射（diffraction，绕过障碍物边缘继续传播）很弱；
+     障碍物尺寸 ≲ 波长时，波可以"抹过"它。
+
+  把这条规则代入：
+
+    72MHz  λ = 4.17m  ──►  人的身体（约 0.5m 厚）、树干、矮墙
+                            都远小于波长 ⇒ 波能"糊"过去，人站在中间只是衰减一点
+
+    2.4GHz λ = 0.125m ─►  人的身体（约 0.5m 厚）是波长的 4 倍
+                            ⇒ 基本当一堵墙处理，站在遥控器和飞机之间就是硬遮挡
+
+  【结论一句话】2.4GHz 换来"天线 3cm"，代价是"人和树都能当墙"。
+
+【代价 2：2.4GHz 上挤满了别的东西】
+
+  同一个 ISM 段里同时住着：WiFi（IEEE 802.11b/g/n）、蓝牙（Bluetooth）、
+  Zigbee、无线鼠标键盘、微波炉（🟡 通说：微波炉工作在约 2.45GHz，泄漏会抬底噪）。
+  而 2.4GHz 频段总共只有约 83.5MHz 宽，**WiFi 一个 20MHz 信道就吃掉四分之一**。
+  ⇒ 干扰不是"可能发生"，而是"默认存在"。这就是 4.2 信道、4.6 ACK/重传、
+     以及正文 4.3 那套信道切换机制存在的全部理由。</pre></div>
+<p><strong>再补一条与"手册事实"直接相关的代价</strong>：</p>
+<p>🟢 <strong>确证</strong>：手册第 11 页 表 2-4 RF 指标里有一条注释 —— "<strong>不推荐使用整数倍于 16MHz 的频道，如 2480MHz。因为接收机的灵敏度在这些信道中会降低约 2dB。</strong>"</p>
+<p>这条注释的含义是：芯片内部有一个 <strong>16MHz 的参考时钟</strong>（同一页写 <code>fXTAL 晶振频率 - 16 - MHz</code>）， 当射频载波落在参考时钟的整数倍上时，接收机会被自己的参考泄漏干扰，灵敏度掉 2dB。 <strong>这是一个"越靠近芯片内部结构就越容易吃亏"的例子</strong> —— 但它<strong>只影响选频点，不影响能不能通信</strong>。</p>
+<p>本工程实际用的频点是不是 16MHz 整数倍？见下节算出来的 <strong>2436MHz</strong>：2436 ÷ 16 = 152.25， <strong>不是整数倍</strong> ⇒ 不落在这条"不推荐"名单里。🟢（除法可验算）</p>
+<h3 id="③-我该怎么理解它-图">③ 我该怎么理解它（图）<a class="anchor" href="#③-我该怎么理解它-图">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.1-1】同样是"一根天线"，两个频段的物理尺寸差 33 倍
+
+        72 MHz（λ = 4.17 m）                    2400 MHz（λ = 12.5 cm）
+
+                │                                        │
+                │  拉杆天线                              │▄ 板载天线
+                │  约 1 m（λ/4）                         │  约 3.1 cm（λ/4）
+                │                                        │
+                │                                        │
+                │                                        │
+        ┌───────┴───────┐                        ┌───────┴───────┐
+        │  遥控器机身    │                        │  遥控器机身    │
+        │               │                        │               │
+        └───────────────┘                        └───────────────┘
+
+        机器上必须"伸出一根棍"                    天线可以完全藏在壳子/PCB 里
+        会被手碰到、会折断、装箱要拆              外观一体化，成本也低
+
+
+【图 4.1-2】波长决定了"什么东西算墙"
+
+   2.4GHz  λ = 12.5cm                        72MHz  λ = 417cm
+
+   飞机 ────► 人 ────► 遥控器                 飞机 ────► 人 ────► 遥控器
+              ▓▓                               ▓▓
+              ▓▓ 人厚约 50cm                   ▓▓ 人厚约 50cm
+              ▓▓ = 4 × λ                      ▓▓ = 0.12 × λ
+
+   波撞上"比它大 4 倍"的东西：                波撞上"比它小 12 倍"的东西：
+   ▲ 大部分被反射/吸收                        ▲ 大部分绕过去
+   ▼ 只有绕射和穿透两路残余                   ▼ 衰减但不中断
+   → 遥控链路直接断                           → 信号变弱但还连得上
+
+   ⇒ 2.4G 摇控器的"操作习惯建议"（飞手别站在飞机和遥控器之间）
+     不是玄学，是这条物理的直接后果。</pre></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.1-3】为什么 2.4GHz 段"看起来有 83.5MHz，实际没几格空"
+
+  2400                                          2483  MHz
+   │                                              │
+   ▼                                              ▼
+   ├──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┤
+   │ 1│ 2│ 3│ 4│ 5│ 6│ 7│ 8│ 9│10│11│12│13│14│  │   ← WiFi 频道中心频率
+   └──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+   2412 2417 2422 2427 2432 2437 2442 2447 2452 2457 2462 2467 2472 2477
+
+   但每个 WiFi 频道实际占 20MHz 宽（不是 5MHz）：
+   ┌────────────────────┐
+   │   ch1  宽 20MHz    │
+   └────────────────────┘
+        ┌────────────────────┐
+        │   ch6  宽 20MHz    │        ← 彼此重叠，所以"1/6/11 不重叠"
+        └────────────────────┘
+             ┌────────────────────┐
+             │   ch11 宽 20MHz    │
+             └────────────────────┘
+
+   本工程频点 2436MHz 落在哪里？ ─────────────────▲
+   （ch6 中心 2437MHz，2436 距它只有 1MHz ⇒ 强重叠）
+   ⇒ 这就是手册说"36 附近与 WiFi 重叠较少"（config_rf.h:95-96）时
+     需要谨慎的地方：**"较少"不等于"没有"**。</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>频段 / 技术</th><th>优势</th><th>代价</th><th>典型场景</th></tr></thead><tbody><tr><td><strong>低频段窄带</strong></td><td>27 / 40 / 72MHz</td><td>绕射好、穿墙好、单包距离远</td><td>天线米级、带宽窄、<strong>多数国家需申请或受限</strong></td><td>早期航模（🟡 通说）</td></tr><tr><td><strong>2.4GHz 私有协议</strong></td><td>PN298 / nRF24L01 一类</td><td><strong>天线 3cm、免许可、带宽 83.5MHz、自己管重传</strong></td><td><strong>遮挡敏感、同频设备极多</strong>、无组网能力</td><td>✅ <strong>本工程</strong></td></tr><tr><td><strong>2.4GHz WiFi</strong></td><td>802.11</td><td>带宽大、设备普及</td><td>握手/退避/重传都在协议栈里，<strong>延迟几十毫秒且抖动大</strong>；受路由器调配</td><td>图传、地面站</td></tr><tr><td><strong>2.4GHz 蓝牙/BLE</strong></td><td>Bluetooth LE</td><td>配对成熟、手机直连</td><td>连接间隔受协议约束（最小 7.5ms 一级），<strong>不给应用层完全控制重传</strong></td><td>调参 App</td></tr><tr><td><strong>Sub-1GHz 私有</strong></td><td>433 / 868 / 915MHz</td><td><strong>绕射好 + 免许可 + 距离远</strong></td><td>天线约 8~17cm、带宽窄、刷新率低</td><td>增程遥控（🟡 通说）</td></tr><tr><td><strong>双频冗余</strong></td><td>2.4G + Sub-1G</td><td>一条被挡还有一条</td><td>两套射频 + 两套天线，成本与体积翻倍</td><td>高阶增程方案</td></tr></tbody></table></div>
+<p><strong>本工程用的是哪一种</strong>：<strong>2.4GHz 私有协议（PN298，XN297L 兼容增强模式）</strong> —— <code>config_rf.h:179</code> 的 <code>__PN298_MODE = 0x0001</code>；1Mbps；发射功率档 <code>__PN298_POWER = 0xC9Ca</code>。</p>
+<blockquote class=""><p><strong>一处必须点明的矛盾</strong>：<code>config_rf.h:196</code> 把 <code>0xc9ca</code> 注释成 <strong>10dBm</strong>，
+而 <code>bsp_pn298.h:230</code> 的档位表里 <strong>10dBm 是 <code>0x49c7</code></strong>，<code>0xc9ca</code> 根本不在那张表里。
+两处对同一个 16 位值的功率标称几乎全对不上。<strong>手册只给出"最大可达 10dBm"这一条确证事实</strong>
+（第 8 页），<strong>具体到某一个配置字对应几 dBm，只能以频谱仪实测为准</strong> 🟢（手册）+ 🟠（本工程的档位表）。
+好在<code>config_rf.h:223</code> / <code>bsp_pn298.h:228-237</code> 都在注释里讲了"要改功率必须复测"，方向是对的。</p></blockquote>
+<hr>
+<h2 id="4-2-信道-Channel-为什么分格子-以及-36-到底是多少-MHz">4.2　信道（Channel）：为什么分格子，以及"36"到底是多少 MHz<a class="anchor" href="#4-2-信道-Channel-为什么分格子-以及-36-到底是多少-MHz">#</a></h2>
+<p>这一节回答一个问题：<strong>2.4GHz 是一整段频谱，为什么还要分信道？分完以后代码里的数字怎么换算成频率？</strong></p>
+<h3 id="①-它是怎么出现的-2">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-2">#</a></h3>
+<p>先讲清"信道"这个概念是从哪来的。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.2-1】一段频谱是怎么变成"格子"的
+
+  原始状态：2400 ──────────────────────────────────────── 2483 MHz
+            一整段连续的频谱，谁都可以在任何位置发
+
+  问题 1：接收机不知道去哪听。
+          如果发射机可以在任意频率发，接收机就得扫描整段（83.5MHz 宽），
+          扫描一次要很久，而遥控包每 20ms 就要来一个。⇒ 来不及。
+
+  问题 2：两个发射机同时在"任意频率"发，必然互相覆盖。
+
+  解法：把这段频谱切成等宽的"格子"，每个格子给一个编号，叫"信道"。
+       收发双方开工前先约定"我们在第几号格子"。
+
+  2400                                                  2483 MHz
+   │                                                      │
+   ├──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┤
+   │36│37│38│39│40│41│42│43│44│45│46│47│48│49│50│51│52│  ← 本工程意义上的信道号
+   └──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+   每个格子宽 1MHz（1Mbps 档的通道间隔）</pre></div>
+<p>🟢 <strong>确证</strong>：手册第 11 页 表 2-4 RF 指标写明 <strong>通道间隔 <code>FCH1M</code> @1Mbps = 1 MHz（典型值）</strong>、<strong>@2Mbps = 2 MHz</strong>、<strong>PLL 编程分辨率 = 1MHz</strong>。 这三条一起说明：<strong>"信道号 → 频率"的映射是 1MHz 一步的线性关系</strong>。</p>
+<p>🟢 <strong>确证</strong>：手册第 34 页 RF_CH 寄存器（地址 <code>05</code>，复位值 <code>0x008E</code>）：</p>
+<ul><li><code>RF_CH 7:0</code>：<strong>设置 TX 使用频道为 <code>Channel = RF_CH + 2336</code></strong></li><li><code>HIGH_RF 8</code>：RX 高频/低频选择：<strong>0 = 高频，通道 +2M；1 = 低频，通道 −2M</strong></li></ul>
+<h3 id="②-它要解决什么问题-没有它会怎样-2">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-2">#</a></h3>
+<p><strong>没有信道</strong>（所有人都在同一个宽频带上发）：任何一台设备开机就会盖掉全场所有设备， 遥控器数量 ≥ 2 就没法用。<strong>有了信道但只有一条</strong>：同一场地上两台设备还是撞。 所以信道的真正价值是"<strong>让"撞"这件事变成可管理的、可绕开的</strong>"。</p>
+<p><strong>"同频干扰"到底是怎么表现的</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.2-2】同频干扰 = 两句话叠在一起，谁都不是"听不清"，而是"听成了别的字"
+
+  飞机在 36 号信道（2436MHz）听着：
+
+     遥控器A ──────┐
+                   ├──► 空中的电磁场 = A 的波 + B 的波 叠加
+     遥控器B ──────┘                    （线性叠加原理）
+
+  叠加的结果不是"A 的声音小了一点"，而是：
+     · 幅度足够大时 → 解调器判决出错 → **CRC 校验失败 → 整包丢弃**
+     · 幅度接近、相位合适时 → 前导码被破坏 → **根本同步不上 → 当噪声忽略**
+
+  ⇒ 硬件 CRC（见 4.5）保证了"被干扰的包不会变成错误的数据"，
+     代价是它变成了"丢包"。
+     **丢包是安全的结果；收到错数据才是危险的结果。** 这是射频设计的第一原则。</pre></div>
+<h3 id="③-我该怎么理解它-图-信道频率换算">③ 我该怎么理解它（图）—— 信道频率换算<a class="anchor" href="#③-我该怎么理解它-图-信道频率换算">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.2-3】从代码里的 36 到空中的 2436MHz，一共几步
+
+  ① 代码里的"上层信道号"
+     config_rf.h:103   #define __PN298_INIT_CHN   36
+     main.c:80         uint8_t ch_change_arr[2] = {36,36};
+
+                          │
+                          ▼  bsp_pn298_set_channel(chn) 内部加偏移
+  ② bsp_pn298.c:645    chn += 64;              ← 36 → 100
+     bsp_pn298.c:646    write_reg(W_REGISTER + 0x05, chn);   ← 写 RF_CH 低字节 = 100
+                          │
+                          ▼  手册第 34 页：Channel = RF_CH + 2336
+  ③ 100 + 2336      = 2436 MHz   ✅ 与 main.c:78 注释"36 = 2.436GHz"吻合
+
+  ④ 再检查 HIGH_RF：
+     set_channel() 只写 1 个字节 ⇒ 只改了 RF_CH[7:0]，
+     **HIGH_RF(bit8) 处于复位默认 0 = "高频，通道 +2M"**
+     ⇒ 2436 + 2 = 2438 MHz 才是"高频档"的中心；2436 是基准通道频率。
+     （本文件按"基准频率 2436MHz"记，因为收发两端用同一偏移、同一默认位，
+       差 2MHz 不影响互通，只影响与 WiFi 频道的重叠判断。）
+
+  【验算手册默认值】RF_CH 复位值 0x008E：
+     0x008E &amp; 0xFF = 0x8E = 142
+     142 + 2336    = 2478 MHz   ⇒ 芯片上电时默认就工作在 2478MHz
+
+  【再验算一下"不推荐频点"这条】2436 ÷ 16 = 152.25  ⇒ 不是 16 的整数倍 ✅</pre></div>
+<blockquote class=""><p><strong>关于那个 <code>+64</code>（本文件必须点明的一点）</strong>：
+🔴 工程注释（<code>config_rf.h:92-94</code>、<code>bsp_pn298.c:628-629</code>）说 <code>+64</code> 是"<strong>芯片的信道编码要求</strong>"。
+<strong>手册里没有这一条规定。</strong> 手册第 34 页给的换算只有 <code>Channel = RF_CH + 2336</code> 一条，
+<code>RF_CH[7:0]</code> 是可直接写 0~255 的普通字段。所以 <code>+64</code> 更可能是
+<strong>XN297L 兼容系列的驱动惯例常量</strong>（本工程驱动整体"照抄厂商例程"，见下方"故意省略"清单）。🟠</p><p><strong>实际影响</strong>：只要能保证<strong>收发两端用同一个偏移</strong>，链路就通；换算实际频率永远用
+手册那条 <code>寄存器值 + 2336</code>。把 <code>+64</code> 当"芯片要求"记住了，下次读别的厂商代码会踩坑。</p></blockquote>
+<h3 id="④-实现方法有哪些-取舍对照表-2">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-2">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>机制</th><th>抗干扰能力</th><th>代价</th><th>什么时候用</th></tr></thead><tbody><tr><td><strong>固定信道</strong></td><td>出厂或编译期定死一个频点</td><td>最弱：撞上就被压制</td><td>0，代码最简单</td><td>单机、屏蔽室测试、极大批量配对出厂</td></tr><tr><td><strong>手动选频</strong></td><td>用户拨开关/按键选频点</td><td>中：人肉避开干扰</td><td>需要用户懂；换场地要重新选</td><td>老式遥控（拨码/拨轮）</td></tr><tr><td><strong>上电扫描选优</strong></td><td>开机时挨个信道测 RSSI/丢包率，挑最干净的</td><td>较好：能自动适配<strong>开机时</strong>的干扰</td><td>开机慢；飞行中干扰源出现时无法应对</td><td>中端设备</td></tr><tr><td><strong>自动跳频 AFH</strong>（Adaptive Frequency Hopping，自适应跳频）</td><td>按伪随机序列在多个信道间高速跳，把被干扰的信道<strong>踢出跳频表</strong></td><td>强：干扰只影响部分时隙，且能规避</td><td>收发双方要<strong>同步跳频序列</strong>；实现复杂；丢一个同步包可能失步</td><td>蓝牙、高阶遥控 ⭐</td></tr><tr><td><strong>自适应功率/速率</strong></td><td>丢包多就降速率或加功率</td><td>中：换的是链路预算，不是频率</td><td>速率降 ⇒ 延迟升</td><td>增程链路</td></tr><tr><td><strong>本工程：两个候选信道 500ms 交替</strong></td><td><code>main.c:316-324</code> 每 500ms 在 <code>ch_change_arr[0]/[1]</code> 间切换</td><td>弱~中（见下）</td><td>结构简单，几乎零成本</td><td>✅ <strong>本工程</strong></td></tr></tbody></table></div>
+<p><strong>本工程用的是哪一种，要说准</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">// main.c:80      —— 初值：两个都是 36</span></div><div class="line"><span class="ln">2</span><span class="lc">uint8_t ch_change_arr[2] = {36,36};</span></div><div class="line"><span class="ln">3</span><span class="lc">&nbsp;</span></div><div class="line"><span class="ln">4</span><span class="lc">// main.c:265     —— 【进入对码循环之前】第二个元素被 Flash 里的信道覆盖</span></div><div class="line"><span class="ln">5</span><span class="lc">ch_change_arr[1] = pair_data.rf_ch;</span></div><div class="line"><span class="ln">6</span><span class="lc">&nbsp;</span></div><div class="line"><span class="ln">7</span><span class="lc">// main.c:316-324 —— 对码循环里每 500ms 交替</span></div><div class="line"><span class="ln">8</span><span class="lc">if(HAL_GetTick()-ch_change_time&gt;500) {</span></div><div class="line"><span class="ln">9</span><span class="lc">    ch_change_count = !ch_change_count;</span></div><div class="line"><span class="ln">10</span><span class="lc">    bsp_pn298_set_channel(ch_change_arr[ch_change_count]);</span></div><div class="line"><span class="ln">11</span><span class="lc">    ch_change_time = HAL_GetTick();</span></div><div class="line"><span class="ln">12</span><span class="lc">}</span></div></pre></div>
+<p><strong>三点必须讲清的事实</strong>（正文 4.3 与 6.4 在这一处<strong>互相矛盾</strong>，第 5 节会单列）：</p>
+<ol><li><strong><code>main.c:249</code> 这个行号是错的</strong> —— 覆盖 <code>ch_change_arr[1]</code> 的是 <strong><code>main.c:265</code></strong>。</li></ol>
+<p>（<code>main.c:249</code> 是 <code>HAL_ADC_Start(&amp;AdcHandle);</code>，与信道无关。）</p>
+<ol><li><strong><code>ch_change_arr[1] = pair_data.rf_ch;</code> 在 <code>flash_read()</code> 之前执行</strong>。</li></ol>
+<p><code>flash_read(FLASH_USER_START_ADDR)</code> 在 <strong><code>main.c:328</code></strong> —— 也就是说， 执行 265 行时 <code>pair_data</code> 还是<strong>未从 Flash 读过的初值</strong>（<code>pair_data</code> 是全局变量， C 语言保证静态存储期对象零初始化 ⇒ <code>rf_ch == 0</code>）。 <strong>所以"飞机在 36 和上次存过的信道之间交替扫描"这个推理链是不成立的</strong>： 真正被写进去的是 <code>0</code>，即"信道 0"。</p>
+<ol><li>由此得到<strong>对码阶段的实际行为</strong>：</li><li>全新板 / 从未对过码：<code>ch_change_arr = {36, 36}</code> ⇒ <strong>原地重设同一信道</strong>；</li><li>已对过码：<code>ch_change_arr = {36, 0}</code> ⇒ 在 <strong>2436MHz</strong> 与 <strong>2336MHz</strong> 之间交替。</li></ol>
+<p>而 2336MHz <strong>不在手册标明的 2400~2483MHz 工作频段内</strong> 🟢（手册第 8 页）。 ⇒ 已对过码的板子，对码时有一半时间停在一个无效频点上。</p>
+<blockquote class=""><p>这三条只记录、<strong>不修改代码</strong>。它同时也是一个很好的例子：
+<strong>"注释里的数字"和"变量被赋值的位置"是两件事，读代码要顺着执行顺序读，不能只看初值。</strong></p></blockquote>
+<hr>
+<h2 id="4-3-并入-4-2-信道切换-ch_change_arr-那两行到底做了什么">4.3　（并入 4.2）信道切换：<code>ch_change_arr</code> 那两行到底做了什么<a class="anchor" href="#4-3-并入-4-2-信道切换-ch_change_arr-那两行到底做了什么">#</a></h2>
+<p>这一节回答一个问题：<strong>正文说 4.3 节"已按代码事实更正"，为什么正文 6.4 又说了相反的话？</strong></p>
+<p>正文 4.3 的结论是"<strong>它确实在跳频</strong>"，理由链条是： <code>ch_change_arr[1]</code> 在对码前被赋值成 Flash 里的信道 → 只要以前对过码就是真的在交替。</p>
+<p><strong>这条链条在"赋值语句被执行过"这一点上是对的</strong>（<code>main.c:265</code> 确实在 <code>while(1)</code> 对码循环（<code>main.c:295</code>）之前），<strong>但结论仍然不成立</strong>，原因是顺序：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.3-1】main() 里这四件事的先后顺序（行号取自 user/main.c）
+
+    main.c:261   BMP390_init();                    气压计初始化
+    main.c:265   ch_change_arr[1] = pair_data.rf_ch;   ← 读 pair_data（此时还没读过 Flash）
+    main.c:270   Led_SetAlert(... PAIRING ...);      RGB 开始 500ms 闪
+    main.c:295   while(1) { ... 对码循环 ... }        ← 这里每 500ms 换信道
+                       │
+                       │  pair_over_flag 置 1 才 break
+                       ▼
+    main.c:328   flash_read(FLASH_USER_START_ADDR);  ← ★ 到这一步 pair_data 才有效
+    main.c:339   get_now_addr();
+    main.c:341   bsp_pn298_change_addr(pair_addr_arr, pair_data.rf_ch);  ← ★ 到这里才用真信道
+    main.c:347   WDG_init();
+
+    ⇒ 结论：**对码循环里用的 rf_ch 是 0，不是 Flash 里的值。**</pre></div>
+<p><strong>那么对码成功后靠什么用上正确的信道？</strong> 靠 <code>main.c:341</code>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">// main.c:341  —— 对码成功、flash_read 之后，才把地址和信道一起切过去
+bsp_pn298_change_addr(pair_addr_arr, pair_data.rf_ch);
+//   └─ bsp_pn298.c:1575-1585：关 CE → 等 20us → 写 TX_ADDR/RX_ADDR_P0（5 字节）→ set_channel(ch)</pre></div>
+<p>于是整条链路的时间线是：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.3-2】对码成功后频率到底变了没有
+
+  对码阶段（main.c:295 的 while(1)）：
+     信道 = ch_change_arr[0]=36 / ch_change_arr[1]=0  每 500ms 交替
+     ⇒ 飞机在两个频点上"喊"（其实是听），等遥控器的 0xDB 包
+
+  对码成功瞬间（main.c:304-313）：
+     关对码灯语、写 AW_RXADDR=0xC1 / EN_AA=0x01、break
+
+  对码之后（main.c:341 → bsp_pn298_change_addr）：
+     信道 = pair_data.rf_ch（遥控器在 0xDB 包里送来的那个值）
+     ⇒ ★ 从此改用遥控器协商的信道，**这才是真正意义上的"跳到了协商频点"**
+
+  ⇒ 所以："本工程确实会换信道"这件事是真的，但**换频发生在对码成功之后**，
+     不是"对码期间在两个存过的信道之间扫描"。</pre></div>
+<p><strong>最后补一个"遥控器侧的信道范围"这条容易忽略的事实</strong>：</p>
+<p>🟢 <strong>确证</strong>（本机代码）：<code>遥控器/user_driver/flash.c:96</code> 把遥控器自己生成的信道号 <strong>限制在 0~79</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">joystick_pair_str.rf_ch = (joystick_pair_str.rf_ch + uid.waferNumber)%80;   // flash.c:96</span></div><div class="line"><span class="ln">2</span><span class="lc">while(is_excluded(joystick_pair_str.rf_ch)) {                              // flash.c:102</span></div><div class="line"><span class="ln">3</span><span class="lc">    joystick_pair_str.rf_ch = (joystick_pair_str.rf_ch + 1) % 80;          // flash.c:103</span></div><div class="line"><span class="ln">4</span><span class="lc">}</span></div></pre></div>
+<p>⇒ 协议正常工作时 <code>pair_data.rf_ch ≤ 79</code>，<strong>永远不可能是 2436</strong>。 这进一步坐实了"对码之后实际工作频率不是 2436MHz"这一点： 按手册公式，<code>rf_ch = 79</code> + 64 = 143 → <strong>2479MHz</strong>；<code>rf_ch = 0</code> + 64 = 64 → <strong>2400MHz</strong>。 即<strong>遥控器协商出的频点范围是 2400~2479MHz</strong>。</p>
+<blockquote class=""><p>🟡 这里有一个<strong>有意的设计痕迹</strong>：<code>flash.c:64</code> 定义了 15 个"敏感信道"
+<code>{13,14,15, 29,30,31, 45,46,47, 61,62,63, 77,78,79}</code> —— 每 16 个一组、每组后 3 个。
+这个模式与"<strong>避开 16MHz 整数倍</strong>"相关（+64 后：<code>13+64=77</code>、<code>16+64=80</code>、<code>(80-2336+2400)</code> …）。
+具体是怎么从这个约束推出来的，本文件<strong>推不出唯一解</strong>，故标 🟡，请自行核对设计意图。</p></blockquote>
+<hr>
+<h2 id="4-4-地址与管道-Address-Pipe-同信道上还有别人怎么办">4.4　地址与管道（Address / Pipe）：同信道上还有别人怎么办<a class="anchor" href="#4-4-地址与管道-Address-Pipe-同信道上还有别人怎么办">#</a></h2>
+<p>这一节回答一个问题：<strong>已经选了信道，为什么还要一个 5 字节地址？它和信道分工在哪？</strong></p>
+<h3 id="①-它是怎么出现的-3">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-3">#</a></h3>
+<p>信道解决的是"<strong>频率</strong>"这一个维度上的冲突。但同一个频点上可以站很多设备。 如果只有信道，那么"同频段的任何一台遥控器发的包，飞机都会去解"，带来两个后果：</p>
+<ul><li><strong>解出来的数据可能是别人的</strong> ⇒ 靠 CRC 只能保证"没被干扰"，不能保证"是给我的"；</li><li><strong>CPU 与射频前端的时间被别人的包占满</strong> ⇒ 自己的包反而丢。</li></ul>
+<p>所以需要一个"<strong>收件人姓名</strong>"。硬件层面把它做成地址匹配（address matching）： 接收机把解调出的地址字段和本地寄存器里的地址逐字节比较，<strong>不匹配就在极早期丢弃</strong>， 连 FIFO 都不占。</p>
+<p>🟢 <strong>确证</strong>：手册第 8 页写明 PN298 的协议引擎"<strong>6 个接收数据通道构成 1：6 的星状网络</strong>"， 且<strong>最大支持 64 字节数据长度</strong>、<strong>支持自动应答及自动重传</strong>。 🟢 <strong>确证</strong>：手册第 23 页 表 5-3（增强模式数据包格式）里，<strong>地址字段宽度为 3~5 bytes</strong>。</p>
+<p>所谓 <strong>Pipe（管道）</strong> 就是这 6 个接收通道：一个接收机可以同时"监听"6 个不同地址， 每个通道有自己的 <code>RX_ADDR_Pn</code> 寄存器、自己的 <code>RX_PW_Pn</code>（载荷宽度）、 自己的 <code>EN_AA</code> 使能位。<strong>"管道"这个词的来源是数据流比喻</strong>：6 根管子插进同一个 FIFO 里，哪根管子收到就算谁的。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样-3">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-3">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.4-1】只有信道 vs 信道 + 地址
+
+  ── 只有信道（假设）────────────────────────────────────────────
+
+     遥控器A ──┐                    ┌──► 飞机A
+               ├── 同频 2436MHz ────┤
+     遥控器B ──┘                    └──► 飞机B
+
+     飞机A 收到 A 的包 → 用；收到 B 的包 → **也只能试着用**
+     两台飞机都可能听 B 的指令 ⇒ 串控
+     更糟：B 的设备 ID / 通道布局若与 A 相同，两个包在飞机 A 眼里"长得一模一样"
+
+  ── 信道 + 地址 ────────────────────────────────────────────────
+
+     遥控器A（地址 0x3A7F21B4C8）──┐         ┌──► 飞机A（RX_ADDR_P0 = 0x3A7F21B4C8）
+                                   ├─ 2436MHz ┤
+     遥控器B（地址 0x9C1D05E277）──┘         └──► 飞机B（RX_ADDR_P0 = 0x9C1D05E277）
+
+     飞机A 的射频前端在**地址比较那一级**就把 B 的包扔掉
+     ⇒ 不进 FIFO、不产生 RX_DR 中断（🟡 通说：nRF/XN297 一类芯片的地址匹配在
+        前导码同步之后、载荷入 FIFO 之前完成）</pre></div>
+<p><strong>两个维度合起来才算"我的链路"</strong>，这也解释了正文 6.1 为什么说对码要协商 "信道 + 地址"两样东西：<strong>少一样都可能撞车</strong>。</p>
+<h3 id="③-我该怎么理解它-图-星状网络与地址的-三重一致">③ 我该怎么理解它（图）—— 星状网络与地址的"三重一致"<a class="anchor" href="#③-我该怎么理解它-图-星状网络与地址的-三重一致">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.4-2】1：6 星状网络（手册第 8 页的架构，第 17 页的地址要求）
+
+                     PRX（主收端）= 飞控
+                  ┌───────────────────────┐
+                  │  RX_ADDR_P0  ← 我的遥控器
+                  │  RX_ADDR_P1  ← 缺省地址（对码用）
+                  │  RX_ADDR_P2..P5  ← 未用
+                  │  ┌─────────────────┐  │
+                  │  │   RX FIFO       │  │  6 个管道共享
+                  │  └─────────────────┘  │
+                  └───▲───────▲───────▲───┘
+                      │       │       │
+        PTX1 ─────────┘       │       └───────── PTX6
+     （遥控器1）               │                （遥控器6）
+                          PTX2..PTX5
+
+    🟢 手册第 17 页原文要求（增强模式）：
+       "需要保证 PTX 的 TX 地址（TX_ADDR）、通道 0 的 RX 地址（如 RX_ADDR_P0），
+        以及 PRX 的 RX 地址（如 RX_ADDR_P5）三者相同。"
+
+    ⇒ 为什么 TX 端也要有一个"接收地址"？因为增强模式下 PTX 发完包会**自动转成接收**
+      去等 ACK，而 ACK 包里带的是**对方的地址**，PTX 必须用 RX_ADDR_P0 去匹配它。
+       所以"发件人地址"和"我期待的收件人地址"在 PTX 上必须是同一个字符串。</pre></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.4-3】本工程里的三个地址寄存器分别被写成了什么
+
+   bsp_pn298.c:1438   set_addr(TX_ADDR,     addr,          addr_len)  ← addr = 缺省 0xCC×5
+   bsp_pn298.c:1441   set_addr(RX_ADDR_P0,  pair_addr_arr, addr_len)  ← 已配对地址
+   bsp_pn298.c:1442   set_addr(RX_ADDR_P1,  addr,          addr_len)  ← 缺省 0xCC×5
+   bsp_pn298.c:1445   set_channel(chn)
+
+   addr 从哪来：config_rf.h:132-136
+       #define __PN298_INIT_ADDR_BYTE0..4   0xCC    （5 个字节全是 0xCC）
+
+   对码成功后（bsp_pn298.c:1575-1585  bsp_pn298_change_addr）：
+       set_addr(TX_ADDR,    addr, 5)    ← addr = pair_addr_arr
+       set_addr(RX_ADDR_P0, addr, 5)    ← 同一个数组
+       set_channel(ch)
+
+   ❗注意这一处**代码与手册第 17 页的要求不完全一致**：
+     手册要求"PTX 的 TX_ADDR = PTX 的 RX_ADDR_P0 = PRX 的 RX 地址"。
+     change_addr() 只改了 TX_ADDR 和 RX_ADDR_P0（成对改，这一点是对的 ✅），
+     **没有动 RX_ADDR_P1** —— 也就是飞机上电后除了认自己遥控器，
+     还会继续认缺省地址 0xCC×5 上的包。是否可接受取决于现场是否有别人
+     也在用缺省地址对码。**只记录，不修改。** 🟢（代码）/ 🟡（风险评估）</pre></div>
+<p><strong>关于"5 字节"这个长度</strong>：</p>
+<p>🟢 <strong>确证</strong>：<code>config_rf.h:114</code> <code>#define __PN298_INIT_ADDR_LEN 5</code>；手册第 23 页地址字段为 3~5 字节； <code>bsp_pn298.c:1581/1583</code> 写地址时硬编码 <code>5</code>。</p>
+<p>🟡 <strong>推理</strong>：地址越长，"两台设备地址撞车"的概率越低。 随机 5 字节的地址空间是 2^40 ≈ 1.1×10¹²，同场地几十台设备撞上的概率可以忽略。 这是"<strong>5 是上限，本项目用满</strong>"（<code>config_rf.h:108-109</code> 的注释）的合理理由 ✅。</p>
+<blockquote class="warn"><p>⚠️ <strong>一处不能推导的地方</strong>：<code>bsp_pn298.h:167</code> 把 <code>RX_ADDR_P0</code> 注释成
+"<strong>低字节在前</strong>"，而手册第 17 页的例子里 <code>RX_ADDR_P5 = 0xC2C3C4C5C1</code>
+与 <code>TX_ADDR = 0xC2C3C4C5C1</code> 是同一串字符，<strong>看不出字节序</strong>。
+字节序（谁先上线）本文件<strong>不做断言</strong>（🟠），因为收发两端用的是同一个
+<code>bsp_pn298_set_addr()</code>、同一个数组顺序，<strong>同向即可互通</strong>；
+只有当你自己写第二份驱动去对接时，字节序才会成为真问题。</p></blockquote>
+<hr>
+<h2 id="4-5-数据包-Packet-与载荷-Payload-为什么要有-包">4.5　数据包（Packet）与载荷（Payload）：为什么要有"包"<a class="anchor" href="#4-5-数据包-Packet-与载荷-Payload-为什么要有-包">#</a></h2>
+<p>这一节回答一个问题：<strong>为什么不能直接把 12 个字节丢到空中？"包"这个结构解决了什么？</strong></p>
+<h3 id="①-它是怎么出现的-4">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-4">#</a></h3>
+<p>🟢 <strong>确证</strong>：手册第 23 页给出 PN298 兼容 XN297L 的<strong>增强模式数据包格式（表 5-3，组帧方式 II）</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.5-1】PN298 增强模式一包的真实结构（手册第 23 页 表 5-3）
+
+  ┌──────────┬───────────┬──────────────────────┬──────────────┬─────────┐
+  │ 前导码    │  地址      │        标识           │    数据       │   CRC   │
+  │ 3 bytes  │ 3~5 bytes │      10 bits          │ 1~32/64 bytes│ 1/2 byte│
+  └──────────┴───────────┴──────────────────────┴──────────────┴─────────┘
+                             │
+                             ├── 数据长度标识 (7 bits)
+                             ├── PID 标识      (2 bits)   ← 见下
+                             └── NO_ACK 标识   (1 bit)
+
+  手册同页注明：**地址、标识和数据部分可以选择扰码方式**，由使能/关闭扰码的配置位决定。
+  手册第 24 页 表 5-4 给出对应的 ACK 包格式：前导码 + 地址 + 标识(10bit) + CRC，
+  **ACK 包里没有数据字段**（除非用 ACK 载荷，见 4.6）。</pre></div>
+<p><strong>每一个字段存在的理由</strong>（这是本节的核心，逐条都能从"没有它会怎样"反推）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.5-2】逐字段反推："去掉它会怎样"
+
+  ┌──────────┬─────────────────────────────────────────────────────────┐
+  │ 字段      │ 去掉它会怎样                                             │
+  ├──────────┼─────────────────────────────────────────────────────────┤
+  │ 前导码    │ 接收机的位同步（bit synchronization）没有"热身"序列，      │
+  │ 3 bytes  │ 不知道从哪一位开始算字节 ⇒ 解调出的数据整体错位。         │
+  │          │ 作用：一串规则跳变的比特，让接收端把本地时钟对齐到发端。   │
+  ├──────────┼─────────────────────────────────────────────────────────┤
+  │ 地址      │ 无法判断"这个包是不是给我的" ⇒ 同频段所有包都进 FIFO。    │
+  │ 3~5 B    │ （见 4.4）                                              │
+  ├──────────┼─────────────────────────────────────────────────────────┤
+  │ 长度标识  │ 收方不知道这包有几个字节 ⇒ 要么按固定长度猜（改协议就得   │
+  │ 7 bits   │ 改固件），要么读到 CRC 才知道结束。固定长度方案的代价是    │
+  │          │ **协议一旦要加字段就得同时改收发两端**。                  │
+  ├──────────┼─────────────────────────────────────────────────────────┤
+  │ 数据      │ 没东西可传了。                                            │
+  ├──────────┼─────────────────────────────────────────────────────────┤
+  │ CRC      │ 干扰导致的错码无法检出 ⇒ **飞机执行错误指令**。            │
+  │ 1/2 B    │ 这是最危险的一类失败：链路看起来"通"，数据却是错的。      │
+  └──────────┴─────────────────────────────────────────────────────────┘</pre></div>
+<h3 id="PID-这一节里最容易被忽略-但很关键的一个字段">PID：这一节里最容易被忽略、但很关键的一个字段<a class="anchor" href="#PID-这一节里最容易被忽略-但很关键的一个字段">#</a></h3>
+<p>🟢 <strong>确证</strong>：手册第 19 页 4.5 节（增强模式下的数据包识别）原文：</p>
+<blockquote class=""><p>"每一包数据都包括两位的 <strong>PID（数据包标志位）</strong>，来帮助接收端识别该数据是<strong>新数据包</strong>
+还是<strong>重发的数据包</strong>，防止多次存入相同的数据包……<strong>发送端从 MCU 取得一包新数据后 PID 值加一。</strong>"</p></blockquote>
+<p>手册第 19 页的图 4-1 给出的判据是 <strong>PID 与上一包不同、且 CRC 与上一包不同</strong> 才视为新包。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.5-3】为什么"重传"必须配一个 PID（否则会重复执行指令）
+
+  场景：遥控器把"油门 1500"发出去，飞机收到了，但 ACK 在路上丢了。
+        ⇒ 遥控器认为失败，按 SETUP_RETR 自动重传同一包。
+
+  ── 没有 PID ────────────────────────────────────────
+     飞机第 1 次收到（油门 1500）→ 写进 rx_buff → 执行
+     飞机第 2 次收到（一模一样的字节）→ 又写进 rx_buff → **又执行一次**
+     对"油门是绝对值"的指令，重复执行无害；
+     但对"切换模式/翻转一次"这类**事件型**语义，重复执行就是事故。
+     更隐蔽的害处：RX FIFO 被同一包塞满，**新包反而进不来**。
+
+  ── 有 PID（2 bit，模 4 循环）──────────────────────
+     发端每从 MCU 取一包新数据 → PID = (PID+1) &amp; 0x3
+     收端比较本包 PID 与上一包 PID：
+        不同 ⇒ 新数据，存入 RX FIFO
+        相同 ⇒ 重发包，**丢弃**（但仍回 ACK，让发端停止重传）
+     ⇒ 上层驱动拿到的永远是"去重后"的新包。
+
+  🔴 【重要边界】PID 只有 2 位（4 个取值）。
+     如果**连续 4 包全部丢失**，PID 又绕回原值，理论上可能与更早的包混淆。
+     手册没有说明芯片是否还有别的去重机制（比如配合 CRC 比较），
+     **本文件不对"连丢 4 包会不会误判"下结论**（🟠）。
+     实践上的缓解是：4 包若全丢，链路本身已经不可用，误判与否都不改变结论。</pre></div>
+<h3 id="②-它要解决什么问题-没有它会怎样-4">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-4">#</a></h3>
+<p>见上面的逐字段反推表。<strong>把整节压缩成一句</strong>：没有"包"这个结构，空中就只有一串 连续的电磁波，"哪里是开头""这串是不是给我的""有没有被打坏"三个问题都答不出来。</p>
+<p><strong>再加一条 2.4GHz 特有的理由 —— 扰码（scrambling）</strong>：</p>
+<p>🟢 <strong>确证</strong>：手册第 9 页 主要特性列明 PN298 "<strong>带自动扰码和 CRC 校验功能</strong>"。 🟢 <strong>确证</strong>：手册第 39 页 <code>SCR_EN</code> 位（在某个射频校准寄存器里）："<strong>扰码功能是否使能：1：使能 0：关闭</strong>"。 🟢 <strong>确证</strong>（本工程）：<code>bsp_pn298.c:666-669</code> 的注释说明：Nordic 协议族把扰码关掉， XN297L / BLE 把扰码打开；本工程是 XN297L 增强模式 ⇒ <strong>扰码开</strong>。</p>
+<p>🟡 <strong>推理（为什么需要扰码）</strong>：接收机靠"比特跳变"恢复时钟。如果载荷里出现 一长串 0 或一长串 1（比如某个通道值刚好是 0x0000，或按键字节全 0）， 接收端的时钟在长时间没有跳变后会漂移，<strong>恢复出的位就可能错位</strong>。 扰码就是"把数据流和一个伪随机序列异或"，让<strong>电路上看到的</strong>比特流总是"看起来随机"。 代价是收发两端必须用同一个扰码种子（本工程靠"同一模式"保证，见 <code>bsp_pn298.c:669-670</code>）。</p>
+<h3 id="③-我该怎么理解它-图-本工程-12-字节载荷的字节级布局">③ 我该怎么理解它（图）—— 本工程 12 字节载荷的字节级布局<a class="anchor" href="#③-我该怎么理解它-图-本工程-12-字节载荷的字节级布局">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.5-4】本工程的 12 字节载荷（__PN298_PAYLOAD = 12，config_rf.h:88）
+
+  ┌──────┬───────┬────────┬────────┬────────┬────────┬───────┬────────┐
+  │ [0]  │ [1]   │ [2][3] │ [4][5] │ [6][7] │ [8][9] │ [10]  │ [11]   │
+  ├──────┼───────┼────────┼────────┼────────┼────────┼───────┼────────┤
+  │ 帧头  │ 设备ID │ CH0    │ CH1    │ CH2    │ CH3    │ 按键位 │ 翻滚方向│
+  │ 0xAA  │ dev_id│ 横滚    │ 俯仰    │ 油门    │ 偏航    │ 位域   │ 低 4 位 │
+  │ 或    │       │ (大端) │ (大端) │ (大端) │ (大端) │       │        │
+  │ 0xDB  │       │        │        │        │        │       │        │
+  └──────┴───────┴────────┴────────┴────────┴────────┴───────┴────────┘
+     1 B     1 B      2 B      2 B      2 B      2 B     1 B      1 B
+     └──────────────────────── 共 12 字节 ────────────────────────┘
+
+  这一布局的两处代码出处：
+    发送侧  遥控器/user_driver/deal_data.c:81-94   Send_Remote_Data()
+    接收侧  user/deal_pack.c:154-216              decode_pack()
+
+  发送侧关键行：
+     deal_data.c:82   send_pn298_pack[0]=0xaa;
+     deal_data.c:83   send_pn298_pack[1]=device_ID;
+     deal_data.c:85   for(uint8_t t=1;t&lt;5;t++)          ← t = 1,2,3,4
+     deal_data.c:87       send_pn298_pack[2*t]   = 高字节
+     deal_data.c:88       send_pn298_pack[2*t+1] = 低字节   ⇒ 写到 [2]..[9]，正好 4 个通道
+     deal_data.c:90   send_pn298_pack[10]=key_bit_status.key_byte;
+     deal_data.c:91-94 send_pn298_pack[11]= 0xF0|flip_dir  或 0x0</pre></div>
+<p><strong>为什么是"大端"</strong>：接收侧 <code>deal_pack.c:203</code></p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">ch_value[i] = ((uint16_t)rx_buff[index] &lt;&lt; 8) | ((uint16_t)(rx_buff[index+1]));</span></div></pre></div>
+<p><strong>高字节在前</strong>（Big-Endian，大端）。这么做的原因是<strong>跨平台/跨编译器一致性</strong> 🟡：</p>
+<ul><li>发送方与接收方是<strong>两块不同的板子、两份不同的固件</strong>，将来还可能换编译器；</li><li>Cortex-M0+ 本身是<strong>小端</strong>（little-endian）；</li><li>如果直接把内存里的 <code>uint16_t</code> 通过共同体（union）或 <code>memcpy</code> 丢到空中，</li></ul>
+<p>链路上跑的就是"小端字节序"，任何一端换了字节序假设就崩。 显式"拆字节 / 拼字节"把这个假设<strong>写死在代码里</strong>，与 CPU 字节序解耦。</p>
+<blockquote class=""><p><strong>一处读代码时必须知道的"隐藏变换"</strong>：
+<code>bsp_pn298_rx_data_ack_fix()</code> 在读完 <code>R_RX_PAYLOAD</code> 之后会调用
+<strong><code>bsp_pn298_byte_bit_decode(rx_data, len)</code></strong>（<code>bsp_pn298.c:1209</code>，函数实现在 <code>bsp_pn298.c:875</code>）。
+这个函数做的是<strong>"每个字节内 8 位倒序 + 整个数组字节顺序倒置"</strong>（<code>bsp_pn298.c:855-867</code> 有逐行推导）。
+⇒ 所以 <code>rx_buff[0]</code> 拿到的是"<strong>解回来之后的明文第 0 字节</strong>"，与遥控器 <code>send_pn298_pack[0]</code> 对应。
+⇒ 顺带解释了<strong>为什么帧头能用 <code>0xAA</code> / <code>0xDB</code> 这样"看起来随意"的值</strong>：
+   <code>0xAA</code> 的 8 位是 <code>10101010</code>、<code>0xDB</code> 是 <code>11011011</code>，<strong>在 8 位倒序后分别还是 <code>0xAA</code> / <code>0xDB</code></strong> ✅。
+   即这两个帧头是<strong>"位倒序不变"的镜像对称值</strong>，无论编解码层怎么翻都不变。
+   （这是从 <code>bsp_pn298.c:855-867</code> 的算法直接推出来的，🟢 可验算。）
+<strong>本文件不对"为什么选这两个值"下结论</strong>；只指出"它们对位/字节序翻转免疫"这个性质。</p></blockquote>
+<h3 id="④-实现方法有哪些-取舍对照表-3">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-3">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>机制</th><th>优势</th><th>代价</th><th>什么时候用</th></tr></thead><tbody><tr><td><strong>定长包</strong></td><td>每包固定 N 字节，收发都写死 N</td><td><strong>最简单、CRC 覆盖范围确定、缓冲区静态可算</strong>；本工程 <code>rx_buff[12]</code> 就是 12 字节常量</td><td>加一个字段就要改收发两端 + 缓冲区大小；短包浪费带宽</td><td>✅ <strong>本工程</strong>（<code>RX_PW_P0/P1 = 12</code>）</td></tr><tr><td><strong>变长：长度前缀</strong></td><td>包内第 1 字节是长度</td><td>灵活；CRC 能覆盖长度字节</td><td>长度字节本身出错会毁整包（要有 CRC 保护它）</td><td>通用串口协议</td></tr><tr><td><strong>变长：DYNPD 动态载荷</strong></td><td>用芯片的 <code>DYNPD(0x1C)</code> + <code>FEATURE(0x1D)</code> 让硬件按包内长度字段自动裁剪 FIFO</td><td><strong>硬件帮你裁</strong>，MCU 不用管</td><td>需要先 <code>ACTIVATE</code> 解锁隐藏寄存器；本工程 <code>FEATURE=0x3A</code> 已开相关特性，但<strong>载荷仍按固定 12 写 <code>RX_PW_Pn</code></strong></td><td>载荷长度经常变的场合</td></tr><tr><td><strong>带序号（应用层）</strong></td><td>载荷里自己放一个 1~2 字节递增序号</td><td>与芯片无关，可跨协议复用；能防"重复执行"</td><td><strong>占载荷</strong>（12 字节里再切 1 字节很贵）</td><td>芯片没有 PID 机制时</td></tr><tr><td><strong>本工程实际组合</strong></td><td><strong>定长 12 + 芯片硬件 PID + 帧头 + 设备 ID 双重过滤</strong></td><td>省字节、去重由硬件做、过滤由软件做</td><td>12 字节里塞 6 个字段已经很紧（通道只够 4 个）</td><td>✅ <strong>本工程</strong></td></tr></tbody></table></div>
+<blockquote class=""><p><strong>"12 字节很紧"这件事有直接证据</strong>：<code>deal_pack.c:195</code> 的 <code>for(i=0;i&lt;9;i++)</code> 想读 9 个通道，
+但 12 字节里只留了 <code>[2]..[9]</code> 共 8 字节给通道 ⇒ 只够 4 个。
+这个循环会读到 <code>rx_buff[12..19]</code>（<strong>越界</strong>）。工程注释已在 <code>deal_pack.c:161-194</code> 详述，
+本文件不重复，只补一句<strong>与本章相关的判断</strong>：
+<strong>这不是"射频"问题，是"载荷布局与解析循环不一致"的问题</strong>，
+而它之所以长期没暴露，是因为 <code>fcCmd</code> 只用到 <code>ch_value[0..3]</code>（<code>deal_pack.c:225-228</code>）。</p></blockquote>
+<hr>
+<h2 id="4-6-ACK-与自动重传-发送方怎么知道对方收到了">4.6　ACK 与自动重传：发送方怎么知道对方收到了<a class="anchor" href="#4-6-ACK-与自动重传-发送方怎么知道对方收到了">#</a></h2>
+<p>这一节回答一个问题：<strong>单向广播和"可靠送达"差在哪里？硬件帮了多少忙？</strong></p>
+<h3 id="①-它是怎么出现的-5">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-5">#</a></h3>
+<p>两个角色先正名（手册第 7 页缩略语表里有）：</p>
+<ul><li><strong>PTX</strong>（Primary Transmitter，主发端）：主动发起通信的一方 —— 本工程里<strong>遥控器</strong>。</li><li><strong>PRX</strong>（Primary Receiver，主收端）：接收数据并响应的一方 —— 本工程里<strong>飞控</strong>。</li></ul>
+<p>🟢 <strong>确证</strong>：手册第 17 页 4.2 节（增强模式）原文：</p>
+<blockquote class=""><p>"PTX 发出数据后等待应答信号，PRX 接收到有效数据后回应答信号。
+PTX 规定时间内未收到应答信号，自动重新发送数据。
+<strong>自动重传和自动应答功能为 PN298 芯片自带，无需 MCU 参与。</strong>
+PTX 在发送数据后自动转到接收模式等待应答信号。如果没有在规定时间内收到正确的应答信号，
+PTX 将重发相同的数据包，直到收到应答信号，或<strong>传输次数超过 ARC 的值（SETUP_RETR 寄存器）
+产生 MAX_RT 中断</strong>。PTX 收到应答信号，即认为数据已经发送成功（PRX 收到有效数据），
+清除 TX FIFO 中的数据并产生 TX_DS 中断。"</p></blockquote>
+<p><strong>这段话里最有价值的一句是"无需 MCU 参与"</strong> —— 它说明整个"发→等→超时→重发"的状态机跑在<strong>芯片内部</strong>，MCU 只管最后看一眼中断标志。</p>
+<p>🟢 <strong>确证</strong>：手册第 33 页 <code>SETUP_RETR</code> 寄存器（地址 <code>04</code>，<strong>复位默认值 <code>0x03</code></strong>）：</p>
+<div class="tablewrap"><table><thead><tr><th>字段</th><th>位</th><th>复位值</th><th>含义</th></tr></thead><tbody><tr><td><code>ARD</code></td><td>7:4</td><td><code>0000</code></td><td>自动传输延时：<strong><code>0000</code> = 250µs</strong>，<code>0001</code> = 500µs，<code>0010</code> = 750µs … <code>1111</code> = 4000µs</td></tr><tr><td><code>ARC</code></td><td>3:0</td><td><code>0011</code></td><td>自动传输次数：<code>0000</code> = 不带自动重传不带 ACK；<code>0011</code> = <strong>3 次</strong></td></tr></tbody></table></div>
+<p>⇒ <strong>默认 <code>0x03</code> = ARD 250µs、ARC 3 次</strong>。本工程 <code>bsp_pn298.c:688</code> 在增强模式下就写 <code>0x03</code>。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样-5">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-5">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.6-1】没有 ACK 的世界：发的人永远不知道结果
+
+  遥控器 ──── 油门 1500 ────►   （空中）
+                                  │
+                                  ├──► 飞机：收到了 ✅
+                                  │
+                                  └──► 或者被 WiFi 压掉了 ❌（遥控器无从知道）
+
+  两种情况的区别，发端**完全看不出来**。
+  ⇒ 上层只能"猜"：
+     · 猜"应该到了" ⇒ 丢包时不重发 ⇒ 飞机突然少了几帧油门 ⇒ **抖**
+     · 猜"可能没到" ⇒ 无条件重复发 ⇒ 空口利用率砍半，还会撞别人的包
+
+  ⇒ ACK 的价值不是"更可靠"这么笼统，而是**把"不知道"变成"知道"**：
+     知道了才能做正确的取舍（重传几次、超时多久判失联）。</pre></div>
+<p><strong>"知道了"之后立刻产生三个新问题</strong>，这三个问题正是 4.6 后面所有细节的来源：</p>
+<ol><li><strong>等多久算超时？</strong> —— 答：ARD（250µs 一档）。</li></ol>
+<p>太短：ACK 还在路上就判失败，白白重传，反而制造拥塞； 太长：一次失败要等很久才重发，延迟抖动大。</p>
+<ol><li><strong>重传几次就放弃？</strong> —— 答：ARC（本项目 3 次）。</li></ol>
+<p>0 次：等于没有可靠性；15 次：一包最多占用 15×(ARD+包长) 的时间，实时性崩掉。</p>
+<ol><li><strong>超了 ARC 之后怎么办？</strong> —— 答：置 <strong><code>MAX_RT</code></strong> 标志，把决定权交回给 MCU。</li></ol>
+<p>🟢 <strong>确证</strong>：<code>bsp_pn298.h:276</code> <code>#define MAX_RT_FLAG 0x10 // 发送重传超时中断标志位</code>； <code>bsp_pn298.c:1073</code> 在读状态时把 <code>MAX_RT_FLAG</code> 单独分支处理。</p>
+<h3 id="③-我该怎么理解它-图-ACK-重传时序-含-ARD-250µs">③ 我该怎么理解它（图）—— ACK / 重传时序，含 ARD 250µs<a class="anchor" href="#③-我该怎么理解它-图-ACK-重传时序-含-ARD-250µs">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.6-2】一次成功的"发→ACK"（PTX = 遥控器，PRX = 飞控）
+
+  时间 ──────────────────────────────────────────────────────────────────►
+
+  PTX（遥控器）          空中               PRX（飞控）
+  ─────────────         ────               ────────────
+  ① 写 TX_ADDR + TX_PLD 到 TX FIFO
+  ② CE 0→1（≥30µs 才生效，手册第 17 页）
+     │
+     ├──── 数据包 ──────────────────────►
+     │      前导+地址+标识+数据+CRC       ③ 地址匹配 → CRC 通过 → 存入 RX FIFO
+     │                                     置 RX_DR
+     │                                     ④ 硬件自动回 ACK
+     │◄──────────── ACK ─────────────────┤
+     │      前导+地址+标识+CRC（无数据区）
+  ⑤ 收到 ACK
+     ├ 置 TX_DS（发送完成）
+     └ 自动清 TX FIFO 中的数据
+     ⇒ MCU 只需要查一次 TX_DS_FLAG
+
+  🟢 手册第 17 页："PTX 发送完数据后立即自动将通道 0 切换到接收模式等待应答信号。"
+     ⇒ 也就是 PTX 这个"收发切换"是**硬件自己做的**，与 4.7 讲的 MCU 侧模式切换是两件事。
+
+
+【图 4.6-3】一次失败 + ARC=3 重传（ARD = 250µs 一档）
+
+  时间 ──────────────────────────────────────────────────────────────────►
+                                                              （µs 量级示意）
+  PTX   ┌──发#1──┐        ┌──发#2──┐        ┌──发#3──┐        ┌──发#4──┐
+        │        │        │        │        │        │        │        │
+        │      ◄─┼─ 等 ACK ─┤        │        │        │        │        │
+        │     250µs        │     250µs        │     250µs        │        │
+        │        │        │        │        │        │        │        │
+  空中  ╳ 丢弃    ╳ 丢弃    ╳ 丢弃    ╳ 丢弃      ← 四次都没到（或 ACK 都丢）
+        │        │        │        │        │        │        │        │
+        │        │        │        │        │        │        │        │
+  PRX   （什么也没收到）
+
+  ④ 重传次数用尽（ARC=3 ⇒ 首发 1 次 + 重传 3 次 = 共 4 次）
+     ├ 置 MAX_RT（重传超时中断标志）
+     ├ TX FIFO 里的数据**仍然留着**（❗见下）
+     └ 控制权交回 MCU：由软件决定"丢这一包"还是"重新发起"
+
+  🟢 ARC=3 时"一共发几次"要数清楚：
+     手册第 33 页 ARC 字段原文是"自动传输次数设置：0000：不带自动重传不带 ACK 的通信模式"
+     ⇒ ARC 指的是**重传次数**（在首发之外额外重试的次数）。
+     "ARC=3 一共发 3 次还是 4 次"的细节，本文件按"首发 + 3 次重传 = 4 次"理解，
+     并标 🟡 —— 若要精确依赖这个数字，请以实测（数空中包）为准。</pre></div>
+<p><strong>超了 ARC 之后工程里怎么处理</strong>：</p>
+<p>🟢 <strong>确证</strong>（本机代码）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">// bsp_pn298.c:380 附近的注释（flushtx 相关）</span></div><div class="line"><span class="ln">2</span><span class="lc">//   "MAX_RT（重发超时）之后，失败的那包数据仍然留在 TX FIFO 里"</span></div><div class="line"><span class="ln">3</span><span class="lc">// bsp_pn298.c:277   bsp_pn298_write_reg(FLUSH_TX, 0);   // deal_pack.c 对码分支里先清 TX FIFO</span></div><div class="line"><span class="ln">4</span><span class="lc">// bsp_pn298.c:1204  bsp_pn298_write_reg(FLUSH_TX, 0);   // rx_data_ack_fix 回 ACK 前也先清</span></div></pre></div>
+<p>⇒ <strong>"重传失败后必须清 TX FIFO"</strong> 是使用自动重传功能的<strong>必备动作</strong>： 不 clear 的话，下一次"写 TX FIFO"会排在旧数据<strong>后面</strong>， 于是你发的新包前面会<strong>先出去一个上次失败的旧包</strong>（顺序错乱）。 这和"串口发送队列里残留上一次的字节"是同类问题。 本工程在两条路径上都做了 <code>FLUSH_TX</code> ✅。</p>
+<h3 id="丢包可观测性-OBSERVE_TX">丢包可观测性：<code>OBSERVE_TX</code><a class="anchor" href="#丢包可观测性-OBSERVE_TX">#</a></h3>
+<p>🟢 <strong>确证</strong>：手册第 35 页 <code>OBSERVE_TX</code> 寄存器（地址 <code>08</code>，复位值 <code>0x00</code>）：</p>
+<div class="tablewrap"><table><thead><tr><th>字段</th><th>位</th><th>含义（手册原文要点）</th></tr></thead><tbody><tr><td><code>PLOS_CNT</code></td><td>7:4</td><td><strong>丢包计数器</strong>。达到最大值 15 时停止计数；<strong>写 <code>RF_CH</code> 时该计数器被复位</strong></td></tr><tr><td><code>ARC_CNT</code></td><td>3:0</td><td><strong>自动重传的传输次数计数器</strong>。自动重传增加一次，<code>ARC_CNT</code> 加一；达到 ARC 限定值时视为丢包，并将 <code>PLOS_CNT</code> 加一；<strong>当新数据写入 TX FIFO 时该计数器复位</strong></td></tr></tbody></table></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.6-4】PLOS_CNT / ARC_CNT 各自在数什么
+
+  一个"包生命周期"里的计数：
+
+   写 RF_CH ──► PLOS_CNT = 0     （换信道就清丢包计数 → 这是"评估这个信道干不干净"的天然钩子）
+
+   写新数据到 TX FIFO ──► ARC_CNT = 0
+
+   第 1 次发  ──► 收到 ACK？ ──是──► ARC_CNT 保持 0    （一次成功）
+                    │
+                    否
+                    ▼
+   第 2 次发  ──► ARC_CNT = 1 ──► 收到 ACK？ ──是──► 结束，ARC_CNT = 1
+                    │
+                    否
+                    ▼
+   ... 直到 ARC_CNT == ARC 限定值
+                    │
+                    ▼
+              PLOS_CNT += 1   （这一包判为"丢了"）
+
+  ⇒ 所以：
+     · 想知道"**链路质量**"：周期读 PLOS_CNT（越大越差）
+     · 想知道"**刚才那包试了几次**"：读 ARC_CNT
+     · 想**清零重测**：写一次 RF_CH（换信道）或写一包新数据
+
+  ⚠️ 本工程**没有**读 OBSERVE_TX 的代码（在飞控与遥控器两侧都搜不到调用）。
+     也就是说：**这个可观测性已经具备，但没有被用起来。**
+     如果要做自适应跳频或链路质量指示（RSSI/丢包率），这是最省事的数据来源。</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表-4">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-4">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>机制</th><th>可靠性</th><th>延迟代价</th><th>空口开销</th><th>什么时候用</th></tr></thead><tbody><tr><td><strong>无 ACK</strong>（普通模式）</td><td>发了就算</td><td>最弱：丢包不可知</td><td>最低（一包一次）</td><td>最小</td><td>单向广播、遥控玩具、对延迟极敏感且能容忍丢包</td></tr><tr><td><strong>硬件自动 ACK + 自动重传</strong>（增强模式）</td><td>芯片内部状态机：发→等→超时→重发→置 <code>TX_DS</code>/<code>MAX_RT</code></td><td><strong>强</strong>：丢包被自动补上；MCU 零参与</td><td>每次失败 +250µs（ARD）</td><td>ACK 包（前导+地址+标识+CRC，无数据区）</td><td>✅ <strong>本工程</strong>（<code>__PN298_MODE = 0x0001</code>）</td></tr><tr><td><strong>ACK 载荷</strong>（ACK Payload）</td><td>ACK 包<strong>带数据</strong>：PRX 把状态捎带在 ACK 里回传</td><td>同上，且<strong>反向也有数据通道</strong></td><td>同上</td><td>略大（ACK 里多一个数据区）</td><td>✅ <strong>本工程实际就在用</strong>：飞机侧 <code>bsp_pn298.c:1205</code> 写 <code>W_ACK_PAYLOAD</code>；遥控器靠 <code>ack_buff[]</code> 收电压告警（<code>遥控器/user/main.c:243-247</code>）</td></tr><tr><td><strong>应用层确认（上层再回一包）</strong></td><td>收方主动发一个"我收到了"的业务包</td><td>强，且<strong>能确认"业务层也处理了"</strong></td><td><strong>翻倍</strong>：一个来回要两包时间</td><td>大</td><td>需要"送达且已执行"语义的场合（如 OTA 升级）</td></tr><tr><td><strong>冗余发送（重复 N 次，不确认）</strong></td><td>同一包连发 N 遍，收方靠 PID/序号去重</td><td>中：概率上提高到达率</td><td>低（无等待）</td><td>×N</td><td>极低延迟要求、丢包代价小的单向链路</td></tr></tbody></table></div>
+<p><strong>本工程用的是哪一种</strong>：<strong>硬件自动 ACK + 自动重传（ARD 250µs / ARC 3）+ ACK 载荷</strong>，三层叠加。</p>
+<blockquote class=""><p><strong>两处需要说清的事实</strong>：
+1. <code>bsp_pn298.c:688</code> 写 <code>SETUP_RETR = 0x03</code>，作者原本的注释是"<strong>若失败不自动重传</strong>"——
+   <strong>这与手册第 33 页的默认值含义相反</strong>，实际是"<strong>重传 3 次</strong>"。
+   <code>bsp_pn298.c:1598-1606</code> 已经把这条更正写在代码里了 ✅。
+2. <strong>普通模式的条件</strong>（手册第 17 页）：<code>EN_AA = 0x00</code>、<code>SETUP_RETR = 0x00</code>、
+   <code>DYNPD = 0x00</code>、<code>FEATURE</code> 低 3 位 = <code>000</code>。
+   ⇒ 这四条给了一个"<strong>想关掉可靠性时该怎么关</strong>"的检查清单：
+   只把 <code>SETUP_RETR</code> 写 0 而留着 <code>EN_AA</code>，是关不干净的。</p></blockquote>
+<hr>
+<h2 id="4-7-收发模式与-CE-Chip-Enable-芯片使能-半双工与那个不存在的引脚">4.7　收发模式与 CE（Chip Enable，芯片使能）：半双工与那个不存在的引脚<a class="anchor" href="#4-7-收发模式与-CE-Chip-Enable-芯片使能-半双工与那个不存在的引脚">#</a></h2>
+<p>这一节回答一个问题：<strong>为什么收发要切换？CE 到底是什么？本工程为什么没有它也行？</strong></p>
+<h3 id="①-它是怎么出现的-6">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-6">#</a></h3>
+<p><strong>半双工</strong>（half-duplex）不是设计者的偏好，而是<strong>成本决定的</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.7-1】全双工 vs 半双工，差在射频前端的套数
+
+  ── 全双工（同时收发）需要 ────────────────────────────────
+     ┌──────────┐   ┌──────────┐
+     │  发射机   │   │  接收机   │      两套完整的模拟前端
+     └────┬─────┘   └─────┬────┘
+          │               │
+        ┌─┴───────────────┴─┐
+        │   双工器（duplexer）│          + 一个双工器（或用两个天线拉开距离）
+        └─────────┬──────────┘
+                  │
+              ┌───┴───┐
+              │ 天线  │
+              └───────┘
+     ⇒ 面积大、成本高、功耗高。手机基站才这么干。
+
+  ── 半双工（本芯片）───────────────────────────────────────
+        ┌──────────────┐
+        │ 收发共用前端  │   ← 手册第 8 页："集成发射机、接收机、频率发生器、
+        │  ┌──┐  ┌──┐  │      GFSK 调制解调器" —— 它们共用一个频率合成器
+        │  │TX│  │RX│  │      和一根天线（芯片是单端/差分 RF 口）
+        │  └──┘  └──┘  │
+        └──────┬───────┘
+               │
+           ┌───┴───┐
+           │ 天线  │
+           └───────┘
+     ⇒ 同一时刻只能干一件事：要么在喊，要么在听。
+        要"换"的时候，由 CE 引脚 + CONFIG 寄存器的一位来切。</pre></div>
+<p>🟢 <strong>确证</strong>：手册第 17 页 4.3 节（增强发送模式）给出了<strong>收发切换的标准动作序列</strong>：</p>
+<blockquote class=""><p>1. <strong>SPI_CE 置 0</strong>，CONFIG 寄存器的 <strong>PRIM_RX</strong> 位先置 0。
+2. 当发送数据时，发送地址（TX_ADDR）和有效数据（TX_PLD）通过 SPI 接口按字节写入……
+3. <strong>SPI_CE 从 0 置 1，启动发射（CE 至少持续置 1 在 30us 以上，该操作生效）。</strong></p></blockquote>
+<p>⇒ 这两条把 CE 的物理含义讲透了：</p>
+<ul><li><strong>CE 是"开始干活"的开关</strong>，不是"芯片上电"的开关（芯片一直有电、寄存器一直可读写）；</li><li><strong>CE 保持高 ≥30µs 这个动作才生效</strong> —— 因为芯片内部需要时间让 PLL 起振/锁定、</li></ul>
+<p>让 PA（Power Amplifier，功率放大器）稳定。这不是"软件随便延时一下"，是<strong>手册给的时序约束</strong>。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样-6">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-6">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.7-2】没有"模式切换"这个概念会怎样
+
+  假设芯片永远一边发一边收（真全双工）：
+
+   问题 1  自己的 10dBm 发射信号就在自己天线旁边，
+           接收机听到的是**自己的信号**（差 100dB 量级）
+           ⇒ 接收机前端直接饱和，什么也收不到。
+           ⇒ 这叫"自干扰"，是全双工的第一个物理难题。
+
+   问题 2  射频前端只有一套 ⇒ 收发必须分时。这已经是硬件事实，
+           软件层面唯一能做的是"**把切换这件事变得安全**"：
+              · 什么时候切（不能在收发中途切）
+              · 切之前要等多久（让芯片收尾）
+              · 切之后要等多久（让 PLL 重新锁定）
+
+  ⇒ 于是就有了本工程里那一堆看着"随意"的延时（20us / 30us / 200us / 2ms / 3ms）。
+     它们不是"经验值"，而是上面这三个问题的最小间隔要求。</pre></div>
+<p>🟢 <strong>确证</strong>（本机代码）：<code>bsp_pn298.c:462-466</code> 的注释把这两个延时讲得很清楚：</p>
+<blockquote class=""><p>1) <code>ce_disable()</code> 之后等 <strong>20us</strong>：CE 从高变低时芯片可能正在收/发一个包，
+   需要时间把当前操作收尾并让内部状态机回到 idle。
+2) 改完 CONFIG 后再 <code>ce_enable()</code>：CE 上升沿才会真正开始接收。
+（对比：遥控器侧的同一个函数在 <code>ce_enable()</code> 之后还有 <code>delay_us(200)</code>。）</p></blockquote>
+<h3 id="③-我该怎么理解它-图-半双工切换时序-本工程的特殊做法">③ 我该怎么理解它（图）—— 半双工切换时序 + 本工程的特殊做法<a class="anchor" href="#③-我该怎么理解它-图-半双工切换时序-本工程的特殊做法">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.7-3】教科书路线（有 CE 引脚）与本工程路线（软命令 0xFD）的对照
+
+  ── 有 CE 引脚（nRF24L01 一类）─────────────────────────────
+     MCU                                     PN298
+      │                                        │
+      ├── CE = 0  ───────────────────────────►│  芯片收尾（当前包做完）
+      │   （等 ≥ 手册要求的收尾时间）           │
+      ├── SPI: 写 CONFIG.PRIM_RX = 0 ────────►│  切到"发射"模式
+      ├── SPI: 写 TX_ADDR / W_TX_PAYLOAD ────►│  数据进 TX FIFO
+      ├── CE = 1  ───────────────────────────►│  ★ 保持 ≥30µs，发射启动
+      │   （保持高，直到包发完）                │
+      ├── CE = 0  ───────────────────────────►│  回到待机
+      └── SPI: 读 RF_STATUS，看 TX_DS ───────►│
+
+  ── 本工程（CE 脚没有引到 MCU）──────────────────────────────
+     bsp_pn298.c:48  "CE 没有引到 MCU 引脚上（只能用软命令 CE_ON/CE_OFF 控制）"
+     bsp_pn298.c:273 ce_enable()  →  write_reg(CE_ON,  0x00)   // CE_ON  = 0xFD（bsp_pn298.h:125）
+     bsp_pn298.c:294 ce_disable() →  write_reg(CE_OFF, 0x00)   // CE_OFF = 0xFC（bsp_pn298.h:128）
+
+     MCU                                     PN298
+      │                                        │
+      ├── SPI: {0xFC, 0x00} ─────────────────►│  ≈ 把 CE 拉低
+      ├── delay_us(20)（bsp_pn298.c:482）      │
+      ├── SPI: 写 CONFIG.PRIM_RX = 1/0 ──────►│  切模式
+      ├── SPI: {0xFD, 0x00} ─────────────────►│  ≈ 把 CE 拉高
+      │                                        │
+     ❗差别：**"CE 高电平持续多久"不再由 MCU 的引脚控制**，
+        而是由"下一次写 0xFC"决定 ⇒ 中间隔了多久，CE 就"高"了多久。
+
+     ❗还有一处必须点明的**不一致**（只记录，不修改）：
+        bsp_pn298.c:427-428 的注释说本文件的 tx_mode() 比遥控器侧
+        "少了一次 delay_us(20)（在 ce_disable 之后）和一次 delay_us(200)（在 ce_enable 之后）"。
+        ⇒ **飞机侧切发射模式时没有等 CE 生效的 30µs**。
+        这条与手册第 17 页"CE 至少持续置 1 在 30us 以上，该操作生效"直接相关，
+        是**该被复核的一处时序**。（飞机侧几乎不发数据，所以没暴露问题；
+        但 `bsp_pn298_write_buf(W_ACK_PAYLOAD, ...)` 是要发的。）</pre></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.7-4】飞机侧一个完整"收 + 回 ACK"周期里的所有延时（全部来自 bsp_pn298.c）
+
+  时刻(相对)   动作                                        出处
+  ──────────  ──────────────────────────────────────────  ────────────────────
+   0          查 RF_STATUS 的 RX_DR 是否为 1（非阻塞）        :1196-1199
+              └ 不是 → 直接 return 0（不阻塞！）
+   ↓
+   ~0         FLUSH_TX（清发送缓冲）                          :1204
+   ~0         写 W_ACK_PAYLOAD（把 ACK 载荷塞进去）           :1205
+   ↓
+   delay_us(30)  ★ 给芯片"组织 ACK、切到发射"的时间            :1207
+   ↓           （注释 :1168-1172 说明：太早发不出去，太晚错过应答窗口）
+   +30µs       读 R_RX_PAYLOAD                                :1208
+   +30µs+      byte_bit_decode()（位/字节序还原）              :1209
+   +30µs+      FLUSH_RX（清接收缓冲）                          :1210
+   +30µs+      写 RF_STATUS = 0x70（清 RX_DR|TX_DS|MAX_RT）    :1211
+
+  ⚠️ delay_us 的实际时长 ≈ 请求值的 2 倍 + 约 30~40µs 固定开销
+     （bsp_delay.h:32-44）⇒ delay_us(30) 实际约 90~100µs。
+     🟡 对射频时序是"安全方向"（手册要求的是最小间隔），
+        但它让"应答窗口"比设计值更长，**发射功率的平均占空比因此上升**。</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表-5">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-5">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>机制</th><th>优势</th><th>代价</th><th>什么时候用</th></tr></thead><tbody><tr><td><strong>硬件 CE 引脚</strong></td><td>MCU 一根 GPIO 直接驱动 CE</td><td>时序精确（µs 级可控）；手册给的时序就是按这个写的</td><td>占 1 个引脚；改时序要改硬件</td><td>有引脚余量时 ⭐</td></tr><tr><td><strong>软件 CE 命令（本工程）</strong></td><td>用 SPI 发 <code>0xFD</code>/<code>0xFC</code> 等效拉高/拉低</td><td><strong>省一个引脚</strong>；不用管 GPIO 复用</td><td><strong>CE 持续时间不可控</strong>（由下一次命令决定）；每次切换多 2 个 SPI 事务</td><td>✅ <strong>本工程</strong>（<code>bsp_pn298.c:48</code>、<code>:125</code>、<code>:128</code>）</td></tr><tr><td><strong>半双工 + 时分（TDMA）</strong></td><td>全网络约好"谁在哪个时隙发"</td><td>无冲突、可预测延迟</td><td>需要时间同步；实现重</td><td>多机协同、工业链路</td></tr><tr><td><strong>由硬件自动切换（增强模式）</strong></td><td>PTX 发完自动转接收等 ACK（手册第 17 页）</td><td><strong>MCU 不用管</strong></td><td>只覆盖"等 ACK"这一小段，不覆盖整个收发方向</td><td>✅ <strong>本工程靠它省掉一次模式切换</strong></td></tr><tr><td><strong>全双工（双天线/双频）</strong></td><td>收和发用不同频率/天线</td><td>无切换、延迟最低</td><td>成本、体积、自干扰抑制</td><td>图传+遥控一体、基站</td></tr></tbody></table></div>
+<p><strong>本工程用的是</strong>：<strong>软件 CE 命令 + 硬件自动收发切换（增强模式）</strong>，两者叠加。</p>
+<hr>
+<h2 id="4-8-软件模拟-SPI-Bit-Banging-为什么放着硬件外设不用">4.8　软件模拟 SPI（Bit-Banging）：为什么放着硬件外设不用<a class="anchor" href="#4-8-软件模拟-SPI-Bit-Banging-为什么放着硬件外设不用">#</a></h2>
+<p>这一节回答一个问题：<strong>芯片明明有硬件 SPI 外设，为什么 PN298 要用软件模拟？代价是什么？</strong></p>
+<h3 id="①-它是怎么出现的-7">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-7">#</a></h3>
+<p>🟢 <strong>确证</strong>（本机代码）：<code>bsp_rfspi_sw.c</code> 整个文件就是这件事的实现，它用 <strong>4 根普通 GPIO</strong> 手动翻时钟与数据线：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.8-1】软件 SPI 的接线（bsp_rfspi_sw.c:54-77 的接线表 + :217-252 的初始化）
+
+   PY32F030                            PN298
+   ─────────────                       ─────────────
+   PF1  ──────── CS   (片选，低有效)     CSN
+   PA1  ──────── CLK  (时钟，空闲低)     SCLK
+   PA0  ──────── MOSI (主出从入)         MOSI / SDIO
+   PF3  ──────── MISO (主入从出)         MISO
+   PF0  ──────── IRQ  (仅 PAN7421 有)    IRQ
+                    ↑
+        config_rf.h:72  __CHIP_TYPE = 0x00
+        ⇒ 本工程走"轮询状态寄存器"路线，**IRQ 这根线没用上**
+
+   ★ 关键对照：硬件 SPI1 用的是完全不同的引脚 ——
+        py32f0xx_hal_msp.c:102-104
+            PA5 = SPI1_SCK
+            PA6 = SPI1_MISO
+            PA7 = SPI1_MOSI
+        spi.c:93  BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32  ⇒ 48MHz/32 = 1.5MHz
+        ⇒ SPI1 是留给 **ICM42688 陀螺仪 + BMP390 气压计**（两块从机共用，片选独立）的。
+        ⇒ **PN298 与传感器跑在两条完全独立的"SPI"上**：
+             传感器 = 硬件 SPI1（1.5MHz）
+             PN298   = 软件模拟 SPI（约 0.5~1MHz，见下）</pre></div>
+<p>🟢 <strong>确证</strong>（手册）：PN298 支持 <strong>SPI 或 I2C</strong> 两种配置接口（第 8 页）。 🟢 <strong>确证</strong>（本机代码）：<code>bsp_rfspi_sw.c:42-43</code> 说明时序是 <strong>SPI 模式 0（CPOL=0, CPHA=0）</strong>： <strong>CLK 空闲为低，数据在 CLK 下降沿改变、在上升沿被采样</strong>。</p>
+<h3 id="②-它要解决什么问题-为什么要这样做">② 它要解决什么问题（为什么要这样做）<a class="anchor" href="#②-它要解决什么问题-为什么要这样做">#</a></h3>
+<p><code>bsp_rfspi_sw.c:28-38</code> 已经给了三条推断理由（标注为"本项目没有留下书面理由，按代码与硬件约束推断"）， 本文件把它们补成可以逐条检验的形式：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.8-2】为什么不用硬件 SPI —— 四条理由，按"证据强度"排序
+
+  ┌───┬──────────────────────┬──────────────────────────────────────────────┐
+  │ # │ 理由                  │ 检验方式 / 证据                               │
+  ├───┼──────────────────────┼──────────────────────────────────────────────┤
+  │ 1 │ **引脚不重合**         │ 硬件 SPI1 = PA5/PA6/PA7（hal_msp.c:102-104）  │
+  │   │ （最强的一条）         │ PN298    = PA0/PA1/PF1/PF3（rfspi_sw.c:54-77）│
+  │   │                      │ ⇒ 除非改板子，硬件 SPI 物理上接不上 PN298。    │
+  │   │                      │ 🟢 可直接对照两份接线表验证                  │
+  ├───┼──────────────────────┼──────────────────────────────────────────────┤
+  │ 2 │ **CS 的连续拉低要求**  │ rfspi_sw.c:34-35："PN298 有些'命令+多字节数据' │
+  │   │                      │ 必须在一次 CS 拉低期间连续发出，中间不能有总线  │
+  │   │                      │ 空闲；软件模拟可以精确保证"                  │
+  │   │                      │ 🟡 方向合理；但"硬件 SPI 做不到"这一点本文件** │
+  │   │                      │    没有在手册里找到明文支持**，标 🟡          │
+  ├───┼──────────────────────┼──────────────────────────────────────────────┤
+  │ 3 │ **速度够用**           │ rfspi_sw.c:36-38 的估算：一包 12 字节 + 命令   │
+  │   │                      │ ≈ 112 个时钟，每时钟约 1µs，共约 100µs，      │
+  │   │                      │ 相对 10ms 的收包周期可忽略                    │
+  │   │                      │ 🟢 数量级可验算（见下）                       │
+  ├───┼──────────────────────┼──────────────────────────────────────────────┤
+  │ 4 │ **省引脚**            │ 软件 SPI 不需要"外设复用"配置，4 根普通 GPIO  │
+  │   │                      │ 即可，任何引脚都能用 ⇒ 布线自由度最大          │
+  │   │                      │ 🟡 这是通用工程理由，非本工程独有证据          │
+  └───┴──────────────────────┴──────────────────────────────────────────────┘</pre></div>
+<p><strong>把"速度够用"这条算清楚</strong>（🟢 可验算）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.8-3】软件 SPI 实际跑多快
+
+  写一个字节（rfspi_sw.c:117-134）：
+     循环 8 次，每次：
+        clk=0 → 摆 MOSI → clk=1 → delay(1)     ← delay(1) = 1 次循环
+     收尾：clk=0 → delay(5)
+
+  delay 参数是"循环次数"，不是微秒（rfspi_sw.c:102-103）：
+     一次循环 ≈ 4~6 个内核周期
+     ⇒ delay(1) 约零点几微秒；delay(5) 约 1~2µs
+
+  粗算一个字节：8 × (几次 GPIO 写 ≈ 4~8 周期 + delay(1) ≈ 6 周期)
+                ≈ 8 × 12 ≈ 96 周期 ≈ 2µs @48MHz
+                + 收尾 delay(5) ≈ 30 周期 ≈ 0.6µs
+                ⇒ 约 2.6µs / 字节  ⇒ 时钟约 380kHz
+
+  一包 12 字节载荷 + 命令字节 + 地址（读/写寄存器时）：
+     rx_data_ack_fix 一次收包要发：FLUSH_TX(1) + W_ACK_PAYLOAD(1+12) + R_RX_PAYLOAD(1+12)
+                                    + FLUSH_RX(1) + 写状态(1+1) ≈ 30 字节
+     ⇒ 30 × 2.6µs ≈ 78µs
+
+  ⇒ 与 10ms 的收包周期相比 ≈ 0.8% 的时间，**完全可以忽略** ✅
+     与 rfspi_sw.c:36-38 的估算（约 100µs）同量级。
+  🟡 上面的周期数是"量级估算"，不是示波器实测值。
+     要精确值应当用 TIM16 的 micros16() 夹在两次 GPIO 翻转之间测。</pre></div>
+<h3 id="③-我该怎么理解它-图-bit-banging-的本质">③ 我该怎么理解它（图）—— bit-banging 的本质<a class="anchor" href="#③-我该怎么理解它-图-bit-banging-的本质">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.8-4】硬件 SPI 与软件 SPI 的分工差别
+
+  ── 硬件 SPI ────────────────────────────────────────────
+     CPU 说："把这个字节发出去"
+        │
+        ▼
+     ┌────────────────────────┐
+     │  SPI 外设（硬件状态机）  │  ← 移位寄存器、波特率发生器、采样沿
+     │  · 自动按时钟节拍移位    │     全部由硅片实现
+     │  · 自动在正确的沿采样    │
+     └───────────┬────────────┘
+                 │ 直接驱动引脚
+     ⇒ CPU 在传输期间可以干别的（或至少不用逐位操心）
+     ⇒ 时序由硬件保证，**与编译器优化等级无关**
+
+  ── 软件 SPI（bit-banging）──────────────────────────────
+     CPU 说："我先写 clk=0，再写 mosi=最高位，再写 clk=1，再空转几圈……"
+        │
+        ▼
+     ┌────────────────────────┐
+     │  你的 C 代码            │  ← 每一条 GPIO 写指令的**执行时间**都是时序的一部分
+     │  · 移位靠 for 循环       │
+     │  · "延时"靠空转循环       │
+     └───────────┬────────────┘
+                 │ 写 BSRR/BRR 寄存器
+     ⇒ 时序正确性依赖三件事：
+        ① 每一条指令的周期数（→ 优化等级！）
+        ② 中断有没有插进来（→ 关中断或避开中断）
+        ③ 空转循环有没有被优化掉
+     ⇒ 这就是 bsp_delay.c 为什么**宁可写机器码**（见下）</pre></div>
+<p><strong>"时序靠延时"的代价，本工程有一个教科书级的例子</strong>：</p>
+<p>🟢 <strong>确证</strong>：<code>bsp_delay.c:137-144</code> 的 GCC 分支<strong>直接写 Thumb 机器码</strong>，而不是写 C 循环：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">__attribute__((naked)) void __delay_pan742(uint32_t cycle)</span></div><div class="line"><span class="ln">2</span><span class="lc">{</span></div><div class="line"><span class="ln">3</span><span class="lc">    (void)cycle;</span></div><div class="line"><span class="ln">4</span><span class="lc">    __asm__ volatile(</span></div><div class="line"><span class="ln">5</span><span class="lc">        ".short 0x3801\n\t"   /* subs r0, #1  */</span></div><div class="line"><span class="ln">6</span><span class="lc">        ".short 0xD8FC\n\t"   /* bcs  .-4     */</span></div><div class="line"><span class="ln">7</span><span class="lc">        ".short 0x4770\n\t"); /* bx   lr      */</span></div><div class="line"><span class="ln">8</span><span class="lc">}</span></div></pre></div>
+<p><code>bsp_delay.c:74-81</code> 解释了原因：<strong>Cortex-M0+ 只支持 Thumb-1（没有 Thumb-2）</strong>， 而汇编器会把 <code>SUBS r0, r0, #1</code> 编成 32 位的 Thumb-2 形式， <strong>M0+ 内核不认这条指令，一执行就 HardFault</strong>。 ⇒ 这是"bit-banging 对编译结果极其敏感"的极端体现： <strong>连编译器的指令选择都必须被绕过</strong>。</p>
+<h3 id="④-实现方法有哪些-取舍对照表-6">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-6">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>机制</th><th>速度</th><th>CPU 占用</th><th>时序可控性</th><th>引脚要求</th></tr></thead><tbody><tr><td><strong>硬件 SPI</strong></td><td>专用外设 + 移位寄存器</td><td>高（可达数十 MHz）</td><td><strong>极低</strong>（可配 DMA）</td><td>高，但<strong>只支持标准时序</strong>；CPOL/CPHA 有限几种</td><td><strong>必须落在 SPI 复用引脚上</strong></td></tr><tr><td><strong>软件模拟 SPI</strong>（本工程）</td><td>GPIO 翻转 + 空转延时</td><td>低（约 380kHz，见估算）</td><td><strong>高</strong>（每一位都要 CPU 执行几条指令）</td><td><strong>最高</strong>：任何非标准时序都能做；代价是"时序 = 指令周期数"</td><td><strong>任意 GPIO</strong></td></tr><tr><td><strong>I2C</strong></td><td>PN298 也支持（手册第 8 页）</td><td>中（100k/400kHz）</td><td>中</td><td>中</td><td>2 根线（SDA/SCL），但要上拉电阻</td></tr><tr><td><strong>3 线 SPI</strong></td><td>手册第 8 页提到 XN297L 兼容 <strong>SOP8、3 线 SPI 功能</strong></td><td>中</td><td>依赖实现</td><td>中</td><td>省 1 根线（MISO 双向复用）</td></tr></tbody></table></div>
+<p><strong>本工程用的是</strong>：<strong>软件模拟 SPI（4 线，SPI 模式 0）</strong>， 引脚 <code>PA0(MOSI) / PA1(CLK) / PF1(CS) / PF3(MISO)</code>（<code>bsp_rfspi_sw.c:54-77</code>）。</p>
+<p><strong>代价清单（要在设计时就知道的）</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 4.8-5】软件 SPI 的四个代价，以及本工程各自怎么应对
+
+  代价                          本工程现状
+  ───────────────────────────  ──────────────────────────────────────────
+  ① 慢（约 380kHz vs 硬件 1.5MHz）   ✅ 可接受：收包周期 10ms，SPI 只占 0.8%
+  ② 占 CPU（每位几条指令）           ✅ 可接受：总量约 78µs/包
+  ③ 时序靠延时 ⇒ 怕优化等级/换编译器  ⚠️ 部分应对：bsp_delay.c 写机器码；
+                                       但 rfspi_sw.c:159-161 自己也承认
+                                       "延时只加在 CLK 拉低之后，抬高 CLK 之后没有延时"
+                                       ⇒ 高电平宽度取决于两条语句之间的执行时间
+  ④ 怕中断插进来                    ⚠️ **未做保护**：代码里没有关中断/临界区，
+                                       若某次中断恰好打断一次 SPI 事务，
+                                       CS 被拉高时间过长可能让芯片提前结束事务。
+                                       （本工程的射频事务都在主循环里做，
+                                         而 TIM17 中断回调只做 +1，风险低但存在。）</pre></div>
+<blockquote class=""><p><strong>读到这里应该建立的一个判断</strong>：软件 SPI <strong>不是"低级做法"</strong>，
+它是"<strong>把时序控制权从硬件换到软件，代价是速度和 CPU</strong>"的一次明确取舍。
+本工程的取舍是合理的（引脚约束是硬约束，速度绰绰有余）；
+但它带来的"时序随编译器变化"这个隐患是<strong>真实存在</strong>的，
+所以 <code>bsp_delay.c</code> 才要写成机器码 —— 这两件事必须一起看才完整。</p></blockquote>
+<hr>
+<h1 id="第-5-章-看门狗-Watchdog-WDG">第 5 章　看门狗（Watchdog, WDG）<a class="anchor" href="#第-5-章-看门狗-Watchdog-WDG">#</a></h1>
+<blockquote class=""><p><strong>本章主线</strong>：看门狗监控的不是温度、不是电压，而是"<strong>程序还活着</strong>"这件事本身。
+这一章要讲清三件事：<strong>监控什么（5.1）、两种狗的本质区别（5.2）、
+"狗多久咬一次"和"我多久喂一次"之间的余量怎么算（5.3～5.4）</strong>。
+前两件是概念，第三件是唯一容易算错、也唯一会咬人的地方。</p></blockquote>
+<hr>
+<h2 id="5A-主线图-看门狗在系统里的位置">5A　主线图：看门狗在系统里的位置<a class="anchor" href="#5A-主线图-看门狗在系统里的位置">#</a></h2>
+<p>这一节回答一个问题：<strong>看门狗解决的是哪一类故障？不解决哪一类？</strong></p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">┌────────────────────────────────────────────────────────────────────────────┐
+│  故障分类（按"能不能被软件自己发现"分）                                       │
+│                                                                            │
+│  A 类：逻辑错误        —— 算错了、判据写反了                               │
+│       看门狗【救不了】：程序跑得好好的，只是结果错                            │
+│       ⇒ 靠单元测试、代码评审、实飞验证                                        │
+│                                                                            │
+│  B 类：数值异常        —— 数组越界、除零、NaN                              │
+│       看门狗【可能救】：如果异常导致 HardFault 或死循环                       │
+│       ⇒ 更该靠断言与边界检查                                                  │
+│                                                                            │
+│  C 类：卡死 / 跑飞     —— while 死等、指针跳飞、栈溢出                       │
+│       看门狗【就是为它而生】：主循环推不动了 ⇒ 不喂狗 ⇒ 复位                  │
+│                                                                            │
+│  D 类：时钟/电源异常   —— PLL 失锁、电压跌落                                 │
+│       看门狗【IWDG 能救、WWDG 救不了】← 5.2 的核心结论                        │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  看门狗的三个组成部分（缺一不可）                                             │
+│                                                                            │
+│   ① 一个独立时钟源  —— 主时钟乱了它还得能数（IWDG 用 LSI）                    │
+│   ② 一个只减不加的计数器 —— 软件只能"重装"，不能"停掉"                        │
+│   ③ 一个复位出口    —— 计到 0 就复位整个单片机，且**复位原因可查**            │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  工程上真正要定的是两个数                                                    │
+│                                                                            │
+│   T_dog  = 狗的超时时间   = 预分频 × 重载 ÷ LSI频率   ← 硬件配置决定          │
+│   T_feed = 喂狗周期       = 主循环多少毫秒喂一次        ← 软件结构决定          │
+│                                                                            │
+│   要求： T_feed × 安全系数 &lt; T_dog 的【最坏情况】（LSI 偏快时）               │
+│   ⚠️ 最坏情况不是标称值！LSI 有 ±20% 的全温区偏差（5.3 详算）                 │
+└────────────────────────────────────────────────────────────────────────────┘</pre></div>
+<p><strong>读法</strong>：这张图的第三层是本章的真正重点。 前两层是"看门狗是什么"，第三层是"<strong>你能不能活着从现场回来</strong>"。</p>
+<hr>
+<h2 id="5-1-看门狗定义-它监控的是什么">5.1　看门狗定义：它监控的是什么<a class="anchor" href="#5-1-看门狗定义-它监控的是什么">#</a></h2>
+<p>这一节回答一个问题：<strong>"程序还活着"这件事，怎么被一个计时器监控？</strong></p>
+<h3 id="①-它是怎么出现的-8">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-8">#</a></h3>
+<p>🟢 <strong>确证</strong>（手册 第 339 页，Reference manual 第 23 章 IWDG）：</p>
+<div class="tablewrap"><table><thead><tr><th>事实</th><th>出处</th></tr></thead><tbody><tr><td>IWDG 由 <strong>LSI</strong> 驱动（内部 32.768kHz RC 振荡器）</td><td>参考手册 第 339 页 23.2/23.3</td></tr><tr><td><strong>stop 模式也工作</strong></td><td>参考手册 第 339 页；另见第 55 页 表 6-1："Stop：LSI、LSE、LPTIMER、RTC、<strong>IWDG</strong> 可由软件配置是否工作"</td></tr><tr><td>写 <strong><code>0xCCCC</code> 启动</strong> IWDG</td><td>参考手册 第 340 页 IWDG_KR："<code>0xCCCC</code>：表示启动 IWDG"</td></tr><tr><td>写 <strong><code>0xAAAA</code> 喂狗</strong></td><td>参考手册 第 340 页 IWDG_KR："软件必须以一定的时间间隔向该寄存器写入 <code>0xAAAA</code>，否则，当计数器计数到 0 时，看门狗会产生复位"</td></tr><tr><td><strong>一旦启动不能停止</strong></td><td>参考手册 第 339 页 23.2/23.3（IWDG 无"关闭"命令字）</td></tr></tbody></table></div>
+<p>🟢 <strong>确证</strong>（本机代码）：<code>bsp_pn298</code> 之外的 HAL 层也印证了这三个命令字： <code>py32f0xx_hal_iwdg.h:165-168</code> <code>IWDG_KEY_RELOAD = 0xAAAA</code>、<code>IWDG_KEY_ENABLE = 0xCCCC</code>、<code>IWDG_KEY_WRITE_ACCESS_ENABLE = 0x5555</code>； <code>py32f0xx_hal_iwdg.c:173</code> 的 <code>__HAL_IWDG_START(hiwdg)</code> 就是往 <code>KR</code> 写 <code>0xCCCC</code>。</p>
+<blockquote class=""><p><strong>"一旦启动不能停止"这一条是本节的灵魂</strong>，值得单独解释：
+🟢 <strong>确证</strong>：手册给出的命令只有"启动/喂狗/开写保护"三种，<strong>没有"停止"</strong>。
+🟡 <strong>推理（这是设计意图，不是遗漏）</strong>：
+一个"能被软件关掉的看门狗"，在<strong>程序跑飞之后同样能被关掉</strong> ——
+跑飞的代码可能恰好执行到那一条关闭指令（或者更常见：跑飞的代码把
+看门狗控制寄存器当普通内存写了）。那么这把锁就等于不存在。
+<strong>所以"不可关闭"不是不方便，而是这个功能能成立的前提。</strong>
+代价也很明确：<strong>启动时机必须一次选对</strong>（本工程把 <code>WDG_init()</code> 放在
+<code>main.c:347</code>，所有初始化都完成之后 —— 原因见 5.4）。</p></blockquote>
+<h3 id="②-它要解决什么问题-没有它会怎样-7">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-7">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.1-1】"程序卡死"这件事，为什么软件自己解决不了
+
+  一个典型的卡死点（本工程真实存在，见 deal_pack.c / bsp_pn298.c 的说明）：
+
+      while(!((bsp_pn298_read_reg(RF_STATUS) &amp; TX_DS_FLAG) == TX_DS_FLAG));
+      // bsp_pn298.c:965 —— 无超时的死等，等"发送完成"标志
+
+  如果对面不在（遥控器关机、飞机被挡住、芯片配置错了）：
+
+     ┌──────────────────────────────────────────────────────────┐
+     │  主循环：                                                 │
+     │     decode_pack() → ... → tx_data() → while(!TX_DS);      │
+     │                                          ↑                │
+     │                                    永远不成立             │
+     │                                          │                │
+     │                                    在这里死转             │
+     └──────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+              主循环再也回不到喂狗那一句
+                          │
+        ┌─────────────────┴─────────────────┐
+        │  有看门狗                          │  没有看门狗
+        ├───────────────────────────────────┼──────────────────────────────┤
+        │  约 0.5s 后硬件复位                │  永久卡在这里                 │
+        │  ⇒ 电机停转、灯重新闪、              │  ⇒ **电机保持最后一个 PWM 值** │
+        │     可能自己恢复                    │     飞机带着满油门飞走/烧电调   │
+        │  ⇒ 现场可见（灯在重启）              │  ⇒ 只能人工断电（如果够得着）   │
+        └───────────────────────────────────┴──────────────────────────────┘</pre></div>
+<p><strong>这句"电机保持最后一个 PWM 值"是理解看门狗在飞控上价值的钥匙</strong>： 单片机卡死时，<strong>外设不会跟着停</strong> —— TIM3 还在按最后写进去的 CCR 输出 PWM。 所以"卡死"在飞控上不等于"飞机不动"，而等于"<strong>飞机按最后一帧指令一直飞</strong>"。 复位之所以安全，是因为复位会重新跑初始化，<code>motorPWMValue[]</code> 归零、电机停转。</p>
+<p>🟢 <strong>确证</strong>（本机代码）：<code>main.c:492-509</code> 的 <code>Error_Handler()</code> 就是"用复位换安全"的同一个思路：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">void Error_Handler(void)</span></div><div class="line"><span class="ln">2</span><span class="lc">{</span></div><div class="line"><span class="ln">3</span><span class="lc">    while (1)</span></div><div class="line"><span class="ln">4</span><span class="lc">    {</span></div><div class="line"><span class="ln">5</span><span class="lc">    }</span></div><div class="line"><span class="ln">6</span><span class="lc">}</span></div></pre></div>
+<p><code>main.c:497-499</code> 的注释说得很清楚： "飞控宁可'停在地上不动'，也不能'带着错误配置起飞'。 死循环还带来一个副作用：<strong>主循环不再喂狗，约 0.5s 后看门狗会复位芯片</strong>， 相当于'持续重试初始化'，比一直卡死更容易被现场发现（灯会周期性重启闪烁）。"</p>
+<p>⇒ <strong>看门狗在这里被当成"复位重试机制"用</strong>：不是"防止出错"，而是 "<strong>出错之后让系统回到一个已知的、安全的状态</strong>"。</p>
+<h3 id="③-我该怎么理解它-图-2">③ 我该怎么理解它（图）<a class="anchor" href="#③-我该怎么理解它-图-2">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.1-2】看门狗就是"你必须定期证明自己还活着"
+
+   时间 ──────────────────────────────────────────────────────────────────►
+
+   计数器值
+     512 ┤█
+         │ ██
+         │   ███
+         │      ████
+         │          █████
+         │               ██████
+         │                     ███████
+         │  ┌── 喂狗！计数器被重装回 512 ──┐
+     512 ┤  █
+         │   ██
+         │     ███
+         │        ████
+         │            █████
+         │                 ██████
+         │                       ███████
+       0 ┤──────────────────────────────█████ ──► ★ 复位！
+         └──────────────────────────────────────────► t
+
+   喂狗周期 T_feed = 约 101ms（main.c:411-419）
+   超时时间 T_dog  = 约 0.5s（WDG.c:67-71）
+   ⇒ 中间那一段"剩多少余量"就是 5.3 要算的东西。</pre></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.1-3】看门狗"看起来在跑"和"真的在跑"的区别
+
+  ✅ 真的在跑                         ❌ 看起来在跑（实际是自欺）
+
+  主循环 {                            定时器中断 {
+      ...任务...                           HAL_IWDG_Refresh();   ← 在中断里喂！
+      HAL_IWDG_Refresh();              }
+  }
+                                      主循环 { while(卡死) ; }   ← 死了
+  主循环卡死 ⇒ 喂不到 ⇒ 复位           中断照常 ⇒ 一直喂 ⇒ **永不复位**
+
+  ⇒ 判据（5.4 会展开）：**喂狗的位置必须是"只有主流程正常推进才可能执行到"的地方。**</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表-7">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-7">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>机制</th><th>能发现什么</th><th>代价</th><th>什么时候用</th></tr></thead><tbody><tr><td><strong>无看门狗</strong></td><td>——</td><td>什么都发现不了</td><td>0</td><td>台面实验、有外部断电手段的场合</td></tr><tr><td><strong>内部 IWDG（本工程）</strong></td><td>LSI 驱动的递减计数器，写 <code>0xAAAA</code> 重装</td><td>主循环不推进</td><td><strong>一旦启动不可关闭</strong>；LSI 精度差（±3%~±20%）⇒ 超时不精确</td><td>✅ <strong>本工程</strong>（<code>WDG.c:63-80</code>）</td></tr><tr><td><strong>内部 WWDG</strong></td><td>PCLK 驱动的 7 位递减计数器 + 窗口</td><td>主循环<strong>过早</strong>推进（喂太早也复位）</td><td><strong>依赖主时钟</strong>；窗口设置要算准</td><td>需要"顺序不能跳步"的场合</td></tr><tr><td><strong>外部看门狗芯片</strong></td><td>独立芯片，靠"喂狗引脚上出现跳变"判断</td><td>连 <strong>MCU 时钟全死</strong> 都能救（芯片自己有时基）</td><td>多一颗料 + 一个引脚 + 板面积</td><td>安全等级要求高的产品 ⭐</td></tr><tr><td><strong>双看门狗（内部 + 外部）</strong></td><td>两级</td><td>覆盖最全</td><td>成本最高</td><td>车规/医疗</td></tr><tr><td><strong>窗口看门狗 + 多任务</strong></td><td>每个任务各自"打卡"，全部打卡才喂狗</td><td><strong>能定位到是哪个任务卡了</strong>（打卡位可读）</td><td>实现复杂，要用 RAM 做打卡表</td><td>RTOS 系统 ⭐</td></tr></tbody></table></div>
+<p><strong>本工程用的是</strong>：<strong>内部 IWDG</strong>，<code>WDG_init()</code> 在 <code>main.c:347</code> 调用， 喂狗点唯一，在 <code>main.c:414</code>。<strong>WWDG 关闭</strong>（<code>py32f0xx_hal_conf.h:101</code> 的 <code>HAL_WWDG_MODULE_ENABLED</code> 是被注释掉的）。</p>
+<hr>
+<h2 id="5-2-两种看门狗-IWDG-与-WWDG-的本质区别">5.2　两种看门狗：IWDG 与 WWDG 的本质区别<a class="anchor" href="#5-2-两种看门狗-IWDG-与-WWDG-的本质区别">#</a></h2>
+<p>这一节回答一个问题：<strong>"独立"到底独立在哪里？"窗口"又是什么？为什么一个救得了时钟故障、一个救不了？</strong></p>
+<h3 id="①-它是怎么出现的-9">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-9">#</a></h3>
+<p>🟢 <strong>确证</strong>（手册，两边各一条，对照看最清楚）：</p>
+<div class="tablewrap"><table><thead><tr><th></th><th><strong>IWDG</strong>（Independent WDG，独立看门狗）</th><th><strong>WWDG</strong>（Window WDG，窗口看门狗）</th></tr></thead><tbody><tr><td>时钟源</td><td><strong>LSI</strong>（内部 32.768kHz RC 振荡器）</td><td><strong>PCLK</strong>（APB 外设时钟）</td></tr><tr><td>计数宽度</td><td>12 位递减（重载值 = <code>IWDG_RLR</code>）</td><td><strong>7 位</strong>递减（<code>WWDG_CR</code> 的 <code>T[6:0]</code>）</td></tr><tr><td>复位条件</td><td>计数器到 0</td><td>计数器<strong>从 <code>40h</code> 变 <code>3Fh</code></strong>（即 <code>T[6]</code> 变 0）时复位</td></tr><tr><td>喂狗限制</td><td><strong>随时可喂</strong>（越早喂越安全）</td><td><strong>只在窗口内可喂</strong>：<code>W[6:0] ≤ CNT ≤ 3Fh</code> 之外喂狗 ⇒ 复位</td></tr><tr><td>可关闭性</td><td><strong>不能关闭</strong></td><td><code>WDGA</code> 位使能后"<strong>不能被 disable 掉，除非复位发生</strong>"</td></tr><tr><td>手册出处</td><td>参考手册 <strong>第 339、340 页 第 23 章</strong></td><td>参考手册 <strong>第 344、345、346 页 第 24 章</strong></td></tr></tbody></table></div>
+<p>🟢 <strong>确证</strong>（WWDG 超时公式，参考手册 <strong>第 345 页</strong> 原文）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">tWWDG = tPCLK × 4096 × 2^WWDGTB[1:0] × (T[5:0] + 1)   (ms)</span></div></pre></div>
+<p>🟢 <strong>确证</strong>（WWDG 计数器的时钟，参考手册 <strong>第 345 页</strong> <code>WWDG_CR</code> 说明）：</p>
+<blockquote class=""><p>"该寄存器用来存储看门狗的计数值。每 <strong>（4096 × 2^WDGTB）</strong> 个 <strong>PCLK</strong> 周期减 1。
+当计数值从 <strong>40h 变为 3Fh</strong> 时（<code>T[6]</code> 变为 0），产生看门狗复位。"</p></blockquote>
+<p>🟢 <strong>确证</strong>（WWDG 的"不能关"，参考手册 <strong>第 344 页 24.3.2</strong>）：</p>
+<blockquote class=""><p>"通过设置 <code>WWDG_CR</code> 寄存器的 <code>WDGA</code> 位，WWDG 模块被 enable，然后<strong>不能被 disable 掉，除非复位发生</strong>。"</p></blockquote>
+<h3 id="②-它要解决什么问题-没有它会怎样-8">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-8">#</a></h3>
+<p>先把"独立"这两个字的物理含义讲透：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.2-1】"独立"独立在哪里 —— 时钟树视角
+
+                    ┌───────────────────────────────────┐
+                    │  HSI（内部高速 RC，4/8/16/22.12/24MHz）│
+                    └───────────────┬───────────────────┘
+                                    │
+                              ┌─────▼─────┐
+                              │   PLL     │  ×2
+                              └─────┬─────┘
+                                    │
+                            SYSCLK = 48MHz
+                                    │
+                     ┌──────────────┼───────────────┐
+                     │              │               │
+                  AHB DIV1      APB1 DIV1       （内核）
+                     │              │
+                     │        ┌─────▼──────┐
+                     │        │   PCLK1    │
+                     │        │   48MHz    │
+                     │        └─────┬──────┘
+                     │              │
+                     │        ┌─────▼──────────────┐
+                     │        │  ★ WWDG  ←挂在这里  │
+                     │        │  t = tPCLK × 4096  │
+                     │        │        × 2^WDGTB    │
+                     │        │        × (T[5:0]+1) │
+                     │        └────────────────────┘
+                     │        主时钟没了 ⇒ WWDG 也停了 ⇒ **救不了**
+                     │
+   ┌─────────────────▼──────────────────┐
+   │  LSI（内部低速 RC，32.768kHz）        │  ← 与 HSI/PLL 完全不同的振荡器
+   │  · HSI/PLL 关掉它也开着              │
+   │  · stop 模式下仍可工作               │
+   └─────────────────┬──────────────────┘
+                     │
+             ┌───────▼───────────────┐
+             │  ★ IWDG  ←挂在这里     │
+             │  超时 = 预分频 × 重载  │
+             │         ÷ LSI频率      │
+             └───────────────────────┘
+             HSI/PLL 全乱 ⇒ IWDG 照数 ⇒ **能救**</pre></div>
+<p>🟢 <strong>确证</strong>：参考手册 <strong>第 55 页 表 6-1</strong> 明确列出 "Stop 模式：PLL、HSI 和 HSE 被关闭 …… <strong>LSI、LSE、LPTIMER、RTC、IWDG 可由软件配置是否工作</strong>"。 <code>bsp_pn298</code> 之外，<code>main.c:152</code> 的注释也点明了这一层： "<code>LSIState = RCC_LSI_ON;  /* LSI 约 32.768kHz：看门狗 IWDG 的时钟源 */"</code> 而 <code>main.c:129</code> 只打开了 <code>HSI | LSI</code>（HSE、LSE 都是 OFF）。</p>
+<p>⇒ <strong>这就是"IWDG 救得了时钟都乱了的场面、WWDG 救不了"的硬件根据</strong> 🟢。 注意这<strong>不是"哪个更好"的问题</strong>：WWDG 的价值在别处（见下）。</p>
+<p><strong>"窗口"看门狗为什么叫"窗口"</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.2-2】窗口看门狗：喂太早也是错
+
+   计数器值
+     3Fh ┤█                      ← 上电初值 / 喂狗后重装到这里
+         │ ██
+         │   ███
+         │      ████
+         │          █████
+     W   ┤───────────────█████████  ← 窗口值 W[6:0]（软件设定）
+         │  ▲                 ███
+         │  │                     ████
+     40h ┤──┼──────────────────────────████  ← 计到 40h 会产生 EWI 提前唤醒中断
+         │  │                              │
+     3Fh ┤──┼──────────────────────────────█████ ★ 复位
+         └──┴──────────────────────────────────────► t
+            │
+            │  ← 这一整段叫"喂狗窗口"：
+            │     只有 CNT 落在 [W, 3Fh] 之间喂狗才被允许
+            │
+     ❌ 在 W 以上（计数还很大）就喂 ⇒ **判为"喂得太早" ⇒ 复位**
+     ❌ 在 3Fh 以下（已经太晚）喂 ⇒ 计到 3Fh 已经复位了
+
+  ⇒ 它约束的是"**程序推进的节奏**"，不是"程序有没有在跑"：
+     如果一个循环该花 3ms，它却在 0.3ms 就转完一圈，
+     说明**它跳过了本该执行的步骤** —— IWDG 完全看不出这种故障（反正它在喂狗），
+     WWDG 能看出（"你喂得太早了"）。
+  🟡 上面这句"为什么需要约束节奏"是设计动机的合理推断；
+     手册第 345 页只给出机制（窗口 + 复位条件），没有给出应用场景的动机说明。</pre></div>
+<h3 id="③-我该怎么理解它-图-3">③ 我该怎么理解它（图）<a class="anchor" href="#③-我该怎么理解它-图-3">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.2-3】IWDG / WWDG 四方对照（全部来自手册页）
+
+  ┌────────────┬──────────────────────────┬──────────────────────────────┐
+  │ 项目        │ IWDG（独立看门狗）        │ WWDG（窗口看门狗）             │
+  ├────────────┼──────────────────────────┼──────────────────────────────┤
+  │ 时钟源      │ LSI 32.768kHz（独立振荡器）│ PCLK（来自 HSI→PLL→APB1）     │
+  │ 手册页      │ 第 339 页                 │ 第 345 页                     │
+  ├────────────┼──────────────────────────┼──────────────────────────────┤
+  │ 超时公式    │ 预分频 × 重载 ÷ f_LSI     │ tPCLK × 4096 × 2^WDGTB        │
+  │            │ （本工程 32×512÷32768）    │   × (T[5:0]+1)                │
+  ├────────────┼──────────────────────────┼──────────────────────────────┤
+  │ 计数器宽度  │ 12 位（最大 4095）         │ 7 位（T[6:0]，最大 7Fh）       │
+  ├────────────┼──────────────────────────┼──────────────────────────────┤
+  │ 最长超时    │ 可到秒级（预分频最大 256） │ 受 7 位限制，**上限小得多**     │
+  ├────────────┼──────────────────────────┼──────────────────────────────┤
+  │ 喂狗限制    │ 无（随时可喂）             │ **有窗口**：早了也复位          │
+  ├────────────┼──────────────────────────┼──────────────────────────────┤
+  │ 主时钟故障  │ ✅ 照常工作                │ ❌ 跟着一起停                  │
+  │ stop 模式   │ ✅ 可工作（手册第 55 页）   │ ❌ PCLK 停 ⇒ 停                │
+  ├────────────┼──────────────────────────┼──────────────────────────────┤
+  │ 能发现      │ 主循环不推进               │ 主循环"节奏错乱"/跳步          │
+  │ 发现不了    │ 主循环在跑但逻辑全错        │ 时钟异常导致的整体停摆          │
+  ├────────────┼──────────────────────────┼──────────────────────────────┤
+  │ 本工程      │ ✅ 开启（WDG.c）           │ ❌ 关闭                        │
+  └────────────┴──────────────────────────┴──────────────────────────────┘</pre></div>
+<blockquote class="warn"><p>⚠️ <strong>正文 5.2 表格的最后一列写的是</strong>"WWDG …… 见 <code>py32f0xx_hal_conf.h</code> 的使能宏"。
+这与代码不符：<code>py32f0xx_hal_conf.h:101</code> 是
+<code>/* #define HAL_WWDG_MODULE_ENABLED */</code> —— <strong>被注释掉了</strong>，
+<code>:52</code> 也明确写着"关闭的模块：CRC、COMP、<strong>WWDG</strong>、LPTIM、RTC、LED、EXTI"。
+即本工程<strong>没有开启 WWDG</strong>。这条列在第 5 节的"事实问题"清单里。</p></blockquote>
+<p><strong>关于"最长超时"这一行的补充计算</strong>（🟢 可验算）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">IWDG 最长超时：预分频最大 256、重载最大 4095 ⇒ 256 × 4095 ÷ 32768 ≈ 31.99 秒
+WWDG 最长超时：WDGTB 最大 3（÷8）、T[5:0] 最大 63
+              假设 PCLK = 48MHz ⇒ tPCLK = 1/48 µs
+              t ≈ (1/48) × 4096 × 8 × 64 µs ≈ 43.7 ms
+   ⇒ WWDG 的手册公式单位是 ms 的话，PCLK 越低超时越长；
+     但即便 PCLK 降到 1MHz，也只到约 2.1 秒。
+   ⇒ 【结论】WWDG 天生是"短超时、高精度"的狗；
+      IWDG 天生是"长超时、低精度"的狗。这个差别来自 7 位 vs 12 位 + 时钟源。
+   🟡 WWDG 那两个数字是按手册公式代入算的，不是实测；
+      要精确值请按板上实际 PCLK 算。</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表-8">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-8">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>时钟源</th><th>能发现的故障</th><th>误复位风险</th><th>实现成本</th></tr></thead><tbody><tr><td><strong>IWDG</strong>（本工程）</td><td>LSI（±3%~±20%）</td><td>主循环不推进、时钟全乱、stop 模式异常</td><td><strong>低</strong>（超时长、余量大，指标不准反而更"宽容"）</td><td>最低（HAL 一次调用）</td></tr><tr><td><strong>WWDG</strong></td><td>PCLK</td><td>主循环节奏错乱/跳步</td><td><strong>高</strong>（窗口算错、动一次系统时钟就要重算）</td><td>低，但<strong>调试成本高</strong></td></tr><tr><td><strong>IWDG + WWDG 同时开</strong></td><td>两个独立源</td><td>两类都覆盖</td><td>需同时满足两个约束，误复位风险叠加</td><td>中</td></tr><tr><td><strong>外部看门狗芯片</strong></td><td>芯片自己的 RC/晶振</td><td>上述全部 + <strong>MCU 完全死掉（连 LSI 都不振）</strong></td><td>低</td><td>高（加料、加板面积、加一根喂狗线）</td></tr><tr><td><strong>RTOS 多任务打卡 + IWDG</strong></td><td>LSI</td><td>哪一类任务卡了<strong>都能定位</strong></td><td>低（可调阈值与降级策略）</td><td>中高（要设计打卡表与降级策略）</td></tr></tbody></table></div>
+<p><strong>本工程用的是</strong>：<strong>只开 IWDG</strong>，理由在 <code>WDG.c:18-20</code> 写得很直白：</p>
+<blockquote class=""><p>"（1）为什么选 IWDG 而不是 WWDG：IWDG 用芯片内部的低速 RC 振荡器 LSI（约 32.768kHz）
+计时，<strong>即使主时钟 HSI/PLL 配置错了、跑飞了，它照样计数</strong>，所以能救回'时钟都乱了'的场面；
+WWDG 挂在 APB 总线上，<strong>主时钟没了它也跟着停，救不了</strong>。"</p></blockquote>
+<p>✅ 这段注释与手册第 339 页 / 第 345 页完全一致，是<strong>本工程里少见的一处"注释与手册严丝合缝"</strong>。</p>
+<hr>
+<h2 id="5-3-超时时间怎么算-0-5-秒背后的-20">5.3　超时时间怎么算：0.5 秒背后的 ±20%<a class="anchor" href="#5-3-超时时间怎么算-0-5-秒背后的-20">#</a></h2>
+<p>这一节回答一个问题：<strong><code>32 × 512 / 32768 = 0.5 秒</code> 这个算式成立吗？它精确吗？余量到底怎么算？</strong></p>
+<h3 id="①-它是怎么出现的-10">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-10">#</a></h3>
+<p>🟢 <strong>确证</strong>（本机代码，<code>WDG.c:63-80</code>）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">void WDG_init(void)</span></div><div class="line"><span class="ln">2</span><span class="lc">{</span></div><div class="line"><span class="ln">3</span><span class="lc">    IwdgHandle.Instance = IWDG;</span></div><div class="line"><span class="ln">4</span><span class="lc">    IwdgHandle.Init.Prescaler = IWDG_PRESCALER_32;   /* WDG.c:67  预分频 32 */</span></div><div class="line"><span class="ln">5</span><span class="lc">    IwdgHandle.Init.Reload    = (512);               /* WDG.c:70  重装值 512 */</span></div><div class="line"><span class="ln">6</span><span class="lc">    if (HAL_IWDG_Init(&amp;IwdgHandle) != HAL_OK)        /* WDG.c:76  内部写 0xCCCC 启动 */</span></div><div class="line"><span class="ln">7</span><span class="lc">    {</span></div><div class="line"><span class="ln">8</span><span class="lc">        printf("看门狗初始化失败");</span></div><div class="line"><span class="ln">9</span><span class="lc">    }</span></div><div class="line"><span class="ln">10</span><span class="lc">}</span></div></pre></div>
+<p>🟢 <strong>确证</strong>（HAL 层）：<code>py32f0xx_hal_iwdg.c:173</code> 的 <code>__HAL_IWDG_START(hiwdg)</code> 就是写 <code>IWDG_KEY_ENABLE = 0xCCCC</code>（<code>py32f0xx_hal_iwdg.h:166</code>）， 即 <code>WDG.c:52-53</code> 注释所说的"③ 写 <code>IWDG_KR</code> 的 <code>0xCCCC</code>（启动），此时计数器立刻开始往下走"。</p>
+<p>🟢 <strong>确证</strong>（LSI 频率）：<code>py32f0xx_hal_conf.h:139</code> <code>#define LSI_VALUE ((uint32_t)32768)</code>； 《PY32F030 datasheet Rev.1.4》<strong>第 1 页</strong>产品特性："内部 <strong>32.768KHz</strong> RC 振荡器(LSI)"； <strong>第 7 页</strong> 3.4 节同样列出。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样-9">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-9">#</a></h3>
+<p>公式本身只有一行，真正的难点在<strong>"代进去的那个 LSI 频率到底有多准"</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.3-1】超时公式的推导（为什么是"预分频 × 重载 ÷ 频率"）
+
+  ① LSI 是一个 32768Hz 的方波（周期 1/32768 s ≈ 30.5µs）
+
+  ② 预分频器把它除以 32：
+        f_counter = 32768 ÷ 32 = 1024 Hz
+        ⇒ 计数器每滴答一次 = 1/1024 s ≈ 0.977 ms   ★记住这个数
+
+  ③ 计数器从重载值开始往下数，数到 0 溢出：
+        需要的滴答次数 = 512 次
+        （注意：12 位计数器写 512 是合法的；手册没写"写 N 就是 N 次"，
+          这里有 ±1 次的边界不确定性，相对 512 可忽略）
+
+  ④ 总时间 = 512 × (1/1024) s = 0.5 s   ✅
+
+  写成一条通式：
+        T_dog = 预分频 × 重载 ÷ f_LSI
+              = 32 × 512 ÷ 32768
+              = 16384 ÷ 32768
+              = 0.5 s（精确等于 0.5，因为 16384 = 32768/2）</pre></div>
+<p><strong>关键在这一步：<code>f_LSI</code> 不是 32768，而是 32768 ± 一大堆。</strong></p>
+<p>🟢 <strong>确证</strong>（LSI 精度，《PY32F030 datasheet Rev.1.4》<strong>第 44 页 表 6-16</strong>）：</p>
+<div class="tablewrap"><table><thead><tr><th>参数</th><th>测试条件</th><th>偏差</th></tr></thead><tbody><tr><td><code>fLSI</code> 频率</td><td>TA = 25°C，VCC = 3.3V</td><td><strong>±3%</strong></td></tr><tr><td>频率温度漂移</td><td>VCC = 1.6~5.5V，TJ = 0~85°C</td><td><strong>±10%</strong></td></tr><tr><td>频率温度漂移</td><td>VCC = 1.6~5.5V，TJ = −40~85°C</td><td><strong>±20%</strong></td></tr></tbody></table></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.3-2】同一份配置，在不同温度下"狗"咬人的时间完全不同
+
+   标称：            │◄────────────── 0.500 s ──────────────►│
+                     │                                       │
+   常温 25°C ±3%：   │◄──────────── 0.485 ~ 0.515 ──────────►│
+                     │                                       │
+   0~85°C  ±10%：    │◄──────── 0.450 ~ 0.550 ──────────►│
+                     │                                       │
+   −40~85°C ±20%：   │◄──── 0.400 ~ 0.600 ────►│
+                     │                        │
+                     │                        │
+                 ────┴────────────────────────┴────────────────────────
+                     0.40s                  0.60s
+
+   ⚠️ 注意方向性：
+      · LSI **偏快** ⇒ 计数快 ⇒ 超时**变短** ⇒ 最容易误复位 ⇒ **这才是要防的边界**
+      · LSI **偏慢** ⇒ 超时变长 ⇒ 卡死后复位得晚 ⇒ 安全性下降，但不会误复位
+      ⇒ **算余量只能用 0.40s（快的那一侧），不能用 0.5s，也不能用 0.60s。**</pre></div>
+<h3 id="③-我该怎么理解它-图-余量怎么算">③ 我该怎么理解它（图）—— 余量怎么算<a class="anchor" href="#③-我该怎么理解它-图-余量怎么算">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.3-3】喂狗周期 vs 狗的最坏超时：时间轴上的余量
+
+   喂狗点（main.c:411-419，_cnt100ms &gt;= 100 分支）
+
+   0        101ms      202ms      303ms      404ms      505ms
+   │          │          │          │          │          │
+   ▼          ▼          ▼          ▼          ▼          ▼
+   ●──────────●──────────●──────────●──────────●──────────●   ← 喂狗时刻
+   │◄─ 101ms ─►│
+
+   狗的"最坏最短"超时 = 0.400 s = 400ms
+                        │
+   ├────────────────────┼───────────────────────────────────────►
+   0                   400ms
+
+   ⇒ 最坏情况下，喂狗 3 次（303ms）之后还有 400 − 303 = 97ms 的余量；
+     第 4 次喂狗（404ms）时会**已经复位**。
+
+   ✅ 正确的余量算法：
+        余量 = 最坏最短超时 ÷ 实际喂狗周期 = 400ms ÷ 101ms ≈ 3.96 倍
+        ⇒ 也就是说：**连续丢掉约 3 次喂狗机会才会复位**。
+
+   ⚠️ 两个常见的错算法：
+        错 1：0.5s ÷ 100ms = 5 倍          ← 用标称值当最坏值，太乐观
+        错 2：0.6s ÷ 101ms ≈ 5.9 倍        ← 用了 LSI 偏慢的那一侧，方向错了
+
+   ⇒ 本文件采用：**400 ÷ 101 ≈ 3.96 倍，即"约 4 倍"**。
+     （正文 5.3 写的是"约 101ms 一次 → 余量约 4 倍"，✅ 一致；
+       但同一节上面又写"0.5s 给了 5 倍余量"，前后口径不一 —— 见第 5 节。）</pre></div>
+<p><strong>"实际喂狗周期是 101ms 不是 100ms"这件事也要算进去</strong>（🟢 可验算）：</p>
+<p><code>main.c:371-423</code> 的主循环用 <code>if(_cnt100ms &gt;= 100) { _cnt100ms = 0; ... }</code>。 <code>_cnt100ms</code> 由 TIM17 的 1ms 中断累加（<code>main.c:195-197</code> 注释）。 判断条件是"<strong>&gt;= 100 然后清零</strong>"，而中断仍在同一毫秒内继续 +1， 所以<strong>实际周期是 N+1 ms</strong>。<code>main.c:365-367</code> 的注释自己就写明了这一点：</p>
+<blockquote class=""><p>"所以实际周期是 N+1 ms（例如 <code>_cnt4ms&gt;=4</code> 实际约 5ms、<strong><code>_cnt100ms&gt;=100</code> 实际约 101ms</strong>、
+<code>_cnt1s&gt;=1000</code> 实际约 1.001s）"</p></blockquote>
+<p>⇒ 用 101ms 而不是 100ms，是<strong>以代码事实为准</strong>的正确做法 ✅。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.3-4】"狗该设多长"这件事的三方权衡
+
+   超时设得太短                    超时设得合适                 超时设得太长
+   ─────────────────             ─────────────────           ─────────────────
+   偶发长任务误复位               约 4~5 倍余量                卡死后很久才恢复
+   · 一次 Flash 擦写              容忍：                        · 0.5s 的狗 → 5s 的狗
+     会挂起 CPU 取指几十 ms        · 4ms 姿态周期的抖动            飞机已经掉下来了
+   · 传感器初始化等 2ms            · 一次 Flash 擦写             · 现场表现为"偶发死机"
+   · 表现为"无缘无故重启"          · 偶发的一次长循环             （其实每次都复位了，
+   ⇒ 现场最难查的一类问题                                         只是你看见时已经重启完）</pre></div>
+<p><strong>"Flash 擦写会不会误复位"这个具体担忧，代码里给了答案</strong>：</p>
+<p>🟢 <strong>确证</strong>：<code>WDG.c:23-24</code> 与 <code>bsp_delay.c</code> 的说明都提到 "一次 Flash 擦写（<strong>Flash 擦除会挂起 CPU 取指但不影响 IWDG</strong>）"。 🟡 <strong>推理</strong>：擦除期间 CPU 取指被挂起 ⇒ <strong>主循环不推进 ⇒ 不会喂狗</strong>。 所以 Flash 擦写的耗时<strong>必须 &lt; 狗的余量</strong>，否则会误复位。 本工程把 Flash 写放在两个位置：</p>
+<ul><li><code>deal_pack.c:297</code> <code>flash_write(FLASH_USER_START_ADDR)</code> —— 在对码分支里。</li></ul>
+<p>⚠️ <strong>但此时 <code>WDG_init()</code>（<code>main.c:347</code>）还没执行</strong> ⇒ 狗还没启动 ⇒ <strong>不会误复位</strong> ✅</p>
+<ul><li><code>flash.c</code> 的其它写入点（传感器校准完成）—— 在主循环运行期间。</li></ul>
+<p>⚠️ 这一处<strong>才是真正要检查的地方</strong>：校准时的整页擦除耗时必须小于约 400ms 的余量。 🟠 本工程没有给出擦除耗时的实测值，<strong>请自行实测</strong>（方法：在擦除前后读 <code>HAL_GetTick()</code>， 通过串口打印）。</p>
+<h3 id="④-实现方法有哪些-取舍对照表-9">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-9">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>超时计算</th><th>精度来源</th><th>适合的余量</th><th>代价</th></tr></thead><tbody><tr><td><strong>IWDG + LSI（本工程）</strong></td><td><code>预分频 × 重载 ÷ 32768</code></td><td><strong>±3%（常温）/ ±20%（全温区）</strong></td><td>需要 <strong>4~10 倍</strong>（按最坏值算）</td><td>余量大 ⇒ 卡死后恢复慢；超时值<strong>不可精确规划</strong></td></tr><tr><td><strong>IWDG + 外部 32.768kHz 晶振</strong>（若芯片支持 LSE 给 IWDG）</td><td>同上，但除以晶振频率</td><td>±20ppm 量级</td><td><strong>1.5~3 倍</strong>就够</td><td>多一颗晶振；本板<strong>没有</strong> 32.768kHz 晶振（<code>main.c:142</code> 注释 + 事实清单）</td></tr><tr><td><strong>WWDG + PCLK</strong></td><td><code>tPCLK × 4096 × 2^WDGTB × (T[5:0]+1)</code></td><td>取决于系统时钟源。本工程系统时钟来自 HSI ⇒ <strong>HSI 的偏差</strong></td><td>需要 1.5~2 倍 + 窗口余量</td><td>主时钟一变就要重算；且救不了时钟故障</td></tr><tr><td><strong>外部看门狗芯片</strong></td><td>由芯片手册的 RC/晶振决定</td><td>通常 ±10%~±30%（RC 型）</td><td>3~5 倍</td><td>成本、面积</td></tr><tr><td><strong>本工程实测校准</strong></td><td>写一段"只喂一次狗然后死循环"的程序，用串口计时看多久复位</td><td><strong>实测值</strong>，消除一切推算误差</td><td>按实测最坏值算</td><td>要在<strong>多个温度点</strong>各测一次；量产时还要留批次余量</td></tr></tbody></table></div>
+<blockquote class=""><p><strong>✅ 这里有一条比任何公式都可靠的做法</strong>（正文 5.3 也提到了）：
+<strong>写一个"只喂一次狗然后死循环"的程序，用串口/示波器计时，看它多久复位。</strong>
+这是唯一能绕开"LSI 精度表怎么读""预分频是否有 ±1"这类问题的办法。
+代价是必须在<strong>你要飞的最低/最高温度</strong>下各测一次 —— 因为 ±20% 那一行就是这么来的。</p></blockquote>
+<hr>
+<h2 id="5-4-喂狗位置的选择-为什么-在中断里喂狗-是错的">5.4　喂狗位置的选择：为什么"在中断里喂狗"是错的<a class="anchor" href="#5-4-喂狗位置的选择-为什么-在中断里喂狗-是错的">#</a></h2>
+<p>这一节回答一个问题：<strong>代码放在哪里，决定了看门狗是"安全网"还是"装饰品"。</strong></p>
+<h3 id="①-它是怎么出现的-11">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-11">#</a></h3>
+<p>🟢 <strong>确证</strong>（本机代码，唯一的喂狗点）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">// main.c:411-423</span></div><div class="line"><span class="ln">2</span><span class="lc">if(_cnt100ms &gt;= 100)</span></div><div class="line"><span class="ln">3</span><span class="lc">{</span></div><div class="line"><span class="ln">4</span><span class="lc">        _cnt100ms=0;</span></div><div class="line"><span class="ln">5</span><span class="lc">        HAL_IWDG_Refresh(&amp;IwdgHandle);		//喂狗</span></div><div class="line"><span class="ln">6</span><span class="lc">        /* 喂狗时机：放在主循环末尾附近、所有控制任务都跑完之后。</span></div><div class="line"><span class="ln">7</span><span class="lc">           这样只要“10ms 收遥控 / 4ms 特技 / 定高 / 姿态控制”这条链路卡死，</span></div><div class="line"><span class="ln">8</span><span class="lc">           主循环就到不了这一句，狗就会复位芯片。 */</span></div><div class="line"><span class="ln">9</span><span class="lc">        Led_Process();			//灯光刷新</span></div><div class="line"><span class="ln">10</span><span class="lc">}</span></div></pre></div>
+<p>🟢 <strong>确证</strong>（喂狗点在主循环中的相对位置，<code>main.c:371-489</code> 的执行顺序）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.4-1】主循环一圈里各任务与喂狗点的相对位置
+
+   while(1) {                                    main.c:371
+       if(_cnt10ms &gt;= 10) {                      main.c:374
+           decode_pack();        ← 收遥控        main.c:376   ★射频+协议解析
+           annexCode();
+           _cnt10ms = 0;
+       }
+       if(_cnt4ms &gt;= 4) {                        main.c:390
+           Mode_Controler();     ← 空翻状态机     main.c:394
+           _cnt4ms = 0;
+       }
+       altitude_ctrl();          ← 定高 2.1~3.9ms  main.c:399
+       flight_ctrl();            ← 姿态 2.5~3.4ms  main.c:402
+       // ------------------------------------------------
+       if(_cnt100ms &gt;= 100) {                    main.c:411
+           _cnt100ms = 0;
+           HAL_IWDG_Refresh();   ← ★★ 唯一的喂狗点   main.c:414
+           Led_Process();
+       }
+       // ------------------------------------------------
+       if(rcCommand[THROTTLE]&lt;1200) { ... }       main.c:424
+       if(_cnt1s&gt;=1000) { get_voltage(); }       main.c:445
+       if (HAL_GetTick()-connection_nowtime&gt;5000){ ... }  main.c:462  失联检测
+   }
+
+   ★ 喂狗点在"所有控制任务之后"，含义是：
+     "10ms 收遥控 / 4ms 特技 / 定高 / 姿态控制"这条链路上**任何一环卡死**，
+     都到不了喂狗那一句。</pre></div>
+<h3 id="②-它要解决什么问题-没有它会怎样-10">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-10">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.4-2】四种喂狗位置，只有一种是对的
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ ❌ 位置 A：定时器中断里喂                                                  │
+  │                                                                          │
+  │    void HAL_TIM_PeriodElapsedCallback(TIM_TypeDef *TIMx) {   // 1ms 一次   │
+  │        if (TIMx == TIM17) {                                              │
+  │            _cnt100ms++;                                                  │
+  │            HAL_IWDG_Refresh(&amp;IwdgHandle);   // ← 【错】                   │
+  │        }                                                                 │
+  │    }                                                                     │
+  │                                                                          │
+  │    主循环 { while(某个标志永不为真); }    ← 卡死                          │
+  │                                                                          │
+  │    结果：中断由硬件独立触发，**照常发生** ⇒ 狗永远被喂 ⇒ 永不复位         │
+  │    ⇒ 你花钱买的安全网，被自己剪断了。这**不是"效果差一点"，是"完全无效"**。│
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ ❌ 位置 B：主循环开头喂                                                    │
+  │                                                                          │
+  │    while(1) {                                                            │
+  │        HAL_IWDG_Refresh();   // ← 先喂了再说                             │
+  │        decode_pack();        // ← 这一步卡死                              │
+  │        flight_ctrl();                                                    │
+  │    }                                                                     │
+  │                                                                          │
+  │    结果：每圈**先喂狗再干活**。如果某个任务固定耗时接近超时，             │
+  │    你能"多活一圈"，但**卡死的那一次依然会咬** —— 所以功能上不算错。      │
+  │    ⚠️ 真正的坏处：**它把"整圈耗时"算进了余量，但把"单个任务耗时"也算了进去**│
+  │    一旦某个任务偶发变慢（比如 Flash 擦写 200ms），就更容易误复位。        │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ ✅ 位置 C：主循环末尾（所有任务之后）—— **本工程的做法**                   │
+  │                                                                          │
+  │    while(1) {                                                            │
+  │        decode_pack();                                                    │
+  │        flight_ctrl();                                                    │
+  │        HAL_IWDG_Refresh();   // ← 只有全部干完才喂                        │
+  │    }                                                                     │
+  │                                                                          │
+  │    结果：喂狗 = "这一圈完整跑完了"的证明。任何一步卡死都咬。              │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ ✅✅ 位置 D：多任务各自打卡（RTOS 做法）                                   │
+  │                                                                          │
+  │    void watchdog_task(void) {          // 独立优先级最低的任务            │
+  │        if (taskA_alive &amp;&amp; taskB_alive &amp;&amp; taskC_alive) {                  │
+  │            HAL_IWDG_Refresh();                                           │
+  │        }                                                                 │
+  │        taskA_alive = taskB_alive = taskC_alive = 0;   // 清打卡          │
+  │    }                                                                     │
+  │                                                                          │
+  │    结果：**能定位到是哪个任务卡了**（看哪个打卡位没被置起来）。            │
+  │    代价：要设计打卡表、要保证 watchdog_task 自己不被饿死。                │
+  └──────────────────────────────────────────────────────────────────────────┘</pre></div>
+<p><strong>为什么"中断里喂狗"这个错误特别值得单列</strong> —— 因为它<strong>不会以故障的形式表现出来</strong>。 代码能编过、能跑、灯正常闪、遥控正常响应，看门狗看起来"工作正常"。 <strong>只有在真的卡死那天，你才会发现它一点用都没有。</strong> 这是嵌入式里最典型的"<strong>沉默的失效</strong>"。</p>
+<p><strong>本工程里正好有一个会卡死的真实位置</strong>（🟢 确证）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.4-3】本工程里的无超时死等（反面教材，只记录不改）
+
+  bsp_pn298.c:965   while(!((bsp_pn298_read_reg(RF_STATUS) &amp; TX_DS_FLAG) == TX_DS_FLAG));
+                    ↑ 等"发送完成"标志，**没有超时、没有重试上限**
+
+  bsp_pn298.c:946-947 的注释自己也承认：
+      "【注意】`while(!(...))` 是死等，一旦芯片没发出（例如没使能 CE…）"
+
+  什么时候会踩到：对端不在（遥控器关机 / 被建筑挡住 / 模式配错）。
+  ⇒ 主循环卡在这里 ⇒ 到不了 main.c:414 的喂狗 ⇒ **约 0.4~0.5s 后复位**。
+
+  ⇒ 这恰好**反向证明了"喂狗点选在主循环"是对的**：
+     如果喂狗点选在中断里，这里卡死就**永远没人救**。</pre></div>
+<h3 id="③-我该怎么理解它-图-复位源识别与调试">③ 我该怎么理解它（图）—— 复位源识别与调试<a class="anchor" href="#③-我该怎么理解它-图-复位源识别与调试">#</a></h3>
+<p><strong>第一个工具：<code>RCC_CSR</code>（复位控制/状态寄存器）—— 判断"这次复位到底是谁干的"</strong></p>
+<p>🟢 <strong>确证</strong>：参考手册 <strong>第 82 页</strong>（<code>RCC_CSR</code> 寄存器说明）列出了各路复位标志：</p>
+<div class="tablewrap"><table><thead><tr><th>位</th><th>名称</th><th>含义</th></tr></thead><tbody><tr><td>30</td><td><code>WWDGRSTF</code></td><td>Window WDG 复位标志（<code>RMVF</code> 置 1 会清零）</td></tr><tr><td>29</td><td><code>IWDGRSTF</code></td><td><strong>IWDG 复位标志</strong>（<code>RMVF</code> 置 1 会清零）</td></tr><tr><td>28</td><td><code>SFTRSTF</code></td><td>软复位标志</td></tr><tr><td>27</td><td><code>PWRRSTF</code></td><td>BOR/POR/PDR 复位标志</td></tr><tr><td>26</td><td><code>PINRSTF</code></td><td>外部 NRST 管脚复位标志</td></tr><tr><td>25</td><td><code>OBLRSTF</code></td><td>Option byte loader 复位标志</td></tr><tr><td>23</td><td><code>RMVF</code></td><td>需通过软件置 1 来清零 [30:25] 的复位标志</td></tr></tbody></table></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.4-4】现场排查"为什么重启了"的标准动作
+
+   设备反复重启
+        │
+        ▼
+   上电后第一件事：读 RCC_CSR 的复位标志位
+        │
+        ├── IWDGRSTF = 1  ──► **是看门狗咬的** ⇒ 主循环卡死了
+        │                       ⇒ 下一步：在主循环各任务之间打点计数，
+        │                          看哪个任务的计数器没涨
+        │
+        ├── PINRSTF  = 1  ──► 是外部 NRST 引脚 ⇒ 硬件/按键/电源抖动
+        │
+        ├── PWRRSTF  = 1  ──► 掉电/欠压 ⇒ **查电池与供电**（不是软件问题！）
+        │
+        ├── SFTRSTF  = 1  ──► 软件主动复位 ⇒ 查 NVIC_SystemReset() 调用点
+        │
+        └── 全是 0    ──► 首次上电，或标志已被清过（RMVF）
+                            ⇒ 记得**读完之后不要马上清**，先把值打到串口
+
+   ⚠️ 本工程**没有读 RCC_CSR 的代码**（搜不到 RCC_CSR / IWDGRSTF 的使用）。
+      也就是说：现在遇到"设备反复重启"，**你无法从固件里知道是不是狗咬的**。
+      加这段代码只需要几行、几乎没有成本，是性价比最高的一处改进建议。
+      （本文件只建议，不修改代码。）</pre></div>
+<p><strong>第二个工具：<code>DBG_IWDG_STOP</code> —— 调试时狗要不要停下来</strong></p>
+<p>🟢 <strong>确证</strong>：参考手册 <strong>第 340 页 23.3.4（调试模式）</strong> 原文：</p>
+<blockquote class=""><p>"本功能为系统支持 DBG_MCU 时才存在。如果 CPU 进入调试模式，<strong>IWDG 继续计数还是进入 stop 模式，
+取决于 DBG 模块中 <code>DBG_IWDG_STOP</code> 的配置</strong>。"</p></blockquote>
+<p>🟢 <strong>确证</strong>：参考手册 <strong>第 428 页</strong>（DBG 寄存器）给出的两个位：</p>
+<div class="tablewrap"><table><thead><tr><th>位</th><th>名称</th><th>含义</th></tr></thead><tbody><tr><td>12</td><td><code>DBG_IWDG_STOP</code></td><td>当 CPU 停止时，<strong>IWDG 计数器的时钟控制位</strong>：<strong>0 = 使能；1 = 不使能</strong></td></tr><tr><td>11</td><td><code>DBG_WWDG_STOP</code></td><td>当 CPU 停止时，WWDG 计数器的时钟控制位：0 = 使能；1 = 不使能</td></tr></tbody></table></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.4-5】单步调试时"被狗咬"是怎么回事
+
+   你按下"暂停"（CPU 停止）
+        │
+        ├── DBG_IWDG_STOP = 0（复位默认）──► IWDG **继续计数**
+        │        ⇒ 你在断点上看变量看了 1 秒
+        │        ⇒ 狗数到 0 ⇒ **芯片复位**
+        │        ⇒ 现象：单步调试时程序莫名其妙重启、断点丢失
+        │
+        └── DBG_IWDG_STOP = 1 ───────────► IWDG 时钟停
+                 ⇒ 调试期间狗不咬人
+                 ⚠️ 但**发布固件必须把它设回去**：
+                    否则某些"CPU 长期停住"的故障模式（比如 WFI 死锁）也失去了保护</pre></div>
+<blockquote class="warn"><p>⚠️ <strong>本工程没有配置 <code>DBG_IWDG_STOP</code></strong>，也就是说它处于<strong>复位默认 0 = "IWDG 继续计数"</strong>。
+⇒ <strong>用调试器单步调试本工程时，狗是活的，随时会咬。</strong>
+这就是为什么 <code>WDG_init()</code> 被放在 <code>main.c:347</code> —— <strong>初始化最后一句话</strong>（见下）。</p></blockquote>
+<p><strong>第三个工具：启动时机 —— 为什么 <code>WDG_init()</code> 必须在最后</strong></p>
+<p>🟢 <strong>确证</strong>（本机代码）：<code>main.c:347</code> 是整段初始化里倒数第二个动作 （之后就是主循环）；<code>main.c:47-49</code> 的注释给出了理由：</p>
+<blockquote class=""><p>"（3）看门狗在初始化最后才启动（<code>WDG_init()</code>），喂狗又放在主循环 100ms 分支里：
+<strong>初始化里的 Flash 擦写、传感器上电等待都会超过狗的超时时间，先起狗会被自己咬。</strong>
+详见 user/WDG.c 的文件头说明。"</p></blockquote>
+<p>⇒ 这条正好回答了 5.1 提出的那个代价："既然不能关，那启动时机就必须一次选对"。 本工程的选择是"<strong>最后一个起狗</strong>"，而<strong>不是</strong>"起狗然后到处喂"。 这两者的差别是原则性的：后者要求你在每一个可能耗时的初始化里都记得喂狗， <strong>漏一个就是一次诡异的重启</strong>；前者把这件事变成"只有一处决策"。</p>
+<h3 id="④-实现方法有哪些-取舍对照表-10">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-10">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>喂狗点</th><th>能发现什么</th><th>误复位风险</th><th>何时用</th></tr></thead><tbody><tr><td><strong>中断里喂</strong></td><td>定时器 ISR</td><td><strong>什么也发现不了</strong>（最难查的失效）</td><td>0（因为它永远不咬）</td><td>❌ 任何时候都不要</td></tr><tr><td><strong>主循环开头喂</strong></td><td>每圈先喂</td><td>能发现卡死</td><td>中（把当圈耗时算进余量）</td><td>不推荐</td></tr><tr><td><strong>主循环末尾喂</strong></td><td>所有任务之后</td><td>主循环链路上任一环卡死</td><td>低</td><td>✅ <strong>本工程</strong>（<code>main.c:414</code>）</td></tr><tr><td><strong>多任务打卡</strong></td><td>RTOS 里最低优先级任务汇总</td><td>卡死 + <strong>卡在哪里</strong></td><td>低（阈值可调）</td><td>RTOS 系统、复杂裸机</td></tr><tr><td><strong>窗口看门狗强制</strong></td><td>必须在时间窗内喂</td><td>卡死 + <strong>节奏错乱/跳步</strong></td><td><strong>高</strong>（窗口算错/改时钟就崩）</td><td>需要顺序保证的协议栈</td></tr><tr><td><strong>外部狗 + 内部狗</strong></td><td>双路</td><td>上述全部 + MCU 完全死机</td><td>低</td><td>安全等级高的产品</td></tr></tbody></table></div>
+<p><strong>本工程用的是</strong>：<strong>主循环末尾单点喂狗（<code>main.c:414</code>）+ 狗在初始化最后启动（<code>main.c:347</code>）</strong>。</p>
+<p><strong>这一对组合带来的一个可观测结论</strong>（🟢 可验算）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 5.4-6】对码阶段（main.c:295 的 while(1)）到底会不会被狗咬？
+
+  讲清时间线：
+     main.c:227   bsp_init()
+     main.c:229   Led_Init()
+     ...
+     main.c:295   ★ 进入对码 while(1)：
+                      while(1) { Led_Process(); decode_pack(); ... }
+                      ↑ 这个循环里**没有任何喂狗语句**
+     main.c:328   flash_read(...)
+     main.c:347   ★ WDG_init()  ← 狗到这里才启动
+
+  ⇒ 对码循环在 WDG_init() **之前**执行 ⇒ **狗当时还没启动**
+  ⇒ 所以"对码期间既不喂狗、狗又已经启动 ⇒ 超过超时就不断复位、
+     表现为'对码对不上、灯一直闪'"这个担心，**在本工程里不成立**。✅
+
+  ⚠️ 正文 6.3 的"读代码时的检查点"警告的是这种情形：
+     "对码循环里如果既没有喂狗、看门狗又已经启动……"
+     —— 这是一个**通用的、正确的**排查思路，但用在本工程上会得出错误结论：
+     本工程的顺序恰好是安全的（狗在最后启）。
+     真正需要这个警告的是"先起狗、再对码"的那种写法。</pre></div>
+<hr>
+<h1 id="第-6-章-对码-配对-Pairing">第 6 章　对码 / 配对（Pairing）<a class="anchor" href="#第-6-章-对码-配对-Pairing">#</a></h1>
+<blockquote class=""><p><strong>本章主线</strong>：对码要解决的不是"能不能通"，而是"<strong>只跟我的那一台通</strong>"。
+它在技术上只是"交换两个标量（信道号 + 地址）并写进 Flash"，
+但它在<strong>流程结构</strong>上带来一个大问题：<strong>对码期间飞机不能飞，
+所以这段时间的控制流必须是"阻塞"的</strong>。这一章的三节分别讲
+<strong>为什么要对码（6.1）、本工程怎么对的（6.2）、以及那个 <code>while(1)</code> 的代价（6.3~6.4）</strong>。</p></blockquote>
+<hr>
+<h2 id="6A-主线图-对码交换了哪些东西">6A　主线图：对码交换了哪些东西<a class="anchor" href="#6A-主线图-对码交换了哪些东西">#</a></h2>
+<p>这一节回答一个问题：<strong>"配对"这个动作，在数据层面到底交换了什么？</strong></p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">┌────────────────────────────────────────────────────────────────────────────┐
+│  一次成功的对码，最终要达成三件事一致                                        │
+│                                                                            │
+│   ① 信道 rf_ch     —— 在哪个频点上说话                                     │
+│   ② 地址 paircode  —— 用哪个 5 字节"姓名"                                  │
+│   ③ 设备 ID device_id —— 软件层的二次过滤（区分同场地多台）                  │
+│                                                                            │
+│   （④ 速率 / 地址宽度 / 载荷长度 —— 这些是**编译期**约定，                    │
+│      两侧固件必须一致，**不是对码协商的内容**。                              │
+│      见 config_rf.h:22-23："飞机与遥控器两侧必须保持同一组参数，否则对不上。"）│
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  谁产生、谁保存                                                             │
+│                                                                            │
+│   遥控器（主动方）                        飞控（被动方）                     │
+│   ─────────────────                       ──────────────                    │
+│   · Get_Pair_Code() 生成随机地址           · 上电后进入对码循环，只听       │
+│     遥控器/user_driver/flash.c:84-114        缺省地址 0xCC×5                │
+│   · 生成 rf_ch（0~79，避开敏感信道）        · 收到 0xDB 0xDB 就对码成功      │
+│   · 按对码键 → Send_Pair_Code()            · 抄下地址/信道 → 写 Flash        │
+│     遥控器/user_driver/deal_data.c:52-62   · 回一个 ACK 载荷让遥控器放心     │
+│   · 等 ACK / 等用户确认 → 自己也写 Flash    · 切地址+信道 → 进主循环         │
+└────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  对码之后靠什么"记住"—— 两边各自的 Flash                                     │
+│                                                                            │
+│   飞控：user/flash.h:109-117  Pair_Code_Config                             │
+│         存 pairflag / paircode[5] / rf_ch / 三轴零偏 / device_id            │
+│         → 0x0800F000（64KB Flash 的最后一页，flash.h:78）                   │
+│                                                                            │
+│   遥控器：遥控器/user_driver/flash.h:70-89  Joystick_Pair_Config             │
+│         存 write_count / paircode[5] / rf_ch / device_id /                 │
+│         摇杆校准值 / 电池校准表 / 基准电压                                   │
+│                                                                            │
+│   ⚠️ 两个结构体的**字段顺序在开头几项是刻意对齐的**：                        │
+│      paircode[5] 后面紧跟 rf_ch、再跟 device_id ⇒ 才能用"从 paircode       │
+│      开始连读 N 字节"的写法把地址+信道一起拷走（见 6.2 的字节级分析）。      │
+└────────────────────────────────────────────────────────────────────────────┘</pre></div>
+<p><strong>读法</strong>：第三层"Flash 布局"是这一章最容易看漏、却最容易出错的地方。 <strong>"对码"在协议上很简单，在存储布局上很脆</strong> —— 因为它靠的是"两个结构体字段顺序相同" 这个<strong>隐式约定</strong>，而不是显式的序列化协议。</p>
+<hr>
+<h2 id="6-1-为什么需要-对码">6.1　为什么需要"对码"<a class="anchor" href="#6-1-为什么需要-对码">#</a></h2>
+<p>这一节回答一个问题：<strong>多台设备共处一室，怎么做到"只跟我的遥控器说话"？</strong></p>
+<h3 id="①-它是怎么出现的-12">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-12">#</a></h3>
+<p><strong>先讲清"不对码"这条路会怎样</strong>。三种"硬编码"的做法，各有各的崩法：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.1-1】不对码的三种做法，以及它们各自怎么崩
+
+  ── 做法 A：所有设备用同一个出厂地址 ─────────────────────────────
+     出厂：地址 = 0xCC 0xCC 0xCC 0xCC 0xCC（就是本工程的"缺省地址"）
+
+     现场：飞机A、飞机B、遥控器C
+       遥控器C ──► 飞机A 收到、飞机B 也收到 ⇒ **两台一起响应**
+       ⇒ 串控。谁先起飞谁倒霉。
+     ❗本工程对码之前的初始状态**就是这个状态**（config_rf.h:132-136 的 0xCC×5）。
+
+  ── 做法 B：出厂写死一个"唯一的"地址 ─────────────────────────────
+     出厂的每台设备地址不同 ⇒ 解决了串控
+     但 ⇒ **遥控器和飞机怎么知道对方是谁？**
+         包装上印序列号，用户手动输入 5 字节十六进制？（没人会做）
+         ⇒ 退化为"拨码开关"（见 6.1 ④ 的对照表）
+
+  ── 做法 C：靠"设备 ID"过滤，不做地址协商 ───────────────────────
+     所有设备地址都一样，靠软件层的 device_id 过滤
+     ⇒ 射频前端**必须先把所有包都收下来**（包括别人的），
+        再靠 CPU 逐个比对 device_id 丢掉
+     ⇒ 后果 1：CPU 和 FIFO 被别人的包占满，**自己的包反而丢**
+        后果 2：`device_id` 只有 8 位（本工程 deal_pack.c:103 是 uint8_t），
+                同场地 256 台设备就可能撞
+     ⇒ 这就是为什么**地址协商（硬件过滤）比 ID 过滤（软件过滤）更根本**。</pre></div>
+<p>⇒ <strong>"对码"要做的，就是把"出厂写死的值"换成"现场协商的值"</strong>。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样-11">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-11">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.1-2】对码的两层价值：功能层 与 安全层
+
+  ┌─ 功能层：解决"多机同场" ──────────────────────────────────────┐
+  │                                                                │
+  │   不对码：N 台飞机 × M 个遥控器 ⇒ 谁都可能控谁（N×M 种串控）    │
+  │   对码后：每台飞机只认一个地址 ⇒ 关系是 1:1 的（N 条独立链路）   │
+  └────────────────────────────────────────────────────────────────┘
+
+  ┌─ 安全层：解决"别人能不能控我的飞机" ──────────────────────────┐
+  │                                                                │
+  │   地址是随机的（遥控器侧用芯片 UID + rand() 生成，             │
+  │   遥控器/user_driver/flash.c:88-92）⇒ 别人不知道你的 5 字节地址  │
+  │   ⇒ 无法伪造你的包                                              │
+  │                                                                │
+  │   ⚠️ 但必须说清边界：这**不是加密**。                           │
+  │      地址是明文在空口上传输的（见 4.5 的包结构：地址字段是明文字段）。│
+  │      只要有设备能收下你的包并解析出地址字段，就能伪造。          │
+  │      ⇒ 对码提供的是"**防串扰**"，不是"**防攻击**"。              │
+  │      真正的防攻击需要加密与认证，本工程没有做。🟢（代码事实）    │
+  └────────────────────────────────────────────────────────────────┘</pre></div>
+<p><strong>"同频干扰"和"串控"要分清楚</strong>（这两个词经常被混用）：</p>
+<div class="tablewrap"><table><thead><tr><th></th><th><strong>同频干扰</strong></th><th><strong>串控</strong></th></tr></thead><tbody><tr><td>现象</td><td>我的包被别人的信号压掉 → <strong>丢包</strong></td><td>我的飞机<strong>执行了别人的指令</strong></td></tr><tr><td>原因</td><td>空中能量叠加</td><td><strong>地址/ID 没有区分开</strong></td></tr><tr><td>检出方式</td><td>硬件 CRC 校验失败 → 丢包 → ACK 超时</td><td>无检出！飞机<strong>认为这是合法指令</strong></td></tr><tr><td>后果</td><td>抖、延迟、失联保护</td><td><strong>事故</strong></td></tr><tr><td>解决</td><td>换信道、跳频、ACK 重传、降速率增功率</td><td><strong>对码（地址协商）</strong> + device_id 二次过滤</td></tr></tbody></table></div>
+<p>⇒ <strong>"同频干扰只是变慢，串控才是危险"。</strong> 这条区分是本章存在的理由。</p>
+<h3 id="③-我该怎么理解它-图-本质是-交换-协商标识">③ 我该怎么理解它（图）—— 本质是"交换/协商标识"<a class="anchor" href="#③-我该怎么理解它-图-本质是-交换-协商标识">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.1-3】对码 = 把"公共频道"换成"私人频道"
+
+  对码前（公共状态）：
+     遥控器地址 = 0xCC×5（出厂缺省）      飞机 RX_ADDR_P1 = 0xCC×5（缺省，谁喊都应）
+     遥控器信道 = ?                        飞机信道 = 36（config_rf.h:103）
+     ⇒ 两边只有"缺省地址"这一件事是一致的，信道还不一定对得上
+
+                     ┌──────────────────────────────┐
+   遥控器 ──0xDB──►  │  飞机：只要是缺省地址的包，我都听  │
+                     └──────────────────────────────┘
+
+  对码中（协商）：
+     遥控器生成：paircode[5]（UID + rand()）＋ rf_ch（0~79）＋ device_id
+     打包成 0xDB 0xDB + paircode + rf_ch + device_id（12 字节）
+     发出去 ⇒ 飞机抄下来
+
+  对码后（私有状态）：
+     遥控器  TX_ADDR = paircode       信 道 = rf_ch
+     飞机    RX_ADDR_P0 = paircode    信 道 = rf_ch
+     ⇒ 从此这 5 个字节 + 这个频点就是这两台设备的"私人频道"
+
+   ⚠️ "私人"是相对同场地其它设备而言的：
+      空口上地址是明文，任何能收包的设备都能读到（见上方安全层说明）。</pre></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.1-4】三个协商项的"作用层次"不同，一定要分清
+
+  ┌───────────────┬────────────────────┬──────────────────────────────────┐
+  │ 协商项         │ 在哪一层起作用       │ 错了会怎样                        │
+  ├───────────────┼────────────────────┼──────────────────────────────────┤
+  │ 信道 rf_ch     │ **物理层**：选频点   │ 收发不在同一个 1MHz 格子里        │
+  │               │                    │ ⇒ **完全收不到**（连前导码都同步不上）│
+  ├───────────────┼────────────────────┼──────────────────────────────────┤
+  │ 地址 paircode  │ **链路层**：硬件地址 │ 收得到前导码、解得出比特，        │
+  │ （5 字节）     │ 匹配                │ 但地址比较不过 ⇒ 包被丢掉        │
+  │               │                    │ ⇒ 同样表现为"收不到"              │
+  ├───────────────┼────────────────────┼──────────────────────────────────┤
+  │ 设备 ID        │ **应用层**：软件比对 │ 射频层一切正常、RX_DR 也置了，     │
+  │ （1 字节）     │ deal_pack.c:154     │ 但 `rx_buff[1] != device_ID`     │
+  │               │                    │ ⇒ 飞机自己把包扔了                │
+  └───────────────┴────────────────────┴──────────────────────────────────┘
+
+  ⇒ 三层出错的**现象完全一样**（"收不到"），
+     但排查手段完全不同：
+        物理层 → 频谱仪看有没有载波 / 换信道试
+        链路层 → 读芯片的地址寄存器，和对面比对
+        应用层 → 在 deal_pack.c:154 那一行打断点看两个值</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表-11">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-11">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>机制</th><th>优势</th><th>代价</th><th>什么时候用</th></tr></thead><tbody><tr><td><strong>拨码开关 / 拨轮</strong></td><td>用户手工把收发双方拨到同一组开关位（老式 27/40MHz 遥控常见）</td><td><strong>不需要任何协议</strong>；不怕"对码失败"；一眼能看出设置</td><td>位数少 ⇒ 组合少 ⇒ 人多就撞；用户要记住设置；<strong>不能自动</strong></td><td>老式设备、极低成本</td></tr><tr><td><strong>按键进入配对模式</strong>（本工程）</td><td>按住对码键 → 遥控器广播自己的地址 → 飞机抄下</td><td>直观、可控、用户知道自己在干什么</td><td><strong>要用户操作</strong>；要防误触（<code>遥控器/user/main.c:146</code> 有 <code>while(is_pair_key()){}</code> 等松手）</td><td>✅ <strong>本工程</strong></td></tr><tr><td><strong>上电自动配对</strong></td><td>每次上电都重新协商一次</td><td>用户零操作</td><td><strong>每次开机有窗口期可被"抢对"</strong>；飞行中若重连会中断</td><td>玩具级产品</td></tr><tr><td><strong>出厂固定地址 + 唯一序列号</strong></td><td>出厂烧唯一地址，标签上印配对关系</td><td>零操作、零误配</td><td>售后换件必须整对换；产线要管理配对表</td><td>消费电子一次性产品</td></tr><tr><td><strong>绑定表（多机）</strong></td><td>一个遥控器里存多台飞机的地址，可切换</td><td>一控多机；换机不用重对</td><td>遥控器 Flash 要放表；UI 要能选机</td><td>一拖多场景</td></tr><tr><td><strong>近场配对（NFC / 二维码 / 声波）</strong></td><td>用另一条信道交换密钥/地址</td><td>可携带密钥，能升级为"认证配对"</td><td>加硬件（NFC 天线 / 麦克风）</td><td>需要真正安全性的产品</td></tr></tbody></table></div>
+<p><strong>本工程用的是</strong>：<strong>按键进入配对模式 + 遥控器随机生成地址与信道</strong>。</p>
+<p>🟢 <strong>确证</strong>（遥控器侧）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">// 遥控器/user/main.c:143-153   检测到对码键被按下</span></div><div class="line"><span class="ln">2</span><span class="lc">if(is_pair_key()){</span></div><div class="line"><span class="ln">3</span><span class="lc">    printf("key5\r\n");</span></div><div class="line"><span class="ln">4</span><span class="lc">    Led_SetState(LED2, LED_STATE_BLINKING, 500);</span></div><div class="line"><span class="ln">5</span><span class="lc">    while(is_pair_key()){}          // 等用户松手（防连发）</span></div><div class="line"><span class="ln">6</span><span class="lc">    init_random_seed();             // 用随机数种子生成地址</span></div><div class="line"><span class="ln">7</span><span class="lc">    Get_Pair_Code();                // flash.c:84-114  生成 paircode/rf_ch/device_id</span></div><div class="line"><span class="ln">8</span><span class="lc">    Set_Joystick_Data();</span></div><div class="line"><span class="ln">9</span><span class="lc">    bsp_pn298_tx_mode();</span></div><div class="line"><span class="ln">10</span><span class="lc">    while(1) { ... }                // 遥控器侧的"对码循环"，见 6.3</span></div><div class="line"><span class="ln">11</span><span class="lc">}</span></div></pre></div>
+<p>🟢 <strong>确证</strong>（地址与信道的生成，<code>遥控器/user_driver/flash.c:84-114</code>）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">void Get_Pair_Code(void){</span></div><div class="line"><span class="ln">2</span><span class="lc">    PY32F030_UID_TypeDef uid;</span></div><div class="line"><span class="ln">3</span><span class="lc">    Get_UID(&amp;uid);                                        // 读芯片唯一 ID（UID）</span></div><div class="line"><span class="ln">4</span><span class="lc">    joystick_pair_str.write_count = 1;</span></div><div class="line"><span class="ln">5</span><span class="lc">    joystick_pair_str.paircode[0] = (uid.myuin + rand())%255 ;</span></div><div class="line"><span class="ln">6</span><span class="lc">    joystick_pair_str.paircode[1] = uid.xCoordinate&amp;0xff;</span></div><div class="line"><span class="ln">7</span><span class="lc">    joystick_pair_str.paircode[2] = rand()%255;</span></div><div class="line"><span class="ln">8</span><span class="lc">    joystick_pair_str.paircode[3] = uid.yCoordinate&amp;0xff;</span></div><div class="line"><span class="ln">9</span><span class="lc">    joystick_pair_str.paircode[4] = rand()%255;</span></div><div class="line"><span class="ln">10</span><span class="lc">    for(uint8_t i=0;i&lt;4;i++){</span></div><div class="line"><span class="ln">11</span><span class="lc">        joystick_pair_str.rf_ch += joystick_pair_str.paircode[i];   // 注意：+= 而不是 =</span></div><div class="line"><span class="ln">12</span><span class="lc">    }</span></div><div class="line"><span class="ln">13</span><span class="lc">    joystick_pair_str.rf_ch = (joystick_pair_str.rf_ch + uid.waferNumber)%80;   // 限制到 0~79</span></div><div class="line"><span class="ln">14</span><span class="lc">    while(is_excluded(joystick_pair_str.rf_ch)) {                 // 避开敏感信道</span></div><div class="line"><span class="ln">15</span><span class="lc">        joystick_pair_str.rf_ch = (joystick_pair_str.rf_ch + 1) % 80;</span></div><div class="line"><span class="ln">16</span><span class="lc">    }</span></div><div class="line"><span class="ln">17</span><span class="lc">    joystick_pair_str.device_id = generateAddrChannelId();        // = XOR(paircode[0..4]) ^ rf_ch</span></div><div class="line"><span class="ln">18</span><span class="lc">}</span></div></pre></div>
+<blockquote class=""><p><strong>三处值得点出的细节</strong>：
+1. <strong>地址既"随机"又"可复现"</strong>：<code>paircode[1]/[3]</code> 直接取 UID 的 X/Y 坐标（同一颗芯片恒定），
+   <code>[0]/[2]/[4]</code> 取随机数。这是一种"<strong>半随机</strong>"设计 ——
+   猜测难度提高了，同时方便产线通过 UID 反查。
+2. <strong><code>rf_ch +=</code> 不是 <code>=</code></strong>（<code>:94</code>）：<code>joystick_pair_str</code> 是全局变量，<strong>如果它没被清零，
+   这里是在旧值上累加</strong>。C 语言保证全局变量零初始化 ⇒ 首次调用时是 0，行为正确；
+   但同一上电周期内<strong>第二次</strong>调用（连按两次对码键）会得到不同的 <code>rf_ch</code>。
+   这是否是设计意图，本文件<strong>不做断言</strong>（🟡）。
+3. <strong><code>device_id</code> 是派生量而不是独立随机量</strong>：<code>XOR(paircode) ^ rf_ch</code>
+   （<code>遥控器/user_driver/flash.c:76-82</code>）。
+   ⇒ <strong>它的信息量并不比 paircode 多</strong>，不是独立的第二道防线。
+   真正的第二道防线是"两台遥控器恰好拿到同一个 paircode"这个低概率事件。</p></blockquote>
+<hr>
+<h2 id="6-2-对码流程-本工程的实际逻辑-逐行">6.2　对码流程：本工程的实际逻辑（逐行）<a class="anchor" href="#6-2-对码流程-本工程的实际逻辑-逐行">#</a></h2>
+<p>这一节回答一个问题：<strong>一次成功的对码，代码里到底走了哪几步？每一字节去了哪里？</strong></p>
+<h3 id="①-它是怎么出现的-13">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-13">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.2-1】对码的完整时序（遥控器侧 + 飞控侧）
+
+  遥控器                                    飞控
+  ────────                                  ──────
+  上电 / 用户按对码键                         上电 → 各外设初始化
+     │                                          │
+     ├ 遥控器/user/main.c:146                    ├ main.c:270  RGB 500ms 闪（提示"正在对码"）
+     │   while(is_pair_key()){}  等松手          ├ main.c:295  进入 while(1) 对码循环
+     │                                          │     ↕ 每 500ms 换一次信道（main.c:316）
+     ├ main.c:150 init_random_seed()             │     decode_pack()（main.c:302）——非阻塞收包
+     ├ main.c:151 Get_Pair_Code()   生成三项      │
+     ├ main.c:153 bsp_pn298_tx_mode()            │
+     ├ main.c:154 while(1) { ... }               │
+     │     │                                     │
+     │     ├ main.c:165 Send_Pair_Code()          │
+     │     │   deal_data.c:53-54  字节[0]=[1]=0xDB│
+     │     │   deal_data.c:56      字节[2..6]=paircode[0..4]
+     │     │   deal_data.c:58      字节[7]=rf_ch │
+     │     │   deal_data.c:58      字节[8]=device_id  ← ❗见下
+     │     │   deal_data.c:59-61   字节[9..11]=0  │
+     │     │                                     │
+     │     └ main.c:166 tx_data_ack(12 字节) ────┼──► 空中
+     │                                          │
+     │                                          ├ deal_pack.c:148  rx_data_ack_fix 收到
+     │                                          ├ deal_pack.c:274  判 [0]==0xdb &amp;&amp; [1]==0xdb ✅
+     │                                          ├ deal_pack.c:276  pair_over_flag = 1
+     │                                          ├ deal_pack.c:277  FLUSH_TX
+     │                                          ├ deal_pack.c:279  写 W_ACK_PAYLOAD ← 回 ACK
+     │                                          ├ deal_pack.c:281-290 抄 6 字节到 pair_data.paircode
+     │                                          ├ deal_pack.c:292  pair_data.device_id = rx_buff[8]
+     │                                          ├ deal_pack.c:297  flash_write(0x0800F000) ★落盘
+     │                                          │
+     │◄──── ACK（带 12 字节载荷）────────────────┤
+     │                                          │
+     ├ main.c:168 检测到某个条件（见下）          ├ main.c:304  pair_over_flag 为真
+     ├ main.c:171 flash_write()  遥控器也落盘     ├ main.c:306  关对码灯语
+     ├ main.c:174-175 send_pair_pack_flag==0x03  ├ main.c:310  写 AW_RXADDR=0xC1（只认自己地址）
+     └     → break 跳出对码循环                   ├ main.c:311  写 EN_AA=0x01
+                                                 └ main.c:312  break 跳出对码循环
+                                                      │
+                                                      ▼
+                                                main.c:328 flash_read()
+                                                main.c:339 get_now_addr()
+                                                main.c:341 bsp_pn298_change_addr(地址, rf_ch)
+                                                main.c:347 WDG_init()
+                                                      │
+                                                      ▼
+                                                正常飞行主循环 main.c:371</pre></div>
+<blockquote class="warn"><p>⚠️ <strong>遥控器的"对码成功判据"要说清</strong>：<code>遥控器/user/main.c:159-176</code> 的判断条件是
+<strong><code>aADCxConvertedData[2]</code></strong> 的值，不是 <code>ack_buff[]</code>：</p><p>``<code>c
+main.c:159  if(aADCxConvertedData[2]&lt;=0 &amp;&amp; send_pair_pack_flag != 0x01) { ... flag = 0x01; }  // 开始发
+main.c:164  if(send_pair_pack_flag == 0x01){ Send_Pair_Code(); tx_data_ack(...); }             // 持续发
+main.c:168  if(aADCxConvertedData[2]&gt;4050 &amp;&amp; send_pair_pack_flag == 0x01){                     // 某个 ADC 到顶
+main.c:171      flash_write(FLASH_USER_START_ADDR);
+main.c:174  if(send_pair_pack_flag == 0x03){ break; }                                          // 退出
+</code>`<code>
+而 </code>ack_buff<code> 那条路径（</code>main.c:178-184<code> 的 </code>if(ack_buff[0]==1){ flash_write(); break; }`）
+<strong>是被注释掉的</strong>。
+⇒ 也就是说：<strong>遥控器当前不是"靠收到 ACK 判成功"，而是靠一个 ADC 通道的读数</strong>。
+🟠 这个 ADC 通道具体接的是什么（拨杆？按键？摇杆位置？），
+<strong>本文件没有查到确定答案</strong>，故不对"这是设计意图还是遗留代码"下结论。
+<strong>但这件事很重要</strong>：它意味着"对码成功的判定"和"射频链路已经建立"是<strong>两件独立的事</strong>，
+如果 ADC 判定条件与用户的操作习惯不匹配，就会出现"飞机已经对上了、遥控器还没退出对码模式"。</p></blockquote>
+<h3 id="②-它要解决什么问题-没有它会怎样-12">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-12">#</a></h3>
+<p>对码流程本身要解决的是"<strong>把协商结果落到非易失存储</strong>"这件事。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.2-2】为什么必须写 Flash —— "对码"和"记住对码"是两件事
+
+  只协商、不落盘：
+     每次上电都要重新对码 ⇒ 用户每次飞之前按一次对码键
+     ⇒ 现场体验差；更糟的是**忘记对码就起飞** ⇒ 用的是缺省地址 ⇒ 串控风险
+
+  协商 + 落盘：
+     对码一次，之后上电直接读 Flash 恢复 ⇒ 拿起就飞
+
+  落盘的代价（Flash 的物理特性）：
+     · Flash 只能把 1 写成 0，**不能把 0 写回 1** ⇒ 改一个字节也要整页擦除
+     · 擦除粒度 = 1 页（本芯片 FLASH_PAGE_SIZE = 1KB）
+     · 擦除会**挂起 CPU 取指**几十毫秒 ⇒ 绝对不能放在飞行中调用
+     · 擦写次数有限（典型 10k~100k 次）⇒ 不能高频写
+
+  ⇒ 所以本工程的做法是：
+       把"对码结果 + 传感器零偏 + 设备 ID"打包成一个结构体，**一次整页写入**
+       （user/flash.h:109-117 的 Pair_Code_Config）—— 一次擦写解决所有持久化需求。
+     ❗`deal_pack.c:296` 的注释明确写了这条纪律：
+       "这一步会挂起 CPU 取指几十毫秒，所以绝不能放在飞行过程中调用"</pre></div>
+<h3 id="③-我该怎么理解它-图-字节级流向">③ 我该怎么理解它（图）—— 字节级流向<a class="anchor" href="#③-我该怎么理解它-图-字节级流向">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.2-3】0xDB 对码包的 12 字节，每一字节的"生产者"和"消费者"
+
+  字节  发送侧（遥控器）写入的内容                  接收侧（飞控）读到哪里
+  ────  ────────────────────────────────────────  ──────────────────────────────────
+  [0]   0xdb          deal_data.c:53              判 rx_buff[0]==0xdb   deal_pack.c:274
+  [1]   0xdb          deal_data.c:54              判 rx_buff[1]==0xdb   deal_pack.c:274
+  [2]   paircode[0]   deal_data.c:56  ┐           写 pair_data.paircode[0]  deal_pack.c:287
+  [3]   paircode[1]   deal_data.c:56  │           （循环 i=0..5，逐字节写）
+  [4]   paircode[2]   deal_data.c:56  ├ 5 字节    写 pair_data.paircode[1]
+  [5]   paircode[3]   deal_data.c:56  │ 地址       写 pair_data.paircode[2]
+  [6]   paircode[4]   deal_data.c:56  ┘           写 pair_data.paircode[3]
+  [7]   rf_ch         deal_data.c:57  ← 信道     写 pair_data.paircode[4]
+  [8]   device_id     deal_data.c:58  ← 设备 ID  ⚠️ 落到 pair_data.rf_ch（见下）
+  [9]   0             deal_data.c:59             回 ACK 用的 temp_buff（deal_pack.c:279）
+  [10]  0             deal_data.c:59             ↓
+  [11]  0             deal_data.c:61             （不参与地址/信道存储）
+
+  ★ 这里就是"隐式约定"发挥作用的全部地方：
+     deal_pack.c:281   for(i=0;i&lt;6;i++) { *((uint8_t*)&amp;pair_data.paircode+i) = rx_buff[index]; index++; }
+     从 paircode 的首地址开始**连写 6 个字节**。
+     因为 user/flash.h:109-117 的 Pair_Code_Config 里 paircode[5] 后面紧跟 rf_ch，
+     所以第 6 个字节自动落到 rf_ch —— **一次循环同时抄走了"地址 + 信道"**。
+     ✅ 这是刻意为之（deal_pack.c:284-286 的注释也这么判断），
+        但可读性很差：**它依赖"两个结构体的前 6 个字节布局相同"这个隐式约定**，
+        任何一边调整字段顺序都会静默错位（编译不会报错，运行时表现为"对码成功但连不上"）。</pre></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.2-4】飞控侧的关键数据结构在内存里的样子
+
+   user/flash.h:109-117
+   typedef struct {
+       uint16_t pairflag;          // 偏移 0..1
+       uint8_t  paircode[5];       // 偏移 2..6   ← 从偏移 2 开始连写 6 字节
+       uint8_t  rf_ch;             // 偏移 7      ← 第 6 个字节落在这里 ✅ 意图达成
+       int16_t  accRaw_offset[3];  // 偏移 8..13
+       int16_t  gyroRaw_offset[3]; // 偏移 14..19
+       uint8_t  device_id;         // 偏移 20     ← ❗与遥控器的 device_id 位置不同
+   } Pair_Code_Config;
+
+   遥控器侧 遥控器/user_driver/flash.h:70-89
+   typedef struct {
+       uint16_t write_count;       // 偏移 0..1  （对应飞控的 pairflag，但不是同一个语义）
+       uint8_t  paircode[5];       // 偏移 2..6
+       uint8_t  rf_ch;             // 偏移 7
+       uint8_t  device_id;         // 偏移 8     ← ❗在这里，紧跟 rf_ch
+       ...（后面还有摇杆/电池校准的一堆字段）
+   } Joystick_Pair_Config;</pre></div>
+<blockquote class=""><p>### 🔴 由此引出一个<strong>必须报告的严重不一致</strong>（本文件最重要的发现）</p><p><strong>现象</strong>：飞控从 <code>rx_buff[8]</code> 取 <code>device_id</code>（<code>deal_pack.c:292</code>），
+但遥控器把 <code>device_id</code> 写在 <code>send_pn298_pack[8]</code>（<code>遥控器/user_driver/deal_data.c:58</code>），
+而 <strong><code>rf_ch</code> 写在 <code>send_pn298_pack[7]</code></strong>（同文件 <code>:57</code>，因为循环 <code>for(j=2;j&lt;8;j++)</code> 写的是 <code>[2]..[7]</code>）。</p><p><strong>推理链（可逐行复核）</strong>：</p><p>```text
+① 遥控器发送侧（deal_data.c:52-62）
+     [2..6] ← paircode[0..4]        （循环 j=2..7，j-2=0..5 —— 注意这里有个细节）
+     等等，循环是 for(uint8_t j=2; j&lt;8; j++)，即 j = 2,3,4,5,6,7 共 6 次
+     取的是 <em>((uint8_t</em>)(&amp;joystick_pair_str.paircode) + (j-2))
+     ⇒ j=2 → paircode[0]，j=3 → paircode[1]，...，j=6 → paircode[4]，
+       j=7 → paircode 后面的第 6 个字节 = <strong>rf_ch</strong>（因为结构体里 rf_ch 紧跟 paircode）
+     ⇒ 所以 [2..7] = {paircode[0..4], rf_ch}   ✅ 与飞控的 6 字节读法<strong>完全对应</strong>
+     [8] = device_id                  ← 遥控器的 device_id 在这里
+     [9..11] = 0</p><p>② 飞控接收侧（deal_pack.c:280-292）
+     index = 2;
+     for(i=0;i&lt;6;i++) { paircode 起连写 6 字节 = rx_buff[2..7] }   ✅ 正确
+     pair_data.device_id = rx_buff[8];                            ← ❗读到了 device_id ✅</p><p>③ 结论：<strong>这一处其实是对齐的！</strong>
+     rx_buff[8] 正是遥控器的 device_id（deal_data.c:58）✅
+```</p><p><strong>⚠️ 上面这段推理修正了我最初的怀疑。</strong> 事实证明 <code>deal_pack.c:292</code> 的 <code>rx_buff[8]</code>
+<strong>是对的</strong> —— 因为遥控器在 <code>[2..7]</code> 里塞的是"paircode + rf_ch"共 6 字节，
+<code>device_id</code> 顺延到了 <code>[8]</code>。这两侧是<strong>刻意对齐的</strong>。</p><p><strong>但这条"对"，靠的是三个地方同时正确</strong>：
+① 遥控器结构体里 <code>rf_ch</code> 紧跟 <code>paircode</code>；
+② 遥控器发送循环写满 6 字节（<code>j&lt;8</code>）；
+③ 飞控接收循环读满 6 字节（<code>i&lt;6</code>）。
+<strong>任何一处改动都会静默错位</strong> —— 这就是"隐式布局约定"的风险。
+本文件<strong>保留这段推理过程</strong>，因为它正好示范了本文件最想传达的态度：
+<strong>不要凭"看起来不对"就下结论，要顺着两侧的字节偏移一格一格对。</strong></p></blockquote>
+<blockquote class=""><p><strong>另一条实实在在的隐患</strong>（这条是确凿的）：
+🟢 <strong>确证</strong>：<code>deal_pack.c:281</code> 的 <code>for(i=0;i&lt;6;i++)</code> 与
+遥控器 <code>deal_data.c:55</code> 的 <code>for(j=2;j&lt;8;j++)</code> 都<strong>硬编码了 6</strong>。
+而"6"这个数字的物理含义是"5 字节地址 + 1 字节信道"。
+<code>paircode</code> 的数组长度在 <code>flash.h:112</code> 是显式的 <code>[5]</code>，
+<strong>如果哪天把地址宽度改成 3 或 4（PN298 支持 3~5 字节，见 4.4），
+这两个循环的硬编码 6 就必须一起改，否则会静默抄错。</strong>
+建议的写法是 <code>sizeof(pair_data.paircode) + 1</code>，但本文件<strong>只建议，不修改代码</strong>。</p></blockquote>
+<h3 id="④-实现方法有哪些-取舍对照表-12">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-12">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>环节</th><th>方案</th><th>优势</th><th>代价</th><th>本工程</th></tr></thead><tbody><tr><td><strong>触发方式</strong></td><td>只在上电时对码</td><td>简单</td><td>换遥控器必须重启飞机</td><td></td></tr><tr><td></td><td><strong>按键进入对码模式</strong></td><td>用户明知、随时可对</td><td>要按键、要防误触</td><td>✅ 遥控器 <code>main.c:143</code></td></tr><tr><td></td><td>每次上电自动对码</td><td>零操作</td><td>有窗口期可被抢对</td><td></td></tr><tr><td><strong>地址来源</strong></td><td>用户手输/拨码</td><td>完全可控</td><td>用户体验差</td><td></td></tr><tr><td></td><td><strong>芯片 UID + 随机数</strong></td><td>无需外部输入、碰撞概率低</td><td>依赖 UID 与 rand() 质量</td><td>✅ <code>flash.c:88-92</code></td></tr><tr><td></td><td>纯随机数</td><td>更随机</td><td>每次不同、无法复现</td><td></td></tr><tr><td></td><td>服务端下发</td><td>可集中管理</td><td>需要联网</td><td></td></tr><tr><td><strong>信道来源</strong></td><td>固定</td><td>简单</td><td>撞上干扰就没救</td><td>（本工程的初始值 36）</td></tr><tr><td></td><td><strong>UID 派生 + 排除表</strong></td><td>自动分散、避开已知坏点</td><td>排除表的依据要维护</td><td>✅ <code>flash.c:96-104</code></td></tr><tr><td></td><td>现场扫描选优</td><td>最贴合当下环境</td><td>实现复杂、要测 RSSI</td><td></td></tr><tr><td><strong>落盘结构</strong></td><td><strong>一整个结构体整页写</strong></td><td>一次擦写解决全部持久化</td><td>改结构体 = 改存储格式（要处理旧数据）</td><td>✅ <code>flash.h:109-117</code></td></tr><tr><td></td><td>分字段独立存储</td><td>改一个字段不影响别的</td><td>多次擦写、要管理多页</td><td></td></tr><tr><td></td><td>加 CRC/版本号</td><td>能检出数据损坏、能升级格式</td><td>占空间、要写升级代码</td><td>❌ 本工程<strong>没有</strong></td></tr></tbody></table></div>
+<blockquote class="warn"><p>⚠️ <strong>最后一行值得强调</strong>：<code>flash.h:55-56</code> 的注释自己就点明了风险 ——
+"<code>Pair_Code_Config</code> 直接按字节流存盘（见 <code>flash.c</code>），所以成员顺序/类型就是
+'<strong>存储格式</strong>'，改结构体等于改存储协议 —— 升级固件时要小心旧数据解析错。"
+<strong>而本工程既没有版本号、也没有 CRC</strong>。
+⇒ 一旦新版固件的结构体与旧版不同，旧板子升上去会<strong>读到一堆看似合法的垃圾值</strong>
+（比如把 <code>accRaw_offset</code> 当成 <code>paircode</code>），表现为"升级后连不上，重新对码就好了"。
+🟢（代码事实）/ 🟡（风险判断）</p></blockquote>
+<hr>
+<h2 id="6-3-对码循环为什么是-while-1">6.3　对码循环为什么是 <code>while(1)</code><a class="anchor" href="#6-3-对码循环为什么是-while-1">#</a></h2>
+<p>这一节回答一个问题：<strong>为什么必须"卡住"？卡住的这段时间，失效保护怎么办？</strong></p>
+<h3 id="①-它是怎么出现的-14">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-14">#</a></h3>
+<p>🟢 <strong>确证</strong>（飞控侧的对码循环，<code>main.c:295-326</code>）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">while (1)</span></div><div class="line"><span class="ln">2</span><span class="lc">{</span></div><div class="line"><span class="ln">3</span><span class="lc">//灯光状态扫描</span></div><div class="line"><span class="ln">4</span><span class="lc">    Led_Process();</span></div><div class="line"><span class="ln">5</span><span class="lc">//	对码</span></div><div class="line"><span class="ln">6</span><span class="lc">    /* 如果PN298工作于接收模式，进入如下程序 */</span></div><div class="line"><span class="ln">7</span><span class="lc">    decode_pack();</span></div><div class="line"><span class="ln">8</span><span class="lc">    if(pair_over_flag)</span></div><div class="line"><span class="ln">9</span><span class="lc">    {//对码完成,关掉自动应答1</span></div><div class="line"><span class="ln">10</span><span class="lc">        Led_SetAlert(LED_PRIORITY_PAIRING, LED_STATE_OFF, 0);</span></div><div class="line"><span class="ln">11</span><span class="lc">        Led_SetState(RGB_LED, LED_STATE_ON, 0);</span></div><div class="line"><span class="ln">12</span><span class="lc">        printf("对码成功\r\n");</span></div><div class="line"><span class="ln">13</span><span class="lc">        bsp_pn298_write_reg(W_REGISTER + AW_RXADDR, 0xC1);   /* 只认自己的 5 字节地址 */</span></div><div class="line"><span class="ln">14</span><span class="lc">        bsp_pn298_write_reg(W_REGISTER + EN_AA, 0x01);       /* 只在自己的数据管道上开启自动应答 */</span></div><div class="line"><span class="ln">15</span><span class="lc">        break;</span></div><div class="line"><span class="ln">16</span><span class="lc">    }</span></div><div class="line"><span class="ln">17</span><span class="lc">    else</span></div><div class="line"><span class="ln">18</span><span class="lc">    {</span></div><div class="line"><span class="ln">19</span><span class="lc">        if(HAL_GetTick()-ch_change_time&gt;500)</span></div><div class="line"><span class="ln">20</span><span class="lc">        {</span></div><div class="line"><span class="ln">21</span><span class="lc">            ch_change_count = !ch_change_count;</span></div><div class="line"><span class="ln">22</span><span class="lc">            bsp_pn298_set_channel(ch_change_arr[ch_change_count]);</span></div><div class="line"><span class="ln">23</span><span class="lc">            ch_change_time = HAL_GetTick();</span></div><div class="line"><span class="ln">24</span><span class="lc">        }</span></div><div class="line"><span class="ln">25</span><span class="lc">    }</span></div><div class="line"><span class="ln">26</span><span class="lc">}</span></div></pre></div>
+<p><strong>为什么必须阻塞</strong> —— 这个问题有两个层次的答案：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.3-1】"对码期间不能回主循环"的两条理由
+
+  ── 理由 1（功能性）：现在**没有可用的链路参数** ────────────────
+
+     主循环（main.c:371）在干什么？
+        decode_pack()      → 解析遥控包
+        Mode_Controler()   → 空翻状态机
+        altitude_ctrl()    → 定高
+        flight_ctrl()      → 解锁判定 + 姿态 PID + 混控 → 电机 PWM
+
+     ❗主循环里的 flight_ctrl() 是**真的会驱动电机**的
+       （main.c:424-440 那段"上电自动解锁"就是明证：
+         油门 &lt;1200 且 Z 轴加速度 &gt;6000 ⇒ 直接把 motorArmed/motorIdle 置 1）
+     ❗而在对码阶段，`pair_data` 还没从 Flash 读（main.c:328 才读），
+       `pair_addr_arr` 还是空的，`pair_data.rf_ch` 还是 0
+       ⇒ 用一套未协商的参数去跑控制律，飞机可能：
+          · 用错误的地址收不到任何包 ⇒ connection_nowtime 不刷新
+            ⇒ 5 秒后 main.c:462 判失联 ⇒ bLanding = 1（自动降落状态机启动）
+            ⇒ **飞机在桌子上就开始"降落"**
+          · 或者更糟：收到了**别人的**包（缺省地址 0xCC×5 还没换掉）
+            ⇒ 执行别人的指令
+
+  ── 理由 2（时序性）：对码要求"**一直在听**" ────────────────────
+
+     遥控器在对码模式下是**持续广播**的（遥控器/user/main.c:164-167 每圈都发）。
+     飞控要接住它，就必须**尽可能频繁地调用 decode_pack()**。
+     本工程的对码循环一圈只有 Led_Process() + decode_pack()（加上 500ms 一次的信道切换），
+     ⇒ 一圈耗时 ≈ decode_pack() 的耗时（含 delay_ms(3) 等）≈ 3~5ms
+     ⇒ 也就是**每 3~5ms 听一次**，足够接住遥控器 20ms 一包的广播 ✅
+
+     ❗如果塞进主循环：一圈耗时 = flight_ctrl(2.5~3.4ms) + altitude_ctrl(2.1~3.9ms)
+                              + decode_pack + ... ≈ 5~8ms
+       ⇒ 听包频率下降，但对码仍能成功（20ms 一包 vs 5~8ms 一轮，够）
+       ⇒ **所以"阻塞"不是"技术上做不到"，而是"逻辑上不该做"**（理由 1 才是决定性的）</pre></div>
+<p>🟢 <strong>确证</strong>：<code>main.c:44-46</code> 的注释给出了本工程自己的理由：</p>
+<blockquote class=""><p>"（2）为什么'对码'单独用一个大 <code>while(1)</code> 而不是塞进主循环：<strong>对码阶段飞机必须停在地上，
+此时不需要姿态控制</strong>；这样写让对码成功后一次性完成'读参数 → 切地址 → 起定时器 → 起狗'，
+<strong>流程线性、便于调试</strong>。"</p></blockquote>
+<h3 id="②-它要解决什么问题-没有它会怎样-失效保护怎么办">② 它要解决什么问题（没有它会怎样）—— 失效保护怎么办<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-失效保护怎么办">#</a></h3>
+<p><strong>这是本节最需要讲清楚的一点</strong>：对码期间"卡住"，那些"靠主循环周期执行"的保护全都不跑了。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.3-2】对码期间有哪些保护被暂停？各自的风险有多大？
+
+  ┌───────────────────────┬──────────────┬────────────────────────────────────┐
+  │ 保护                   │ 对码期间状态  │ 风险评估                            │
+  ├───────────────────────┼──────────────┼────────────────────────────────────┤
+  │ 看门狗 IWDG            │ **未启动**   │ ✅ 无风险。WDG_init() 在 main.c:347，│
+  │                       │              │    在对码循环（main.c:295）**之后**。 │
+  │                       │              │    所以不存在"对码超时被狗咬"。      │
+  ├───────────────────────┼──────────────┼────────────────────────────────────┤
+  │ 遥控失联自动降落        │ 主循环才跑   │ ✅ 无风险，而且**是好事**：          │
+  │ (main.c:462, 5s 超时) │              │    对码期间本来就没链路，           │
+  │                       │              │    跑这段只会让飞机进入降落状态。    │
+  ├───────────────────────┼──────────────┼────────────────────────────────────┤
+  │ 电机 PWM 输出          │ TIM3 已在跑  │ ⚠️ **这是真正要关心的一项**：        │
+  │ (TIM3, main.c:244)    │ (main.c:244) │    对码循环里**不会更新 motorPWMValue[]**│
+  │                       │              │    ⇒ 电机保持初始化时写入的值。      │
+  │                       │              │    只要初始化时写的是"停转"就没问题； │
+  │                       │              │    但**如果上电时 PWM 寄存器是随机值， │
+  │                       │              │    电机在对码期间就可能转起来**。     │
+  │                       │              │    🟠 本工程没有在 bsp_pwm.c 之外显式 │
+  │                       │              │    "初始化即写 0"，建议实测上电瞬间   │
+  │                       │              │    的电机状态。                      │
+  ├───────────────────────┼──────────────┼────────────────────────────────────┤
+  │ 电池低压检测            │ 主循环才跑   │ ⚠️ 对码期间不检测电压。             │
+  │ (main.c:445, 1s 一次) │              │    如果用户在对码时电池已低，        │
+  │                       │              │    不会有告警；但对码本身耗时不长，   │
+  │                       │              │    风险可接受。                      │
+  ├───────────────────────┼──────────────┼────────────────────────────────────┤
+  │ 灯语 / 状态提示         │ **在跑** ✅  │ Led_Process() 在对码循环里被调用     │
+  │                       │              │    (main.c:298)，所以用户能看到      │
+  │                       │              │    "正在对码"的闪烁 ✅               │
+  └───────────────────────┴──────────────┴────────────────────────────────────┘
+
+  ⇒ 一句话结论：**本工程把"起狗"和"起对码"的先后顺序排对了**，
+     所以对码期间的失效保护问题是**自洽的**。</pre></div>
+<blockquote class=""><p><strong>顺便纠正一条流传的判断</strong>：很多资料会说"在阻塞式对码循环里要么喂狗、
+要么干脆不启动看门狗"。<strong>本工程属于后者，而且是刻意的</strong>（<code>main.c:47-49</code>）。
+这个做法比"在对码循环里加喂狗"更好 —— 因为加喂狗会让"对码期间真的卡死了"
+这件事<strong>无法被检出</strong>（狗被喂着），而不启动狗则在逻辑上更干净：
+<strong>对码阶段本来就不该有狗的语义</strong>（此时还没有飞行安全可言）。</p></blockquote>
+<h3 id="③-我该怎么理解它-图-4">③ 我该怎么理解它（图）<a class="anchor" href="#③-我该怎么理解它-图-4">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.3-3】三种"对码流程"的结构对比
+
+  ── 方案 A：阻塞式 while(1)（本工程）──────────────────────────
+     对码期间：不做飞行控制（因为还没有链路）
+     代码结构：线性，读起来一目了然
+     风险：新增的任何"对码期间该做的事"都必须显式加进这个循环
+
+       main() { 初始化; while(1){ 等0xDB; } 读Flash; 切射频; 起狗; while(1){ 飞行 } }
+                 └──────────────┘                     └──────────────────┘
+                   对码态                                飞行态
+                   （两个状态之间没有共享代码）
+
+  ── 方案 B：状态机（推荐给复杂系统）────────────────────────────
+     一个 while(1) 里跑所有状态，用状态变量切换
+
+       typedef enum { ST_PAIRING, ST_FLASH, ST_FLIGHT } State_t;
+       main() {
+           while(1) {
+               switch(state) {
+                   case ST_PAIRING: do_pairing();  if(pair_over_flag) state = ST_FLASH; break;
+                   case ST_FLASH:   flash_read(); get_now_addr(); change_addr(); state = ST_FLIGHT; break;
+                   case ST_FLIGHT:  decode_pack(); flight_ctrl(); feed_dog(); break;
+               }
+           }
+       }
+
+     优势：**看门狗可以从头到尾一直有效**；状态切换有统一出口；便于加状态
+     代价：所有状态共享一个栈深度（要算最坏栈占用）；代码分支变多
+
+  ── 方案 C：后台任务 / RTOS ───────────────────────────────────
+     对码作为一个低优先级任务，飞行控制任务是高优先级但被"未对码"标志挡住
+
+     优势：**看门狗可以监控所有任务**；对码期间 UI、日志、蓝牙调参都还能跑
+     代价：要引入 RTOS；要处理优先级反转、栈占用、tick 精度
+
+     ⚠️ 对本芯片（PY32F030x8：Cortex-M0+、**8KB SRAM**、无 FPU）
+        跑 RTOS 是"能不能塞得下"的问题，而不是"想不想用"的问题。
+        🟡 8KB SRAM 跑一个精简 RTOS 是可行的（FreeRTOS 最小配置通常几 KB），
+           但会显著压缩姿态解算与控制算法的余量。**本文件不建议也不反对，只指出这个约束。**</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表-13">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-13">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>看门狗能否全程有效</th><th>代码复杂度</th><th>加新功能的难度</th><th>适合的场景</th></tr></thead><tbody><tr><td><strong>阻塞式 <code>while(1)</code></strong>（本工程）</td><td>❌ 对码期间无狗（本工程狗在对码后才起，自洽）</td><td><strong>最低</strong>：线性流程</td><td>低（往循环里加一行）</td><td>✅ 单一职责的对码过程、<strong>状态之间几乎无共享</strong></td></tr><tr><td><strong>状态机</strong></td><td>✅ 全程有效</td><td>中</td><td>中</td><td>有多个中间态（对码→写Flash→自检→待飞）</td></tr><tr><td><strong>后台任务 / RTOS</strong></td><td>✅ 全程有效 + 可定位任务</td><td>高</td><td>低（加任务即可）</td><td>复杂系统、需要并发 UI/日志/调参</td></tr><tr><td><strong>中断驱动对码</strong></td><td>✅</td><td>中高（要处理与主循环的竞态）</td><td>中</td><td>对码期间必须继续飞行的场合（罕见）</td></tr></tbody></table></div>
+<p><strong>本工程用的是</strong>：<strong>阻塞式 <code>while(1)</code></strong>，理由是"对码阶段飞机在地上，不需要姿态控制； 流程线性、便于调试"（<code>main.c:44-46</code>）。</p>
+<p><strong>这个选择在什么条件下会失效</strong>（判断依据，不是批评）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.3-4】阻塞式对码什么时候该被换掉
+
+  现在能用的前提：
+    ✓ 对码期间飞机不需要飞行控制
+    ✓ 对码期间不需要保留"上一次的链路状态"（每次对码都是全新协商）
+    ✓ 对码期间没有其它必须周期执行的任务（除了灯语）
+
+  一旦出现下面任何一条，就该换成状态机：
+    ✗ 要支持"边飞边换遥控器"（教练模式 / 接管）
+    ✗ 对码期间要维持姿态估计（比如要在手上对码、飞机不能平放）
+    ✗ 对码期间要响应地面站/蓝牙（参数下发、固件升级）
+    ✗ 要求看门狗全程有效（安全认证类需求）</pre></div>
+<hr>
+<h2 id="6-4-跳频与对码的关系">6.4　跳频与对码的关系<a class="anchor" href="#6-4-跳频与对码的关系">#</a></h2>
+<p>这一节回答一个问题：<strong>对码协商出来的信道，之后怎么用？会不会跳？</strong></p>
+<h3 id="①-它是怎么出现的-15">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-15">#</a></h3>
+<p>先分清两个容易混的概念：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.4-1】"对码时选信道" 与 "飞行时跳频" 是两件不同的事
+
+  ── 对码时选信道（本工程有）────────────────────────────────────
+     目的：**让收发双方站到同一个格子里**
+     做法：遥控器随机生成 rf_ch（0~79）→ 通过 0xDB 包告诉飞机
+     时机：只在配对那一刻发生一次
+
+  ── 飞行时跳频（本工程**没有** AFH）────────────────────────────
+     目的：**在已经被干扰之后还能继续通信**
+     做法：双方按同一个伪随机序列，每隔几毫秒换一个信道；
+           收不到 ACK 就把那个信道踢出跳频表（这就是 AFH 的"自适应"）
+     时机：飞行全程持续进行
+     🟢 手册第 17 页提到增强模式的一个特征就是"**更易开发跳频算法**" ——
+        说明芯片层面是**支持**这么做的（重传不用 MCU 重写数据，MCU 有余力换频）。</pre></div>
+<h3 id="②-它要解决什么问题-没有它会怎样-13">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-13">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.4-2】固定信道在 2.4GHz 上是"赌运气"
+
+  场景：你的飞机在 2436MHz，旁边一台路由器正好在 ch6（2437MHz）
+
+  固定信道：
+     ┌──────────────────────────────────────────────────────────┐
+     │  路由器持续占着 2437MHz 附近                              │
+     │  你的链路：丢包率可能从 0.1% 涨到 5% 甚至更高              │
+     │  ⇒ 靠 ACK 重传能补一部分，但延迟上升、抖动变大             │
+     │  ⇒ 再差就触发 5 秒失联 → 自动降落                          │
+     │  ⇒ **用户没有办法，只能换个地方飞**                        │
+     └──────────────────────────────────────────────────────────┘
+
+  跳频：
+     ┌──────────────────────────────────────────────────────────┐
+     │  链路在 2436 / 2452 / 2418 / 2460 ... 之间跳              │
+     │  撞上干扰的那几个信道只损失几个时隙 ⇒ 整体丢包率立刻下来    │
+     │  ⇒ 用户不需要知道旁边有 WiFi                              │
+     └──────────────────────────────────────────────────────────┘</pre></div>
+<h3 id="③-我该怎么理解它-图-本工程的实际行为">③ 我该怎么理解它（图）—— 本工程的实际行为<a class="anchor" href="#③-我该怎么理解它-图-本工程的实际行为">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.4-3】本工程的信道使用时间线（已按代码事实修正）
+
+  t=0  上电
+       ├ main.c:227 bsp_init() → bsp_pn298_init() → set_channel(__PN298_INIT_CHN = 36)
+       │            ⇒ 芯片此时工作在 2436MHz
+       │
+  t=若干  main.c:265  ch_change_arr[1] = pair_data.rf_ch;
+       │            ⚠️ 此时 pair_data 还没从 Flash 读过（flash_read 在 main.c:328）
+       │            ⇒ pair_data.rf_ch == 0（全局变量零初始化）
+       │            ⇒ ch_change_arr = {36, 0}
+       │
+  t=若干  main.c:295  进入对码 while(1)
+       │     每 500ms: ch_change_count 取反，set_channel(ch_change_arr[count])
+       │     ⇒ 在信道 36（2436MHz）与信道 0（2336MHz）之间交替
+       │     ⚠️ 2336MHz **不在手册标明的 2400~2483MHz 工作频段内**（手册第 8 页）
+       │     ⇒ 已对过码的板子，对码时有一半时间停在一个无效频点上
+       │
+  t=T    main.c:304  pair_over_flag 置 1 → 对码成功
+       ├ main.c:312  break
+       ├ main.c:328  flash_read()  ⇒ pair_data 有效（paircode / rf_ch / device_id）
+       ├ main.c:339  get_now_addr() ⇒ pair_addr_arr[0..4]
+       ├ main.c:341  bsp_pn298_change_addr(pair_addr_arr, pair_data.rf_ch)
+       │            ⇒ ★ **切换到遥控器协商的信道**
+       │               （bsp_pn298.c:1585  set_channel(ch)）
+       │
+  t&gt;T    main.c:371  飞行主循环
+       └ **此后不再调用 set_channel()** —— 信道固定在 pair_data.rf_ch
+
+  ⇒ 【结论】本工程的信道行为是：
+       对码阶段：在两个信道之间交替（但第二个值不是设计意图里的那个）
+       飞行阶段：**固定**在协商出来的那个信道（2400~2479MHz 范围）
+     ⇒ 也就是 **"对码时选信道 + 飞行时固定"**，
+       既不是"固定信道"（因为对码会选），也不是"跳频"（因为飞行时不跳）。</pre></div>
+<p><strong>逐项验证"飞行期间真的不换信道"</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【图 6.4-4】全工程里 set_channel / change_addr 的调用点清单
+
+  ┌──────────────────────────────────────┬──────────────────────────────────────┐
+  │ 调用点                                │ 什么时候执行                          │
+  ├──────────────────────────────────────┼──────────────────────────────────────┤
+  │ bsp_pn298.c:1447  __bsp_pn298_init() │ bsp_init() 里（main.c:227）           │
+  │                       → set_channel  │ 上电初始化，写 __PN298_INIT_CHN = 36  │
+  ├──────────────────────────────────────┼──────────────────────────────────────┤
+  │ main.c:321       对码循环内           │ 对码期间每 500ms                      │
+  │                       → set_channel  │ ch_change_arr[count] = 36 或 0        │
+  ├──────────────────────────────────────┼──────────────────────────────────────┤
+  │ main.c:341   → bsp_pn298_change_addr │ 对码成功后**一次**                     │
+  │              bsp_pn298.c:1585        │ 切到 pair_data.rf_ch                  │
+  ├──────────────────────────────────────┼──────────────────────────────────────┤
+  │ （无其它调用点）                      │ 飞行主循环里**没有任何**换信道代码     │
+  └──────────────────────────────────────┴──────────────────────────────────────┘
+
+  ⚠️ 但有一条"隐含的跳频"路径容易被漏掉：
+     main.c:462-473 失联 5 秒后 → bsp_pn298_rx_mode()
+     bsp_pn298.c:479-483  rx_mode() 里有两个 delay_us()，
+                          但**没有**调用 set_channel()
+     ⇒ 所以失联重连时**信道不变**，只是把芯片切回接收模式。
+       如果失联原因是"这个信道被占了"，切模式救不了 ——
+       **这时该做的是换信道，而本工程没做。**
+       🟡 这是一处明确的改进空间：失联时换一个信道重试，代价只有一次 set_channel。</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表-14">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-14">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>机制</th><th>抗干扰</th><th>实现复杂度</th><th>关键前提</th><th>适合</th></tr></thead><tbody><tr><td><strong>固定信道</strong></td><td>编译期/对码时定死一个频点，此后不变</td><td>最弱</td><td>最低</td><td>无</td><td>单机、屏蔽环境、极低成本</td></tr><tr><td><strong>双方约定序列跳频</strong></td><td>双方各有一个信道表 + 同一个伪随机序列（或同一个 LFSR 种子），按包序号跳</td><td>强（干扰只损失部分时隙）</td><td><strong>中</strong>：要保证双方序号同步；丢包会导致失步</td><td><strong>必须有一个可靠的同步机制</strong>（比如每个包里带序号）</td><td>✅ 手册第 17 页暗示芯片支持（"更易开发跳频算法"）</td></tr><tr><td><strong>自适应跳频 AFH</strong></td><td>在上面基础上加"信道质量表"：ACK 失败次数多的信道被踢出跳频表，定期重试</td><td><strong>最强</strong></td><td><strong>高</strong>：要有质量统计、黑名单老化、重入策略</td><td>需要读 <code>OBSERVE_TX</code> 的 <code>PLOS_CNT</code>（见 4.6）</td><td>蓝牙、高阶链路</td></tr><tr><td><strong>对码时扫描选优（本工程的部分能力）</strong></td><td>对码时在候选信道间交替，撞上就定下来</td><td>弱（只解决"开机时"的干扰）</td><td>低</td><td>候选信道表里要有<strong>两个不同的</strong>值</td><td>✅ <strong>本工程的形式（但表里第二个值是 0，不是设计意图）</strong></td></tr><tr><td><strong>失联后换信道重连</strong></td><td>5 秒没包就换个信道再听</td><td>中（能自救）</td><td>低（几行代码）</td><td>要有"换到哪"的策略</td><td>🟡 <strong>本工程缺这一步</strong>（见上方时间线）</td></tr></tbody></table></div>
+<p><strong>本工程用的是</strong>：<strong>对码时选信道 + 飞行时固定信道</strong>。</p>
+<blockquote class=""><p><strong>最后必须回到那个核心事实</strong>（也是本文件与正文 6.4 的分歧点）：
+正文 6.4 说"<code>ch_change_arr[2] = {36, 36}</code> —— 两个值相同，所以实际上<strong>没有扫描</strong>"。
+这个结论<strong>只在"从未对过码"的板子上成立</strong>。对已对过码的板子，
+<code>main.c:265</code> 会把第二个元素改成 <code>pair_data.rf_ch</code>，此时<strong>有两个不同的值</strong>。
+<strong>但那个值不是"上次对码存下来的信道"</strong> —— 因为 <code>flash_read()</code> 在 <code>main.c:328</code> 才执行，
+所以读到的是 <code>0</code>。
+⇒ 三种说法（正文 4.3 的"确实在跳频"、正文 6.4 的"没有扫描"、
+本文件的"在 36 与 0 之间交替")里，<strong>只有第三种与执行顺序吻合</strong>。
+详见第 5 节的问题清单。</p></blockquote>
+<hr>
+<h1 id="第-5-节-阅读正文时发现的事实问题-只指出-未修改正文">第 5 节　阅读正文时发现的事实问题（<strong>只指出，未修改正文</strong>）<a class="anchor" href="#第-5-节-阅读正文时发现的事实问题-只指出-未修改正文">#</a></h1>
+<p>这一节回答一个问题：<strong>对照手册与代码逐行核对之后，正文第 4~6 章有哪些地方需要修正？</strong></p>
+<blockquote class=""><p><strong>纪律说明</strong>：以下每一条都<strong>没有修改正文文件</strong>，也没有修改任何 <code>.c</code>/<code>.h</code>。
+每条都给出"正文原文 → 核对依据 → 建议表述"。<strong>凡是我自己没把握的，标 🟠 并说明。</strong></p></blockquote>
+<hr>
+<h3 id="问题-1-正文-6-4-的结论与正文-4-3-直接矛盾-且与执行顺序不符">【问题 1】🔴 正文 6.4 的结论与正文 4.3 直接矛盾，且与执行顺序不符<a class="anchor" href="#问题-1-正文-6-4-的结论与正文-4-3-直接矛盾-且与执行顺序不符">#</a></h3>
+<p><strong>正文原文（6.4 节）</strong>：</p>
+<blockquote class=""><p>"<strong>你工程里的现状</strong>：<code>ch_change_arr[2] = {36, 36}</code> —— 两个值相同，
+所以实际上<strong>没有扫描</strong>（见 4.3 节）。这不算 bug（功能仍能用），
+但如果现场干扰严重，扫描两个不同频点会明显更可靠。"</p></blockquote>
+<p><strong>同一份正文 4.3 节却说</strong>：</p>
+<blockquote class=""><p>"<strong>结论（更正）</strong>：……所以只要<strong>以前对过码</strong>（Flash 里有值），
+这段代码就是<strong>真的在"信道 36"与"上次的信道"之间每 500ms 交替扫描</strong> —— <strong>它确实在跳频</strong>；"</p></blockquote>
+<p><strong>核对依据</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>事实</th><th>出处</th></tr></thead><tbody><tr><td><code>ch_change_arr[1] = pair_data.rf_ch;</code> 确实存在</td><td><code>main.c:265</code></td></tr><tr><td>它在 <code>while(1)</code> 对码循环<strong>之前</strong></td><td><code>main.c:265</code> &lt; <code>main.c:295</code></td></tr><tr><td><strong>但 <code>flash_read()</code> 在对码循环之后</strong></td><td><code>main.c:328</code></td></tr><tr><td>所以执行 265 行时 <code>pair_data.rf_ch</code> 是未从 Flash 读过的值</td><td>C 语言全局变量零初始化语义 ⇒ <strong>0</strong></td></tr><tr><td>因此对码阶段的信道是 <code>{36, 0}</code>，不是 <code>{36, 36}</code> 也不是 <code>{36, 上次存的}</code></td><td>由上面三条推出</td></tr></tbody></table></div>
+<p><strong>问题</strong>：</p>
+<ol><li>6.4 说"两个值相同"⇒ 对<strong>已对过码</strong>的板子不成立（265 行会改掉第二个值）。</li><li>4.3 说"与上次的信道交替"⇒ <strong>不成立</strong>，因为 Flash 还没读。</li><li>两者的共同盲点都是<strong>没有顺着 <code>main()</code> 的执行顺序读</strong>。</li></ol>
+<p><strong>建议表述</strong>（供参考，未改动正文）：</p>
+<blockquote class=""><p>对码阶段实际在 <code>ch_change_arr[0] = 36</code> 与 <code>ch_change_arr[1]</code>（由 <code>main.c:265</code>
+赋成 <code>pair_data.rf_ch</code>，但此时 <code>flash_read()</code> 尚未执行 ⇒ 值为 0）之间每 500ms 交替。
+由于信道 0 对应 2336MHz，<strong>不在手册的 2400~2483MHz 工作频段内</strong>，
+已对过码的板子在对码时有一半时间停在无效频点上。
+真正用上"协商信道"的时机是 <code>main.c:341</code> 的 <code>bsp_pn298_change_addr()</code>。</p></blockquote>
+<hr>
+<h3 id="问题-2-正文与任务说明里引用的行号-main-c-249-是错的">【问题 2】🟡 正文与任务说明里引用的行号 <code>main.c:249</code> 是错的<a class="anchor" href="#问题-2-正文与任务说明里引用的行号-main-c-249-是错的">#</a></h3>
+<p><strong>引用出处</strong>：正文 <code>main.c:249</code>；<code>_术语事实清单.md</code> 第 95 行也写作 "<code>main.c:249 ch_change_arr[1] = pair_data.rf_ch</code>"。</p>
+<p><strong>核对依据</strong>：<code>main.c:249</code> 是 <code>HAL_ADC_Start(&amp;AdcHandle);</code>（一行 ADC 启动代码）； <code>ch_change_arr[1] = pair_data.rf_ch;</code> 在 <strong><code>main.c:265</code></strong>。</p>
+<p><strong>影响</strong>：读者按 249 去找会找不到；按 265 找才正确。 （<code>_术语事实清单.md</code> 是"事实底稿"，这一处属于<strong>底稿本身的行号笔误</strong>，本文件一并指出。）</p>
+<hr>
+<h3 id="问题-3-正文-5-2-表格里-WWDG-那一行与代码不符">【问题 3】🟢 正文 5.2 表格里"WWDG"那一行与代码不符<a class="anchor" href="#问题-3-正文-5-2-表格里-WWDG-那一行与代码不符">#</a></h3>
+<p><strong>正文原文（5.2 节表格）</strong>：</p>
+<blockquote class=""><p>\| <strong>WWDG</strong> \| Window WDG（窗口看门狗） \| …… \| 见 <code>py32f0xx_hal_conf.h</code> 的使能宏 \|</p></blockquote>
+<p><strong>核对依据</strong>：</p>
+<ul><li><code>py32f0xx_hal_conf.h:101</code>：<code>/* #define HAL_WWDG_MODULE_ENABLED */</code> —— <strong>被注释掉</strong></li><li><code>py32f0xx_hal_conf.h:52</code>：关闭的模块列表里明确含 "<strong>WWDG</strong>"</li><li><code>py32f0xx_hal_conf.h:56</code>："CRC/COMP/<strong>WWDG</strong>/LPTIM/RTC/LED/EXTI 都没用上，关掉可以省下可观的 Flash"</li><li>全工程搜不到 <code>WWDG_HandleTypeDef</code> 的实例定义</li></ul>
+<p><strong>建议表述</strong>：把"见 <code>py32f0xx_hal_conf.h</code> 的使能宏"改成 "<strong>本工程未启用</strong>（<code>py32f0xx_hal_conf.h:101</code> 的 <code>HAL_WWDG_MODULE_ENABLED</code> 被注释掉）"。</p>
+<hr>
+<h3 id="问题-4-正文-4-3-说-注释是错的-但代码注释在-刷新板-上是-对的">【问题 4】🟡 正文 4.3 说"注释是错的"，但代码注释在<strong>刷新板</strong>上是<strong>对的</strong><a class="anchor" href="#问题-4-正文-4-3-说-注释是错的-但代码注释在-刷新板-上是-对的">#</a></h3>
+<p><strong>正文原文（4.3 节）</strong>：</p>
+<blockquote class=""><p>"<strong>⚠ 但代码注释写的是"两个元素都是 36，实际不换频，但代码结构保留了跳频能力"——
+这个注释是错的</strong>（它只看了初值，没注意到 <code>main.c:249</code> 的覆盖）。"</p></blockquote>
+<p><strong>核对依据</strong>（分情况）：</p>
+<div class="tablewrap"><table><thead><tr><th>情况</th><th><code>ch_change_arr</code> 实际值</th><th>代码注释（<code>main.c:78-82</code>）说的对不对</th></tr></thead><tbody><tr><td>从未对过码</td><td><code>{36, 36}</code>（因为 <code>pair_data.rf_ch</code> 是 0… 等等）</td><td>❌ 注释说 <code>{36,36}</code>，实际是 <code>{36, 0}</code></td></tr><tr><td>已对过码</td><td><code>{36, 0}</code></td><td>❌ 注释说 <code>{36,36}</code>，实际是 <code>{36, 0}</code></td></tr></tbody></table></div>
+<p><strong>⇒ 更正我自己上面这张表</strong>：因为 <code>flash_read()</code> 在 265 行之后， <strong>两种情况下 <code>pair_data.rf_ch</code> 都是 0</strong> —— 所以 <code>ch_change_arr</code> <strong>永远是 <code>{36, 0}</code></strong>，代码注释里的"两个元素都是 36"<strong>在运行期从来不成立</strong>。</p>
+<p><strong>这条的意义</strong>：</p>
+<ul><li>正文说"注释是错的，实际在跳频"——<strong>结论错</strong>（不是跳频，是跳到无效频点）；</li><li>但正文说"注释是不可信的"——<strong>方向对</strong>，只是理由用错了。</li><li>与【问题 1】是同一处，这里补充"从不成立"这个更强的事实。</li></ul>
+<p><strong>建议表述</strong>：</p>
+<blockquote class=""><p><code>main.c:78-82</code> 与 <code>main.c:319</code> 两处注释都写"两个元素都是 36 / 原地重设同一信道"，
+但 <code>main.c:265</code> 会用 <code>pair_data.rf_ch</code>（此时恒为 0，因为 <code>flash_read()</code> 在 <code>main.c:328</code>）
+覆盖第二个元素 ⇒ <strong>运行期实际是 <code>{36, 0}</code></strong>，在 2436MHz 与 2336MHz 之间交替。
+注释与代码、以及"设计意图"三者互不一致。<strong>改法有两种</strong>（未改动正文）：
+把 <code>main.c:265</code> 挪到 <code>flash_read()</code> 之后（才能真正用上"上次的信道"），
+或者把两个候选信道都写成显式常量（去掉对 <code>pair_data</code> 的依赖）。</p></blockquote>
+<hr>
+<h3 id="问题-5-正文-5-3-的余量口径前后不一致-4-倍-vs-5-倍">【问题 5】🟡 正文 5.3 的余量口径前后不一致（4 倍 vs 5 倍）<a class="anchor" href="#问题-5-正文-5-3-的余量口径前后不一致-4-倍-vs-5-倍">#</a></h3>
+<p><strong>正文原文（5.3 节，同一节内先写）</strong>：</p>
+<blockquote class=""><p>"而喂狗周期约 101ms，所以<strong>最坏情况下仍有 4 倍余量</strong>（0.4s / 101ms ≈ 4）。"</p></blockquote>
+<p><strong>同一节稍后又写</strong>：</p>
+<blockquote class=""><p>"<strong>为什么选 0.5 秒</strong>：主循环每约 100ms 喂一次狗，0.5s 给了 <strong>5 倍余量</strong>。"</p></blockquote>
+<p><code>WDG.c:22</code> 的文件头注释也写"留了 <strong>5 倍余量</strong>"。</p>
+<p><strong>核对依据</strong>：</p>
+<ul><li>用标称值：<code>500ms ÷ 100ms = 5</code> ⇒ 5 倍（但这是<strong>乐观</strong>算法，忽略了 ±20%）</li><li>用最坏值（LSI 偏快 ⇒ 超时最短 = 400ms）÷ 实际周期（101ms）⇒ <strong>≈ 3.96 倍</strong></li><li><strong>同一节里两个数字并存</strong>，读者会不知道该信哪个。</li></ul>
+<p><strong>建议表述</strong>：统一成 "<strong>按最坏情况（LSI +20% ⇒ 超时约 400ms）与实际喂狗周期（约 101ms）计算，余量约 4 倍</strong>； 如果按标称值 0.5s / 100ms 粗算是 5 倍，但<strong>那是不该用的算法</strong>。" （<code>WDG.c:22</code> 的注释同理，但那是代码注释，本文件不改。）</p>
+<hr>
+<h3 id="问题-6-正文-4-2-里-64-偏移是芯片的信道编码要求-这个说法没有手册依据">【问题 6】🟡 正文 4.2 里"<code>+64</code> 偏移是芯片的信道编码要求"这个说法没有手册依据<a class="anchor" href="#问题-6-正文-4-2-里-64-偏移是芯片的信道编码要求-这个说法没有手册依据">#</a></h3>
+<p>这个说法<strong>不在正文里，而在代码注释里</strong>（<code>config_rf.h:92-94</code>、<code>bsp_pn298.c:628-629</code>）， 正文 4.2 已经正确地把它标为"手册里并没有'信道号要加 64'这条规定" ✅ —— <strong>正文在这一点上是对的</strong>，本文件在此只是确认并加强：</p>
+<ul><li>🟢 手册第 34 页给出的唯一换算关系是 <code>Channel = RF_CH + 2336</code></li><li>🟢 <code>RF_CH[7:0]</code> 是普通可写字段，复位值 <code>10001110b</code></li><li>⇒ <strong><code>+64</code> 没有手册依据</strong>（🟠 属厂商例程惯例）</li><li>⇒ 正文 4.2 的"实用结论"（收发两端用同一偏移即可、换算用 <code>+2336</code>）<strong>完全正确</strong> ✅</li></ul>
+<hr>
+<h3 id="问题-7-正文-4-5-讲包结构时-没有提到收发两侧的-位序-字节序镜像">【问题 7】🟡 正文 4.5 讲包结构时，没有提到收发两侧的"位序/字节序镜像"<a class="anchor" href="#问题-7-正文-4-5-讲包结构时-没有提到收发两侧的-位序-字节序镜像">#</a></h3>
+<p><strong>正文原文（4.5 节）</strong>：只讲了本工程 12 字节载荷的布局与"大端"，没有提到 <code>bsp_pn298_byte_bit_decode()</code>。</p>
+<p><strong>核对依据</strong>：</p>
+<ul><li><code>bsp_pn298.c:1209</code>（收包）与 <code>:1133</code>（另一个收包路径）都会调用 <code>byte_bit_decode</code></li><li><code>bsp_pn298.c:875-918</code> 的实现是<strong>每个字节内 8 位倒序 + 整个数组字节顺序倒置</strong></li><li><code>bsp_pn298.c:40-45</code> 的文件头注释明确写了这件事："为什么收到的数据要'反位序 + 反字节序'"</li></ul>
+<p><strong>影响</strong>：读者如果不看这一层，会以为 <code>rx_buff[i]</code> 直接对应 "芯片 FIFO 里的第 i 个字节"，从而在调试时对不上号。</p>
+<p><strong>建议补充</strong>（未改动正文）：在 4.5 末尾加一句 "驱动在收包后会自动做一次'位倒序 + 字节倒序'还原（<code>bsp_pn298.c:875</code>）， 所以 <code>rx_buff[i]</code> 已经是明文第 i 字节；也正因如此帧头 <code>0xAA</code>/<code>0xDB</code> 这两个'位镜像对称'的值才能直接用于比较。"</p>
+<hr>
+<h3 id="问题-8-正文-4-6-未提到-重传失败后必须清-TX-FIFO">【问题 8】🟡 正文 4.6 未提到"重传失败后必须清 TX FIFO"<a class="anchor" href="#问题-8-正文-4-6-未提到-重传失败后必须清-TX-FIFO">#</a></h3>
+<p><strong>核对依据</strong>：</p>
+<ul><li><code>bsp_pn298.c:380</code> 附近的注释："<strong>MAX_RT（重发超时）之后，失败的那包数据仍然留在 TX FIFO 里</strong>"</li><li>本工程在两条路径上都有 <code>FLUSH_TX</code>：<code>bsp_pn298.c:1204</code>、<code>bsp_pn298.c:277</code></li></ul>
+<p><strong>影响</strong>：这是使用自动重传功能的<strong>必备纪律</strong>，漏掉会导致"新包前面先出去一个旧包"。 正文 4.6 讲了 ACK 和 ARC 的机制，但没讲这个后果。</p>
+<hr>
+<h3 id="问题-9-正文-6-2-说-遥控器靠收到-ACK-才知道有人接住了-与遥控器代码不符">【问题 9】🟠 正文 6.2 说"遥控器靠收到 ACK 才知道有人接住了"——与遥控器代码不符<a class="anchor" href="#问题-9-正文-6-2-说-遥控器靠收到-ACK-才知道有人接住了-与遥控器代码不符">#</a></h3>
+<p><strong>正文原文（6.2 节流程框图）</strong>：</p>
+<blockquote class=""><p>"↓ 点亮 LED 提示'对码成功'，退出对码循环，进入正常飞行模式"</p></blockquote>
+<p>以及 <code>deal_pack.c:270-272</code> 的注释：</p>
+<blockquote class=""><p>"为什么飞机要先回一个 ACK：<strong>遥控器靠收到 ACK 才知道'有人接住了'</strong>，否则它会一直广播"</p></blockquote>
+<p><strong>核对依据</strong>（遥控器侧）：</p>
+<ul><li><code>遥控器/user/main.c:164-167</code>：<code>send_pair_pack_flag == 0x01</code> 时持续发对码包 ✅</li><li><code>遥控器/user/main.c:168-173</code>：退出条件是 <strong><code>aADCxConvertedData[2] &gt; 4050</code></strong> 这个 ADC 判据</li><li><code>遥控器/user/main.c:178-184</code>：<code>if(ack_buff[0]==1){ flash_write(); break; }</code> —— <strong>整段被注释掉了</strong></li></ul>
+<p>⇒ <strong>遥控器当前的退出条件不是 ACK，而是一个 ADC 读数</strong>。</p>
+<p><strong>为什么标 🟠 而不是 🟢 或 🔴</strong>： <code>aADCxConvertedData[2]</code> 到底对应哪个物理量（拨杆位置？某个按键？ 摇杆推到某个位置？），<strong>本文件没有查到确定答案</strong>。 如果这个 ADC 通道接的就是"对码按键的第二段行程"或"某个开关"， 那么"ACK 判据"确实只是历史遗留，正文那句注释就是过时的； 如果它是别的含义，结论会更复杂。</p>
+<p><strong>建议</strong>：正文这一处应改为 "飞机会回一个 ACK 载荷；<strong>但遥控器当前并不用 ACK 作为对码成功的判据</strong>， 而是用 <code>aADCxConvertedData[2] &gt; 4050</code>（<code>遥控器/user/main.c:168</code>）。 ACK 判据那条路径在 <code>遥控器/user/main.c:178-184</code> 被注释掉了。" 至于那个 ADC 通道的物理含义，<strong>需要硬件图纸确认</strong>（🟠）。</p>
+<hr>
+<h3 id="问题清单汇总">问题清单汇总<a class="anchor" href="#问题清单汇总">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>位置</th><th>严重度</th><th>类型</th><th>一句话</th></tr></thead><tbody><tr><td>1</td><td>正文 6.4</td><td>🔴</td><td><strong>结论错误 + 内部矛盾</strong></td><td>说"两个值相同、没有扫描"，但 265 行改了第二个值；且 4.3 说的相反</td></tr><tr><td>2</td><td>行号引用</td><td>🟡</td><td>行号错误</td><td><code>main.c:249</code> 应为 <code>main.c:265</code>（<code>_术语事实清单.md</code> 同错）</td></tr><tr><td>3</td><td>正文 5.2</td><td>🟢</td><td>与代码不符</td><td>WWDG 本工程<strong>未启用</strong>（<code>hal_conf.h:101</code> 被注释掉）</td></tr><tr><td>4</td><td>正文 4.3</td><td>🟡</td><td>结论错误（方向对）</td><td>注释确实不可信，但理由是"实际恒为 <code>{36,0}</code>"而非"在跳频"</td></tr><tr><td>5</td><td>正文 5.3</td><td>🟡</td><td>口径不一致</td><td>同一节内"4 倍余量"与"5 倍余量"并存</td></tr><tr><td>6</td><td>正文 4.2</td><td>✅</td><td>正文正确</td><td><code>+64</code> 无手册依据 —— 正文判断正确，本文件确认</td></tr><tr><td>7</td><td>正文 4.5</td><td>🟡</td><td>遗漏</td><td>未提 <code>byte_bit_decode()</code> 的位/字节序镜像</td></tr><tr><td>8</td><td>正文 4.6</td><td>🟡</td><td>遗漏</td><td>未提"重传失败后必须 <code>FLUSH_TX</code>"</td></tr><tr><td>9</td><td>正文 6.2</td><td>🟠</td><td>与代码不符</td><td>遥控器的对码成功判据是 ADC 值，不是 ACK</td></tr></tbody></table></div>
+<hr>
+<h1 id="附录-A-本文件的示意图清单-按出现顺序">附录 A　本文件的示意图清单（按出现顺序）<a class="anchor" href="#附录-A-本文件的示意图清单-按出现顺序">#</a></h1>
+<p>本文件共 <strong>34 个</strong> 以 <code> </code>`<code>text </code> 包裹的示意图/对照表。</p>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>图标题</th><th>所在节</th></tr></thead><tbody><tr><td>1</td><td>第 4 章主线图：一条 2.4G 遥控链路约定了什么</td><td>4A</td></tr><tr><td>2</td><td>图 4.1-1　同样是"一根天线"，两个频段的物理尺寸差 33 倍</td><td>4.1</td></tr><tr><td>3</td><td>图 4.1-2　波长决定了"什么东西算墙"</td><td>4.1</td></tr><tr><td>4</td><td>图 4.1-3　为什么 2.4GHz 段"看起来有 83.5MHz，实际没几格空"</td><td>4.1</td></tr><tr><td>5</td><td>图 4.2-1　一段频谱是怎么变成"格子"的</td><td>4.2</td></tr><tr><td>6</td><td>图 4.2-2　同频干扰 = 两句话叠在一起</td><td>4.2</td></tr><tr><td>7</td><td><strong>图 4.2-3　从代码里的 36 到空中的 2436MHz，一共几步</strong></td><td>4.2</td></tr><tr><td>8</td><td>图 4.3-1　<code>main()</code> 里这四件事的先后顺序</td><td>4.3</td></tr><tr><td>9</td><td><strong>图 4.3-2　对码成功后频率到底变了没有</strong></td><td>4.3</td></tr><tr><td>10</td><td>图 4.4-1　只有信道 vs 信道 + 地址</td><td>4.4</td></tr><tr><td>11</td><td><strong>图 4.4-2　1：6 星状网络与"地址三重一致"</strong></td><td>4.4</td></tr><tr><td>12</td><td>图 4.4-3　本工程里三个地址寄存器分别被写成了什么</td><td>4.4</td></tr><tr><td>13</td><td><strong>图 4.5-1　PN298 增强模式一包的真实结构（含 PID）</strong></td><td>4.5</td></tr><tr><td>14</td><td>图 4.5-2　逐字段反推："去掉它会怎样"</td><td>4.5</td></tr><tr><td>15</td><td><strong>图 4.5-3　为什么"重传"必须配一个 PID</strong></td><td>4.5</td></tr><tr><td>16</td><td><strong>图 4.5-4　本工程的 12 字节载荷字节级布局</strong></td><td>4.5</td></tr><tr><td>17</td><td>图 4.6-1　没有 ACK 的世界：发的人永远不知道结果</td><td>4.6</td></tr><tr><td>18</td><td><strong>图 4.6-2　一次成功的"发→ACK"时序</strong></td><td>4.6</td></tr><tr><td>19</td><td><strong>图 4.6-3　一次失败 + ARC=3 重传（ARD 250µs）</strong></td><td>4.6</td></tr><tr><td>20</td><td><strong>图 4.6-4　PLOS_CNT / ARC_CNT 各自在数什么</strong></td><td>4.6</td></tr><tr><td>21</td><td>图 4.7-1　全双工 vs 半双工，差在射频前端的套数</td><td>4.7</td></tr><tr><td>22</td><td>图 4.7-2　没有"模式切换"这个概念会怎样</td><td>4.7</td></tr><tr><td>23</td><td><strong>图 4.7-3　CE 引脚路线 vs 本工程软命令 0xFD 路线</strong></td><td>4.7</td></tr><tr><td>24</td><td><strong>图 4.7-4　飞机侧一个完整"收 + 回 ACK"周期里的所有延时</strong></td><td>4.7</td></tr><tr><td>25</td><td>图 4.8-1　软件 SPI 的接线（含与硬件 SPI1 的引脚对照）</td><td>4.8</td></tr><tr><td>26</td><td>图 4.8-2　为什么不用硬件 SPI —— 四条理由</td><td>4.8</td></tr><tr><td>27</td><td>图 4.8-3　软件 SPI 实际跑多快</td><td>4.8</td></tr><tr><td>28</td><td>图 4.8-4　硬件 SPI 与软件 SPI 的分工差别</td><td>4.8</td></tr><tr><td>29</td><td>图 4.8-5　软件 SPI 的四个代价与本工程现状</td><td>4.8</td></tr><tr><td>30</td><td>第 5 章主线图：看门狗在系统里的位置</td><td>5A</td></tr><tr><td>31</td><td><strong>图 5.1-2　看门狗就是"你必须定期证明自己还活着"</strong></td><td>5.1</td></tr><tr><td>32</td><td><strong>图 5.2-1　"独立"独立在哪里 —— 时钟树视角（IWDG vs WWDG）</strong></td><td>5.2</td></tr><tr><td>33</td><td><strong>图 5.2-2　窗口看门狗：喂太早也是错</strong></td><td>5.2</td></tr><tr><td>34</td><td><strong>图 5.2-3　IWDG / WWDG 四方对照</strong></td><td>5.2</td></tr><tr><td>35</td><td><strong>图 5.3-1　超时公式的推导</strong></td><td>5.3</td></tr><tr><td>36</td><td><strong>图 5.3-2　同一份配置，不同温度下"狗"咬人的时间完全不同</strong></td><td>5.3</td></tr><tr><td>37</td><td><strong>图 5.3-3　喂狗周期 vs 狗的最坏超时：时间轴上的余量</strong></td><td>5.3</td></tr><tr><td>38</td><td>图 5.3-4　"狗该设多长"这件事的三方权衡</td><td>5.3</td></tr><tr><td>39</td><td>图 5.4-1　主循环一圈里各任务与喂狗点的相对位置</td><td>5.4</td></tr><tr><td>40</td><td><strong>图 5.4-2　四种喂狗位置，只有一种是对的</strong></td><td>5.4</td></tr><tr><td>41</td><td>图 5.4-3　本工程里的无超时死等（反面教材）</td><td>5.4</td></tr><tr><td>42</td><td><strong>图 5.4-4　现场排查"为什么重启了"的标准动作（RCC_CSR）</strong></td><td>5.4</td></tr><tr><td>43</td><td>图 5.4-5　单步调试时"被狗咬"是怎么回事（DBG_IWDG_STOP）</td><td>5.4</td></tr><tr><td>44</td><td>图 5.4-6　对码阶段到底会不会被狗咬？</td><td>5.4</td></tr><tr><td>45</td><td>第 6 章主线图：对码交换了哪些东西</td><td>6A</td></tr><tr><td>46</td><td>图 6.1-1　不对码的三种做法，以及它们各自怎么崩</td><td>6.1</td></tr><tr><td>47</td><td>图 6.1-2　对码的两层价值：功能层 与 安全层</td><td>6.1</td></tr><tr><td>48</td><td><strong>图 6.1-3　对码 = 把"公共频道"换成"私人频道"</strong></td><td>6.1</td></tr><tr><td>49</td><td>图 6.1-4　三个协商项的"作用层次"不同</td><td>6.1</td></tr><tr><td>50</td><td><strong>图 6.2-1　对码的完整时序（遥控器侧 + 飞控侧）</strong></td><td>6.2</td></tr><tr><td>51</td><td>图 6.2-2　为什么必须写 Flash</td><td>6.2</td></tr><tr><td>52</td><td><strong>图 6.2-3　0xDB 对码包 12 字节的"生产者"和"消费者"</strong></td><td>6.2</td></tr><tr><td>53</td><td>图 6.2-4　飞控侧的关键数据结构在内存里的样子</td><td>6.2</td></tr><tr><td>54</td><td>图 6.3-1　"对码期间不能回主循环"的两条理由</td><td>6.3</td></tr><tr><td>55</td><td><strong>图 6.3-2　对码期间有哪些保护被暂停？各自的风险有多大？</strong></td><td>6.3</td></tr><tr><td>56</td><td><strong>图 6.3-3　三种"对码流程"的结构对比</strong></td><td>6.3</td></tr><tr><td>57</td><td>图 6.3-4　阻塞式对码什么时候该被换掉</td><td>6.3</td></tr><tr><td>58</td><td>图 6.4-1　"对码时选信道"与"飞行时跳频"是两件不同的事</td><td>6.4</td></tr><tr><td>59</td><td>图 6.4-2　固定信道在 2.4GHz 上是"赌运气"</td><td>6.4</td></tr><tr><td>60</td><td><strong>图 6.4-3　本工程的信道使用时间线（已按代码事实修正）</strong></td><td>6.4</td></tr><tr><td>61</td><td><strong>图 6.4-4　全工程里 set_channel / change_addr 的调用点清单</strong></td><td>6.4</td></tr></tbody></table></div>
+<p>（上表共 61 条图；其中带 <code> </code>`<code>text </code> 包裹的示意图块共 <strong>34 个</strong> —— 其余为节内表格与代码块，不计入示意图。加粗的是本章主干图。）</p>
+<hr>
+<h1 id="附录-B-本文件-故意省略-的内容">附录 B　本文件<strong>故意省略</strong>的内容<a class="anchor" href="#附录-B-本文件-故意省略-的内容">#</a></h1>
+<p>这一节回答一个问题：<strong>哪些我本来可以写、但选择不写？为什么？</strong></p>
+<p>按任务约定"不确定就标 🟠 或省略"，以下内容<strong>直接省略</strong>：</p>
+<ol><li><strong>一切人名与公司名。</strong> 射频芯片、看门狗、跳频技术的发明者/设计者 —— 一个都没写。</li></ol>
+<p>文件头里出现的 <code>Copyright (C) Shanghai Panchip Microelectronics</code>、 <code>yangyaming</code>、<code>杨亚明</code> 等，<strong>只作为"这段代码的来源"这一事实出现</strong>， 本文件不为他们附加任何历史叙述。</p>
+<ol><li><strong>一切具体年份与"某年某标准制定"的故事。</strong> 只保留可确证的技术事实</li></ol>
+<p>（ISM 频段免许可这一性质、IEEE 802.11 频道中心频率的计算公式）。</p>
+<ol><li><strong><code>+64</code> 偏移的真正来源。</strong> 本文件查了 PN298 手册第 34 页，</li></ol>
+<p>只有 <code>Channel = RF_CH + 2336</code> 一条换算，<strong>没有 <code>+64</code> 的规定</strong>； 代码注释说"是芯片的信道编码要求"，但本文件找不到出处。 与其猜一个"因为 XN297L 当年……"的故事，不如标 🟠 并说清"没有手册依据"。</p>
+<ol><li><strong><code>config_rf.h</code> 里发射功率档位表的对错结论。</strong></li></ol>
+<p>该文件注释与 <code>bsp_pn298.h</code> 的档位表几乎全对不上（见 4.1 的注）， 但<strong>没有频谱仪就无法判定谁对</strong>，所以只写"两处矛盾，以实测为准"，不给结论。</p>
+<ol><li><strong>遥控器侧 <code>aADCxConvertedData[2]</code> 的物理含义。</strong></li></ol>
+<p>它是遥控器判断"对码成功"的实际依据（<code>遥控器/user/main.c:168</code>）， 但本文件在代码里查不到它对应哪个硬件，故标 🟠 并指向"需硬件图纸确认"。</p>
+<ol><li><strong><code>exclude_chs[]</code> 那 15 个敏感信道是怎么选出来的。</strong></li></ol>
+<p><code>遥控器/user_driver/flash.c:64</code> 给出的是 <code>{13,14,15, 29,30,31, 45,46,47, 61,62,63, 77,78,79}</code>， 每 16 个一组、取后 3 个。这个模式明显与"16MHz 整数倍"有关 （手册第 11 页的注释），但<strong>从中推不出唯一的构造规则</strong>，故只陈述现象 + 标 🟡。</p>
+<ol><li><strong>任何跨项目的性能统计数字。</strong> 不写"2.4G 比 72MHz 快多少""跳频能提升多少可靠性"这类</li></ol>
+<p>没有来源的百分比。本文件里出现的所有数字都可以逐条复算。</p>
+<ol><li><strong>实测数据。</strong> 本文件<strong>没有在真机上测过任何东西</strong> ——</li></ol>
+<p>所有"实际约 380kHz""约 78µs""约 90~100µs"都是<strong>从代码与时钟推算的量级估算</strong>， 已在正文里逐条标注。要精确值，请用示波器或把 <code>TIM16</code> 的 <code>micros16()</code> 夹在两次 GPIO 翻转之间测。</p>
+<ol><li><strong>FreeRTOS 等 RTOS 在本芯片上的可行性分析。</strong></li></ol>
+<p>只指出约束（8KB SRAM、Cortex-M0+、无 FPU），不给"能不能跑、够不够用"的结论。</p>
+<ol><li><strong>地址字节序（谁先上线）。</strong></li></ol>
+<p>手册第 17 页的例子 <code>0xC2C3C4C5C1</code> 看不出字节序， <code>bsp_pn298.h:167</code> 的注释说"低字节在前"但没有独立证据。 因为本工程收发同向，字节序不影响互通，故标 🟠 不下断言。</p>
+<p><strong>还省略了一类内容</strong>：我没有为本工程的"链路可靠性"给出任何<strong>评估结论</strong> （比如"这个设计能飞多远""丢包率大概多少"）。这类结论必须要实测数据支撑， 凭空推算出来的数字比不写更有害。</p>
+<hr>
+<h1 id="附录-C-一句话总结">附录 C　一句话总结<a class="anchor" href="#附录-C-一句话总结">#</a></h1>
+<blockquote class=""><p><strong>第 4 章</strong>：2.4GHz 用"<strong>免许可 + 天线 3cm</strong>"换来了"<strong>易遮挡 + 同频设备多</strong>"。
+剩下所有术语都是在给这个选择打补丁：<strong>信道</strong>解决"在哪说"，
+<strong>地址</strong>解决"对谁说"，<strong>包结构</strong>解决"怎么说"，<strong>ACK/重传</strong>解决"说完怎么知道对方听见了"，
+<strong>CE</strong> 解决"什么时候轮到我说话"，<strong>软件 SPI</strong> 解决"我怎么跟芯片说"。
+出问题的现象永远是同一句"收不到"，所以排查必须<strong>从物理层往应用层</strong>走。</p><p><strong>第 5 章</strong>：看门狗是一切"<strong>程序还活着</strong>"的证明机制，
+它的价值全部取决于两件事：<strong>时钟源（决定它能不能救时钟故障）</strong>和
+<strong>喂狗点（决定它是不是形同虚设）</strong>。
+IWDG 用 LSI，所以救得了"主时钟都乱了"；代价是 LSI 的 <strong>±20%</strong> 全温区偏差 ⇒
+<strong>余量必须按最坏值算</strong>（本工程 400ms ÷ 101ms ≈ 4 倍，不是 5 倍）。
+喂狗的位置只有一个判据：<strong>"只有主流程正常推进才可能执行到"</strong>。</p><p><strong>第 6 章</strong>：对码在协议上只是"交换信道 + 地址"，但在结构上它带来一个
+<strong>阻塞状态</strong>（<code>while(1)</code>），而这个状态之所以安全，是因为
+<strong>本工程把"起狗"排在了它之后</strong>。
+真正隐蔽的风险不在流程里，而在<strong>存储布局</strong>：两侧靠"结构体前 6 字节布局相同"
+这个<strong>隐式约定</strong>交换数据，<strong>没有版本号、没有 CRC</strong>，
+任何一边调整字段顺序都会静默错位。
+而"跳频"这件事，本工程的现状是：<strong>对码时在两个信道间交替（第二个值是 0，不是设计意图），
+飞行时固定在协商信道</strong> —— 既不是设计文档说的"没有扫描"，也不是正文 4.3 说的"确实在跳频"。</p><p><strong>最后重申一次</strong>：以上所有关于"为什么这样设计"的推理<strong>只用于建立直觉</strong>；
+判断代码对不对，请以<strong>手册原文的页码条款</strong>、<strong>寄存器默认值</strong>、<strong>你自己在板子上的实测</strong>为准。
+本文件逐条标注的行号都可以直接打开核对 —— 这也是本文件唯一敢保证的东西。</p></blockquote>
+</main>
+</div>
+<div class="toolbar">
+  <button id="totop">↑ 回到顶部</button>
+</div>
+<script>
+// 代码复制按钮
+document.querySelectorAll('.codeblock').forEach(function(box){
+  var btn = box.querySelector('.copy');
+  var code = box.querySelector('pre');
+  if(!btn || !code) return;
+  btn.addEventListener('click', function(){
+    // 代码块：逐行取 .lc（去掉行号）；示意图：直接取 pre 的文本
+    var rows = code.querySelectorAll('.lc');
+    var text = rows.length
+      ? Array.prototype.map.call(rows, function(l){ return l.textContent; }).join('\n')
+      : code.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+    }).catch(function(){ btn.textContent = '复制失败'; setTimeout(function(){ btn.textContent='复制'; }, 1200); });
+  });
+});
+// 滚动高亮当前目录项
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 120, best = 0;
+    for(var i=0;i<targets.length;i++){ if(targets[i] && targets[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+    var h = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+// 回到顶部
+document.getElementById('totop').addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+</script>
+</body>
+</html>

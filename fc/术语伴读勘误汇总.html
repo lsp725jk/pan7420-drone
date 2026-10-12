@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>术语伴读勘误汇总</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+  --sidebar-bg:#f6f8fa; --code-bg:#f6f8fa; --code-border:#d8dee4;
+  --accent:#0969da; --accent-soft:#ddf4ff;
+  --warn-bg:#fff8c5; --warn-border:#d4a72c;
+  --danger-bg:#ffebe9; --danger-border:#cf222e;
+  --ok-bg:#dafbe1; --ok-border:#1a7f37;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d;
+    --sidebar-bg:#161b22; --code-bg:#161b22; --code-border:#30363d;
+    --accent:#58a6ff; --accent-soft:#0c2d6b;
+    --warn-bg:#3a2d00; --warn-border:#9e6a03;
+    --danger-bg:#3d1418; --danger-border:#f85149;
+    --ok-bg:#0f2f1a; --ok-border:#3fb950;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,sans-serif;
+  font-size:16px; line-height:1.75;
+}
+/* ---------- 布局 ---------- */
+.wrap{display:flex; align-items:flex-start; max-width:1500px; margin:0 auto}
+nav{
+  position:sticky; top:0; flex:0 0 300px; height:100vh; overflow-y:auto;
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  padding:20px 0 60px;
+}
+nav .navtitle{
+  padding:0 20px 14px; font-weight:600; font-size:15px;
+  border-bottom:1px solid var(--border); margin-bottom:10px;
+}
+nav a{
+  display:block; padding:4px 20px; color:var(--muted);
+  text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+nav a:hover{color:var(--accent); background:var(--accent-soft)}
+nav a.h1{font-weight:600; color:var(--fg); margin-top:8px}
+nav a.h2{padding-left:32px}
+nav a.h3{padding-left:46px; font-size:12.5px}
+nav a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); font-weight:600}
+main{flex:1 1 auto; min-width:0; padding:32px 44px 120px}
+/* ---------- 页头 ---------- */
+header.page{
+  border-bottom:2px solid var(--border); padding-bottom:20px; margin-bottom:28px;
+}
+header.page h1{margin:0 0 6px; font-size:30px; line-height:1.3; border:0; padding:0}
+header.page .sub{color:var(--muted); font-size:15px}
+header.page .meta{color:var(--muted); font-size:12.5px; margin-top:10px}
+/* ---------- 标题 ---------- */
+h1,h2,h3,h4{line-height:1.35; font-weight:600; scroll-margin-top:16px}
+h1{font-size:26px; margin:44px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+h2{font-size:22px; margin:38px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border)}
+h3{font-size:18px; margin:28px 0 10px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--muted)}
+.anchor{color:var(--border); text-decoration:none; margin-left:8px; font-weight:400; opacity:0}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+/* ---------- 正文元素 ---------- */
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{margin:12px 0; padding-left:26px}
+li{margin:5px 0}
+li>ul,li>ol{margin:5px 0}
+hr{border:0; border-top:1px solid var(--border); margin:34px 0}
+strong{font-weight:600}
+/* 行内代码 */
+code{
+  background:var(--code-bg); border:1px solid var(--code-border);
+  border-radius:5px; padding:.15em .4em; font-size:.875em;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  word-break:break-word;
+}
+/* 代码块 */
+.codeblock{
+  position:relative; margin:16px 0; border:1px solid var(--code-border);
+  border-radius:8px; overflow:hidden; background:var(--code-bg); box-shadow:var(--shadow);
+}
+.codeblock .cbhead{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; background:var(--sidebar-bg); border-bottom:1px solid var(--code-border);
+  font-size:12px; color:var(--muted);
+}
+.codeblock .lang{font-weight:600; letter-spacing:.03em; text-transform:uppercase}
+.codeblock .copy{
+  cursor:pointer; border:1px solid var(--code-border); background:transparent;
+  color:var(--muted); border-radius:5px; padding:2px 9px; font-size:11.5px;
+  font-family:inherit;
+}
+.codeblock .copy:hover{color:var(--accent); border-color:var(--accent)}
+.codeblock pre{
+  margin:0; padding:12px 0; overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px; line-height:1.65;
+}
+.codeblock .line{display:flex; min-width:max-content}
+.codeblock .ln{
+  flex:0 0 auto; width:3.2em; padding-right:12px; text-align:right;
+  color:var(--border); user-select:none;
+}
+.codeblock .lc{padding-right:20px; white-space:pre}
+/* 示意图：不加行号、不换行（换行会毁掉 ASCII 图的列对齐，所以横向滚动） */
+.codeblock.art{background:var(--bg)}
+.codeblock.art .lang{color:var(--accent)}
+.codeblock .artpre{
+  margin:0; padding:14px 16px; overflow-x:auto; white-space:pre;
+  font-family:"Cascadia Mono",Consolas,"MS Gothic","Courier New",monospace;
+  font-size:13px; line-height:1.5; tab-size:4;
+}
+/* 表格 */
+.tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{border-bottom:1px solid var(--border); padding:9px 13px; text-align:left; vertical-align:top}
+th{background:var(--sidebar-bg); font-weight:600; white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sidebar-bg)}
+/* 引用块：按内容分色 */
+blockquote{
+  margin:16px 0; padding:12px 16px; border-left:4px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0;
+}
+blockquote p{margin:6px 0}
+blockquote.warn{border-left-color:var(--warn-border); background:var(--warn-bg)}
+blockquote.danger{border-left-color:var(--danger-border); background:var(--danger-bg)}
+blockquote.ok{border-left-color:var(--ok-border); background:var(--ok-bg)}
+/* 顶部工具条 */
+.toolbar{
+  position:fixed; right:20px; bottom:20px; display:flex; gap:8px; z-index:50;
+}
+.toolbar button{
+  border:1px solid var(--border); background:var(--bg); color:var(--muted);
+  border-radius:20px; padding:8px 16px; cursor:pointer; font-size:13px;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.toolbar button:hover{color:var(--accent); border-color:var(--accent)}
+/* 进度条 */
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; z-index:99}
+/* 窄屏 */
+@media (max-width:900px){
+  nav{display:none}
+  main{padding:20px 18px 100px}
+  .wrap{display:block}
+  body{font-size:15px}
+}
+@media print{
+  nav,.toolbar,#progress{display:none}
+  main{padding:0}
+  .codeblock,.tablewrap{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav>
+  <div class="navtitle">术语伴读勘误汇总</div>
+  <a class="h2" href="#一-影响最大的四条-会误导判断的" title="一、影响最大的四条（会误导判断的）">一、影响最大的四条（会误导判断的）</a>
+  <a class="h2" href="#二-术语手册的修正-已在手册第-11-5-11-6-节留档" title="二、术语手册的修正（已在手册第 11.5 / 11.6 节留档）">二、术语手册的修正（已在手册第 11.5 / 11.6 节留档）</a>
+  <a class="h2" href="#三-代码注释的修正-只改注释-代码未动" title="三、代码注释的修正（只改注释，代码未动）">三、代码注释的修正（只改注释，代码未动）</a>
+  <a class="h2" href="#四-新增的记录-不是错误-是查出来的事实" title="四、新增的记录（不是错误，是查出来的事实）">四、新增的记录（不是错误，是查出来的事实）</a>
+  <a class="h2" href="#五-怎么自己复核" title="五、怎么自己复核">五、怎么自己复核</a>
+</nav>
+<main>
+<header class="page">
+  <h1>术语伴读勘误汇总</h1>
+  <div class="sub">写伴读时反过来查出的原有错误：文档错误与代码注释错误，附依据与复核方法</div>
+  <div class="meta">PAN 飞控工程 · PY32F030 (Cortex-M0+) · 由 build-gcc/tools/md_to_html.py 生成</div>
+</header>
+<p>写这份术语伴读系列时，为了讲清「它为什么长这样」，每个断言都重新核了一遍代码与手册。 <strong>结果是查出了一批原有的错误说法</strong>，其中有文档错误，也有<strong>代码注释错误</strong>。 这份文件把它们集中到一处，方便你一次看完。</p>
+<blockquote class=""><p><strong>重要前提</strong>：所有修正<strong>只改注释与文档，没有改任何一行代码逻辑</strong>。
+每个改过的文件都用「剥离注释后哈希比对」验证过，且固件重新构建后
+<strong>FLASH 63116 B / RAM 5136 B 与改动前完全相同</strong>。</p></blockquote>
+<h2 id="一-影响最大的四条-会误导判断的">一、影响最大的四条（会误导判断的）<a class="anchor" href="#一-影响最大的四条-会误导判断的">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>错误说法</th><th>事实</th><th>为什么影响大</th></tr></thead><tbody><tr><td>1</td><td>「<code>flight_ctrl()</code> 每 1ms 执行一次，由 TIM17 中断调用」（<strong>7 处注释 + 手册</strong>都这么写）</td><td>唯一调用点是 <code>user/main.c:410</code>，<strong>在主循环</strong>；TIM17 中断只做计数自增（<code>bsp_timer.c:168-194</code>）</td><td>1ms 是<strong>时基</strong>节拍，不是控制环周期。混淆会让「PID 按多快调」「滤波器系数按什么采样率算」全盘偏移。实测主循环一圈约 <strong>4.6ms</strong>（<code>main.c:407</code> 标 2.1~3.9ms + <code>main.c:410</code> 标 2.5~3.4ms）</td></tr><tr><td>2</td><td>PWM 频率按 <strong>24MHz</strong> 基数算（<code>bsp_pwm.c</code>/<code>led.c</code>/<code>led.h</code>/<code>spi.c</code> 共 9 处）</td><td><code>main.c:165-166</code> 的 AHB/APB1 都是 <strong>DIV1</strong> ⇒ 基数是 <strong>48MHz</strong>。故 TIM3 = <strong>16kHz</strong>（原写 10kHz）、TIM1 = <strong>20kHz</strong>（原写 10kHz）、SPI1 = <strong>1.5MHz</strong>（原写 750kHz）</td><td>电调 PWM 频率直接影响电机驱动是否正常（太低会啸叫抖动、太高部分电调不认）</td></tr><tr><td>3</td><td>GPIOA 基地址写成 <code>0x40000000</code>（4 处）</td><td>手册表 3-2：<strong>GPIOA = <code>0x5000 0000</code></strong>（IOPORT 区）；<code>0x4000 0000</code> 是 <strong>APB 区</strong></td><td>注释里的「真机写法」若被照抄，在真机上会操作到<strong>别外设</strong></td></tr><tr><td>4</td><td>对码时「<code>ch_change_arr</code> 两个元素都是 36，并未跳频」</td><td><code>main.c:265</code> 把 <code>[1]</code> 赋成 <code>pair_data.rf_ch</code>，而<strong>此时 <code>flash_read()</code>（328 行）还没执行</strong>⇒ <code>pair_data</code> 零初始化 ⇒ 实际是 <strong><code>{36, 0}</code></strong>，在 <strong>2436MHz 与 2400MHz</strong> 间扫描</td><td>影响对「对码为什么会成功」的理解，也影响改信道时的判断</td></tr></tbody></table></div>
+<h2 id="二-术语手册的修正-已在手册第-11-5-11-6-节留档">二、术语手册的修正（已在手册第 11.5 / 11.6 节留档）<a class="anchor" href="#二-术语手册的修正-已在手册第-11-5-11-6-节留档">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>位置</th><th>原来写的</th><th>改成</th><th>依据</th></tr></thead><tbody><tr><td>8.2 静止判定阈值</td><td><code>GYRO_CALI_DIFF_LIMIT 40</code>（注释称"抖动&lt;20"）</td><td><strong>50</strong>，且代码里该行无注释</td><td><code>imu/accgyro.c:222</code></td></tr><tr><td>8.2 分辨率</td><td>"如 2048 LSB/g"</td><td>±8g 档 ⇒ <strong><code>acc_1G = 4096</code></strong>；陀螺 16.4 LSB/(°/s)</td><td><code>accgyro.c:35/36</code></td></tr><tr><td>8.4 陷波器</td><td>"你工程里的地方：<code>FILTER_NOTCH</code>"</td><td><strong>实现了但无调用者</strong>；唯一 biquad 是低通 30Hz</td><td><code>filter.c:160-169</code> vs <code>accgyro.c:71</code></td></tr><tr><td>8.3 欧拉角</td><td>"由四元数换算而来"</td><td>由<strong>旋转矩阵 <code>rMat</code></strong> 算出</td><td><code>imu.c:372-387</code></td></tr><tr><td>8.5 定高结构</td><td>"串级（高度环+姿态环）"</td><td><strong>两条独立串级</strong>（位置→速度、角度→角速度），混控处相加</td><td><code>altitude.c:312→367</code>、<code>pid.c:259→304</code></td></tr><tr><td>11.3 失联判据</td><td><code>main.c:446</code></td><td><strong><code>main.c:462</code></strong></td><td>代码行号</td></tr><tr><td>多处</td><td><code>main.c:249</code></td><td><strong><code>main.c:265</code></strong></td><td>行号漂移（加注释后整体下移）</td></tr><tr><td>1.1 晶振</td><td>"板子上没有晶振也能跑"</td><td><strong>板上有 16MHz 晶振</strong>，只是代码没启用（与 13.2 节自相矛盾）</td><td>元件清单</td></tr><tr><td>3.4 初始化顺序</td><td>6 步，把"启动定时器中断"列在最后</td><td><strong>20 步，附行号</strong>；1ms 时基在 <code>main.c:235</code> 就开了，<strong>看门狗 <code>main.c:355</code> 才是最后</strong></td><td><code>user/main.c</code></td></tr><tr><td>5.2 WWDG</td><td>"见 <code>py32f0xx_hal_conf.h</code> 的使能宏"</td><td><strong>工程未启用</strong>（<code>HAL_WWDG_MODULE_ENABLED</code> 被注释掉）</td><td><code>py32f0xx_hal_conf.h:101</code></td></tr><tr><td>5.3 余量口径</td><td>同节内"4 倍"与"5 倍"并存</td><td>统一为 <strong>400ms ÷ 101ms ≈ 3.96 倍</strong></td><td>算术</td></tr><tr><td>5.4 卡死论证</td><td>用 <code>bsp_pn298.c:965</code> 的死等论证飞机侧会卡死</td><td>该函数<strong>不在飞机侧主路径</strong>（飞机侧是轮询收包）</td><td><code>config_rf.h:72</code></td></tr><tr><td>6.2 对码成功判据</td><td>"遥控器靠收到 ACK 才知道有人接住了"</td><td>实际退出条件是 <strong><code>aADCxConvertedData[2] &gt; 4050</code></strong>；ACK 路径被注释掉</td><td>遥控器 <code>user/main.c:168</code>/<code>178-184</code></td></tr><tr><td>手册第 8 章开头</td><td>"<code>fc.c</code> 只有 33 行"</td><td>实际 <strong>115 行</strong></td><td>文件行数</td></tr><tr><td>PWM 规格</td><td>"电调标准 1000~2000µs"</td><td><strong>16kHz 固定频率 + 0~1000 千分比</strong></td><td><code>main.c:244</code>、<code>bsp_pwm.c:150-185</code></td></tr></tbody></table></div>
+<h2 id="三-代码注释的修正-只改注释-代码未动">三、代码注释的修正（只改注释，代码未动）<a class="anchor" href="#三-代码注释的修正-只改注释-代码未动">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>文件</th><th>改了什么</th></tr></thead><tbody><tr><td><code>user/main.c</code></td><td><code>ch_change_arr</code> 相关 3 处说明（<code>{36,36}</code> → 实际 <code>{36,0}</code>；「若从未写过 Flash 这里是 0xFF」改为「此刻还没读 Flash，值是 0」）</td></tr><tr><td><code>imu/fc.c</code>（2 处）、<code>imu/fc.h</code>、<code>imu/pid.c</code>（3 处）、<code>imu/pid.h</code></td><td><code>flight_ctrl()</code> 的调用位置：由「TIM17 1ms 中断」改为「<strong>主循环</strong>，约 4.6ms 一圈」</td></tr><tr><td><code>user/bsp_pwm.c</code>（6 处）、<code>user/led.c</code>（3 处）、<code>user/led.h</code>、<code>user/spi.c</code></td><td>频率基数由 24MHz 改为 <strong>48MHz</strong>，频率值随之更正（16kHz/20kHz/1.5MHz）</td></tr><tr><td><code>user/main.c:151</code> 附近</td><td>之前已注明「本板无外部高速晶振」与硬件不符</td></tr></tbody></table></div>
+<h2 id="四-新增的记录-不是错误-是查出来的事实">四、新增的记录（不是错误，是查出来的事实）<a class="anchor" href="#四-新增的记录-不是错误-是查出来的事实">#</a></h2>
+<ul><li><strong>11 条「注释数值与代码不符」</strong>（如注释说 256、代码是 512；注释 α=0.7、代码 0.1）—— 见手册 11.5 节 A 组</li><li><strong>2 处参数与假设矛盾</strong>：ODR 配 200Hz 但滤波器按 800Hz 设计；串级 PID 内外环量纲不一致 —— 见手册 11.5 节 B 组</li><li><strong>「实现了但没调用」两处</strong>：陷波器（<code>filter.c:160-169</code>）、<code>calGyroVariance()</code>（<code>imu.c:29-71</code>）</li><li><strong>本工程实际用的滤波与姿态算法总表</strong>（带行号）—— 见手册 11.5 节 D 组</li></ul>
+<h2 id="五-怎么自己复核">五、怎么自己复核<a class="anchor" href="#五-怎么自己复核">#</a></h2>
+<div class="codeblock"><div class="cbhead"><span class="lang">powershell</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc"># 1) 看三批发现的原始记录（含逐条依据）</span></div><div class="line"><span class="ln">2</span><span class="lc">#    术语解析手册.md 的 11.4 / 11.5 / 11.6 节</span></div><div class="line"><span class="ln">3</span><span class="lc">&nbsp;</span></div><div class="line"><span class="ln">4</span><span class="lc"># 2) 看每份伴读自己的勘误节</span></div><div class="line"><span class="ln">5</span><span class="lc">#    术语伴读01-03 的第 5 节；术语伴读04-06 / 07-08 的附录；飞控技术演进总纲 8.1 节</span></div><div class="line"><span class="ln">6</span><span class="lc">&nbsp;</span></div><div class="line"><span class="ln">7</span><span class="lc"># 3) 重新核验「只改注释、未动代码」</span></div><div class="line"><span class="ln">8</span><span class="lc">#    各修正脚本都在 build-gcc\tools\ 下，脚本里记录了改动前的哈希</span></div></pre></div>
+<blockquote class=""><p><strong>一个值得注意的规律</strong>：这套伴读系列一共触发了 <strong>三次</strong>「写伴读反而查出正文错误」
+（C/C++ 教程 16 处、术语手册第一批 6 处 + 总纲 5 处 + 01-03 一批）。
+原因不难理解：<strong>写「为什么」时必须把每个断言重新核一遍，
+而写「是什么」时容易照着已有说法抄。</strong>
+所以伴读的价值不只是「讲清来龙去脉」，它同时起到<strong>审计</strong>作用。</p></blockquote>
+</main>
+</div>
+<div class="toolbar">
+  <button id="totop">↑ 回到顶部</button>
+</div>
+<script>
+// 代码复制按钮
+document.querySelectorAll('.codeblock').forEach(function(box){
+  var btn = box.querySelector('.copy');
+  var code = box.querySelector('pre');
+  if(!btn || !code) return;
+  btn.addEventListener('click', function(){
+    // 代码块：逐行取 .lc（去掉行号）；示意图：直接取 pre 的文本
+    var rows = code.querySelectorAll('.lc');
+    var text = rows.length
+      ? Array.prototype.map.call(rows, function(l){ return l.textContent; }).join('\n')
+      : code.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+    }).catch(function(){ btn.textContent = '复制失败'; setTimeout(function(){ btn.textContent='复制'; }, 1200); });
+  });
+});
+// 滚动高亮当前目录项
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 120, best = 0;
+    for(var i=0;i<targets.length;i++){ if(targets[i] && targets[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+    var h = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+// 回到顶部
+document.getElementById('totop').addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+</script>
+</body>
+</html>

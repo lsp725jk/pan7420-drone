@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>飞控代码注释规范</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+  --sidebar-bg:#f6f8fa; --code-bg:#f6f8fa; --code-border:#d8dee4;
+  --accent:#0969da; --accent-soft:#ddf4ff;
+  --warn-bg:#fff8c5; --warn-border:#d4a72c;
+  --danger-bg:#ffebe9; --danger-border:#cf222e;
+  --ok-bg:#dafbe1; --ok-border:#1a7f37;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d;
+    --sidebar-bg:#161b22; --code-bg:#161b22; --code-border:#30363d;
+    --accent:#58a6ff; --accent-soft:#0c2d6b;
+    --warn-bg:#3a2d00; --warn-border:#9e6a03;
+    --danger-bg:#3d1418; --danger-border:#f85149;
+    --ok-bg:#0f2f1a; --ok-border:#3fb950;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,sans-serif;
+  font-size:16px; line-height:1.75;
+}
+/* ---------- 布局 ---------- */
+.wrap{display:flex; align-items:flex-start; max-width:1500px; margin:0 auto}
+nav{
+  position:sticky; top:0; flex:0 0 300px; height:100vh; overflow-y:auto;
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  padding:20px 0 60px;
+}
+nav .navtitle{
+  padding:0 20px 14px; font-weight:600; font-size:15px;
+  border-bottom:1px solid var(--border); margin-bottom:10px;
+}
+nav a{
+  display:block; padding:4px 20px; color:var(--muted);
+  text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+nav a:hover{color:var(--accent); background:var(--accent-soft)}
+nav a.h1{font-weight:600; color:var(--fg); margin-top:8px}
+nav a.h2{padding-left:32px}
+nav a.h3{padding-left:46px; font-size:12.5px}
+nav a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); font-weight:600}
+main{flex:1 1 auto; min-width:0; padding:32px 44px 120px}
+/* ---------- 页头 ---------- */
+header.page{
+  border-bottom:2px solid var(--border); padding-bottom:20px; margin-bottom:28px;
+}
+header.page h1{margin:0 0 6px; font-size:30px; line-height:1.3; border:0; padding:0}
+header.page .sub{color:var(--muted); font-size:15px}
+header.page .meta{color:var(--muted); font-size:12.5px; margin-top:10px}
+/* ---------- 标题 ---------- */
+h1,h2,h3,h4{line-height:1.35; font-weight:600; scroll-margin-top:16px}
+h1{font-size:26px; margin:44px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+h2{font-size:22px; margin:38px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border)}
+h3{font-size:18px; margin:28px 0 10px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--muted)}
+.anchor{color:var(--border); text-decoration:none; margin-left:8px; font-weight:400; opacity:0}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+/* ---------- 正文元素 ---------- */
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{margin:12px 0; padding-left:26px}
+li{margin:5px 0}
+li>ul,li>ol{margin:5px 0}
+hr{border:0; border-top:1px solid var(--border); margin:34px 0}
+strong{font-weight:600}
+/* 行内代码 */
+code{
+  background:var(--code-bg); border:1px solid var(--code-border);
+  border-radius:5px; padding:.15em .4em; font-size:.875em;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  word-break:break-word;
+}
+/* 代码块 */
+.codeblock{
+  position:relative; margin:16px 0; border:1px solid var(--code-border);
+  border-radius:8px; overflow:hidden; background:var(--code-bg); box-shadow:var(--shadow);
+}
+.codeblock .cbhead{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; background:var(--sidebar-bg); border-bottom:1px solid var(--code-border);
+  font-size:12px; color:var(--muted);
+}
+.codeblock .lang{font-weight:600; letter-spacing:.03em; text-transform:uppercase}
+.codeblock .copy{
+  cursor:pointer; border:1px solid var(--code-border); background:transparent;
+  color:var(--muted); border-radius:5px; padding:2px 9px; font-size:11.5px;
+  font-family:inherit;
+}
+.codeblock .copy:hover{color:var(--accent); border-color:var(--accent)}
+.codeblock pre{
+  margin:0; padding:12px 0; overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px; line-height:1.65;
+}
+.codeblock .line{display:flex; min-width:max-content}
+.codeblock .ln{
+  flex:0 0 auto; width:3.2em; padding-right:12px; text-align:right;
+  color:var(--border); user-select:none;
+}
+.codeblock .lc{padding-right:20px; white-space:pre}
+/* 示意图：不加行号、不换行（换行会毁掉 ASCII 图的列对齐，所以横向滚动） */
+.codeblock.art{background:var(--bg)}
+.codeblock.art .lang{color:var(--accent)}
+.codeblock .artpre{
+  margin:0; padding:14px 16px; overflow-x:auto; white-space:pre;
+  font-family:"Cascadia Mono",Consolas,"MS Gothic","Courier New",monospace;
+  font-size:13px; line-height:1.5; tab-size:4;
+}
+/* 表格 */
+.tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{border-bottom:1px solid var(--border); padding:9px 13px; text-align:left; vertical-align:top}
+th{background:var(--sidebar-bg); font-weight:600; white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sidebar-bg)}
+/* 引用块：按内容分色 */
+blockquote{
+  margin:16px 0; padding:12px 16px; border-left:4px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0;
+}
+blockquote p{margin:6px 0}
+blockquote.warn{border-left-color:var(--warn-border); background:var(--warn-bg)}
+blockquote.danger{border-left-color:var(--danger-border); background:var(--danger-bg)}
+blockquote.ok{border-left-color:var(--ok-border); background:var(--ok-bg)}
+/* 顶部工具条 */
+.toolbar{
+  position:fixed; right:20px; bottom:20px; display:flex; gap:8px; z-index:50;
+}
+.toolbar button{
+  border:1px solid var(--border); background:var(--bg); color:var(--muted);
+  border-radius:20px; padding:8px 16px; cursor:pointer; font-size:13px;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.toolbar button:hover{color:var(--accent); border-color:var(--accent)}
+/* 进度条 */
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; z-index:99}
+/* 窄屏 */
+@media (max-width:900px){
+  nav{display:none}
+  main{padding:20px 18px 100px}
+  .wrap{display:block}
+  body{font-size:15px}
+}
+@media print{
+  nav,.toolbar,#progress{display:none}
+  main{padding:0}
+  .codeblock,.tablewrap{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav>
+  <div class="navtitle">飞控代码注释规范</div>
+  <a class="h2" href="#一-每个文件必须有文件头块" title="一、每个文件必须有文件头块">一、每个文件必须有文件头块</a>
+  <a class="h2" href="#二-函数注释-四要素" title="二、函数注释：四要素">二、函数注释：四要素</a>
+  <a class="h2" href="#三-讲清-关联-与-为什么-的三类行内注释" title="三、讲清&quot;关联&quot;与&quot;为什么&quot;的三类行内注释">三、讲清&quot;关联&quot;与&quot;为什么&quot;的三类行内注释</a>
+  <a class="h2" href="#四-关键字与语法讲解-必做-不是可选" title="四、关键字与语法讲解（必做，不是可选）">四、关键字与语法讲解（必做，不是可选）</a>
+  <a class="h3" href="#4-0-英文缩写必须配中文说明-用户明确要求" title="4.0 英文缩写必须配中文说明（用户明确要求）">4.0 英文缩写必须配中文说明（用户明确要求）</a>
+  <a class="h3" href="#4-1-总原则" title="4.1 总原则">4.1 总原则</a>
+  <a class="h3" href="#4-2-必须讲的关键字-按本工程出现频次排序" title="4.2 必须讲的关键字（按本工程出现频次排序）">4.2 必须讲的关键字（按本工程出现频次排序）</a>
+  <a class="h3" href="#4-3-相对旧版第四节的说明" title="4.3 相对旧版第四节的说明">4.3 相对旧版第四节的说明</a>
+  <a class="h2" href="#五-改动纪律-很重要" title="五、改动纪律（很重要）">五、改动纪律（很重要）</a>
+  <a class="h2" href="#六-文件角色速查-写文件头时用" title="六、文件角色速查（写文件头时用）">六、文件角色速查（写文件头时用）</a>
+</nav>
+<main>
+<header class="page">
+  <h1>飞控代码注释规范</h1>
+  <div class="sub">给代码写注释的格式、深度要求与纪律</div>
+  <div class="meta">PAN 飞控工程 · PY32F030 (Cortex-M0+) · 由 build-gcc/tools/md_to_html.py 生成</div>
+</header>
+<p>给 <code>飞控/</code> 下所有 <code>.c</code> / <code>.h</code> 加中文注释时，必须遵守本规范。 目标读者：<strong>能写代码、但没写过飞控的嵌入式学习者</strong>。所以注释要讲"为什么"，不能只讲"是什么"。</p>
+<hr>
+<h2 id="一-每个文件必须有文件头块">一、每个文件必须有文件头块<a class="anchor" href="#一-每个文件必须有文件头块">#</a></h2>
+<p>放在文件最顶端（若已有版权头，放在版权头之后），格式如下：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* ============================================================================
+ * 文件：imu/pid.c                     【角色】姿态控制的核心算法
+ * ----------------------------------------------------------------------------
+ * 一、这个文件在项目里干什么
+ *     （2~4 句。说清它在数据流里的位置：谁给它输入、它算出什么、给谁用）
+ *
+ * 二、它在整个飞控里的位置（数据流）
+ *     加速度计/陀螺仪 → accgyro.c（校准、去零偏）
+ *                     → imu.c（姿态解算，得到角度）
+ *                     → pid.c（本文件：算出电机修正量）
+ *                     → bsp_pwm.c（输出 PWM 给电调）
+ *
+ * 三、关键设计取舍（为什么这样写）
+ *     （1~3 条。例如：为什么用整数定点而不是浮点、为什么放在定时中断里）
+ *
+ * 四、对外接口（被谁调用）
+ *     - pidInit()        ：fc.c 初始化时调用
+ *     - pidUpdate()      ：main.c 的 1kHz 循环里调用
+ *     - pidReset()       ：解锁/上锁时调用
+ * ==========================================================================*/</pre></div>
+<h2 id="二-函数注释-四要素">二、函数注释：四要素<a class="anchor" href="#二-函数注释-四要素">#</a></h2>
+<p>每个函数（含 static）上方都要有：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/**</span></div><div class="line"><span class="ln">2</span><span class="lc"> * @brief  一句话说明这个函数做什么</span></div><div class="line"><span class="ln">3</span><span class="lc"> *</span></div><div class="line"><span class="ln">4</span><span class="lc"> * 【参数】</span></div><div class="line"><span class="ln">5</span><span class="lc"> *   @param err   本次角度误差（单位 0.1 度，int16_t）</span></div><div class="line"><span class="ln">6</span><span class="lc"> *   @param dt_ms 距上次调用的时间（毫秒）</span></div><div class="line"><span class="ln">7</span><span class="lc"> *</span></div><div class="line"><span class="ln">8</span><span class="lc"> * 【返回】 电机修正量（-500~500，占空比千分比）</span></div><div class="line"><span class="ln">9</span><span class="lc"> *</span></div><div class="line"><span class="ln">10</span><span class="lc"> * 【算法】为什么这么算</span></div><div class="line"><span class="ln">11</span><span class="lc"> *   标准位置式 PID：out = Kp*e + Ki*∫e + Kd*de/dt</span></div><div class="line"><span class="ln">12</span><span class="lc"> *   这里做了两处针对本项目的改动：</span></div><div class="line"><span class="ln">13</span><span class="lc"> *     1) 积分项加了限幅（anti-windup）—— 否则长时间偏差会让积分饱和，</span></div><div class="line"><span class="ln">14</span><span class="lc"> *        反向修正时"甩不回来"，表现为打舵迟钝；</span></div><div class="line"><span class="ln">15</span><span class="lc"> *     2) 微分项对测量值求导而不是对误差求导 —— 避免设定值突变时</span></div><div class="line"><span class="ln">16</span><span class="lc"> *        微分项产生尖峰（derivative kick）。</span></div><div class="line"><span class="ln">17</span><span class="lc"> *</span></div><div class="line"><span class="ln">18</span><span class="lc"> * 【调用关系】</span></div><div class="line"><span class="ln">19</span><span class="lc"> *   被 imu.c: imuCalculateEstimatedAttitude() 每 1ms 调用一次。</span></div><div class="line"><span class="ln">20</span><span class="lc"> *   它依赖 mlib.c 的 mlib_abs() 做死区判断。</span></div><div class="line"><span class="ln">21</span><span class="lc"> *</span></div><div class="line"><span class="ln">22</span><span class="lc"> * 【注意】 必须放在定时中断里调用；在主循环里调用会因周期抖动导致 D 项噪声。</span></div><div class="line"><span class="ln">23</span><span class="lc"> */</span></div></pre></div>
+<h2 id="三-讲清-关联-与-为什么-的三类行内注释">三、讲清"关联"与"为什么"的三类行内注释<a class="anchor" href="#三-讲清-关联-与-为什么-的三类行内注释">#</a></h2>
+<ol><li><strong>跨文件关联</strong>：调用别人 / 被别人调用时注明来源</li></ol>
+<p>``<code>c accgyro.gyroADC[axis] = ...;   /* 原始 ADC → accgyro.c 的校准流程会减掉零偏 */ </code>``</p>
+<ol><li><strong>算法步骤</strong>：分步骤标注，让人能对着公式看代码</li></ol>
+<p>``<code>c /* 步骤 2：四元数微分方程 q' = 0.5 * q ⊗ ω ， 这里用一阶欧拉积分近似，dt 固定为 1ms 所以把 dt 折进系数里 */ </code>``</p>
+<ol><li><strong>魔法数字 / 硬件相关常量</strong>：必须解释来源</li></ol>
+<p>``<code>c #define GYRO_CALI_DIFF_LIMIT  40   /* 静止判定阈值：实测静止时陀螺仪抖动 &lt;20，取 2 倍余量 */ </code>``</p>
+<h2 id="四-关键字与语法讲解-必做-不是可选">四、关键字与语法讲解（<strong>必做，不是可选</strong>）<a class="anchor" href="#四-关键字与语法讲解-必做-不是可选">#</a></h2>
+<p>用户明确要求：<strong>语法的关键字、用法及变式都要说明</strong>。</p>
+<h3 id="4-0-英文缩写必须配中文说明-用户明确要求">4.0 英文缩写必须配中文说明（<strong>用户明确要求</strong>）<a class="anchor" href="#4-0-英文缩写必须配中文说明-用户明确要求">#</a></h3>
+<p><strong>规则：注释里出现英文缩写时，第一次出现必须在旁边写中文意思。</strong></p>
+<p>写法（把中文放在缩写后面）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* 好：缩写后面直接跟中文 */</span></div><div class="line"><span class="ln">2</span><span class="lc">/* ODR（输出数据速率）设为 1kHz */</span></div><div class="line"><span class="ln">3</span><span class="lc">/* 通过 SPI（串行外设接口）读 ICM42688（6 轴惯性测量单元） */</span></div><div class="line"><span class="ln">4</span><span class="lc">&nbsp;</span></div><div class="line"><span class="ln">5</span><span class="lc">/* 不好：光写缩写，读者得另外去查 */</span></div><div class="line"><span class="ln">6</span><span class="lc">/* ODR 设为 1kHz */</span></div><div class="line"><span class="ln">7</span><span class="lc">/* 通过 SPI 读 ICM42688 */</span></div></pre></div>
+<p><strong>哪些要加</strong>：所有非"人人皆知"的缩写。完整清单见 <code>术语解析手册.md</code> 第 12 节 <strong>英文缩写速查表</strong>（按芯片内核 / 外设通信 / 传感器姿态 / 飞控业务 / 工具链 / 常用英文术语 分六类，每项含英文全称与中文说明）。</p>
+<p><strong>哪些可以不加</strong>：</p>
+<ul><li><code>LED</code>、<code>USB</code>、<code>CPU</code> 这类日常到不需要解释的；</li><li><strong>同一个文件内已经在前面解释过</strong>的缩写（讲过一次就够了，不必每行重复）。</li></ul>
+<p><strong>为什么这条重要</strong>：本工程横跨射频、传感器、编译器工具链多个领域，缩写密度很高 （工具统计下来光官方文档里就有 800 多种大写缩写）。对"很久没接触嵌入式"的读者， <code>ODR</code>、<code>FSR</code>、<code>NVM</code>、<code>IWDG</code> 这类词光看英文完全想不起来是什么。 加一个中文说明的成本极低，收益很大。</p>
+<h3 id="4-1-总原则">4.1 总原则<a class="anchor" href="#4-1-总原则">#</a></h3>
+<p>遇到关键字/特殊语法，就用 1~4 行注释讲清三件事：</p>
+<ol><li><strong>它在这里起什么作用</strong>（不是抄语法书的定义，而是"为什么这里需要它"）；</li><li><strong>有什么变式</strong>（同一种写法在别处会怎么变，容易搞混的对比）；</li><li><strong>有什么坑</strong>（用错了会怎样）。</li></ol>
+<blockquote class=""><p>完整的关键字教学见同目录 <strong><code>C_KEYWORDS_GUIDE.md</code></strong>（14 节，含本工程真实实例）。
+在代码里遇到时，用一行注释指过去即可，例如：
+``<code>c
+static float rate_i[3];   /* static 局部变量：跨调用保持。详见 C_KEYWORDS_GUIDE.md 第 1.4 节 */
+</code>``
+<strong>不要</strong>把整篇指南复制进代码 —— 文件头 + 关键点用一两句话点到即可。</p></blockquote>
+<h3 id="4-2-必须讲的关键字-按本工程出现频次排序">4.2 必须讲的关键字（按本工程出现频次排序）<a class="anchor" href="#4-2-必须讲的关键字-按本工程出现频次排序">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>优先级</th><th>关键字/写法</th><th>必须讲清的点</th></tr></thead><tbody><tr><td>★★★</td><td><code>static</code></td><td>三种含义（文件内全局/文件内函数/函数内保持状态）——<strong>最易混，务必分开讲</strong></td></tr><tr><td>★★★</td><td><code>volatile</code></td><td>为什么中断共享变量必须加；<strong>它不保证原子性</strong></td></tr><tr><td>★★★</td><td>位运算 `\</td><td>=<code> </code>&amp;=<code> </code>^=<code> </code>&lt;&lt;<code> </code>&amp;(1&lt;&lt;n)`</td><td>为什么用 `\</td><td>=<code> 而不是 </code>=`（会清掉别人配的位）</td></tr><tr><td>★★★</td><td>强制类型转换 <code>(uint16_t)</code></td><td><strong>窄化/符号变化</strong>风险：负数转无符号会回绕成巨大值</td></tr><tr><td>★★☆</td><td><code>const</code></td><td>修饰变量 vs 修饰指针（<code>const char*</code> 与 <code>char* const</code> 的区别）</td></tr><tr><td>★★☆</td><td><code>extern</code></td><td>声明 vs 定义的区别；局部 extern 的隐患</td></tr><tr><td>★★☆</td><td><code>typedef</code> / <code>struct</code> / <code>enum</code></td><td>别名用法；<code>_s</code>/<code>_e</code>/<code>_t</code> 命名约定</td></tr><tr><td>★★☆</td><td>位域 <code>:1</code></td><td>省 RAM 的用途；<strong>不能取地址</strong>、<strong>布局依赖编译器</strong></td></tr><tr><td>★★☆</td><td>宏 <code>#define</code></td><td>参数加括号的原因；多语句宏为何要 <code>do{}while(0)</code>；副作用陷阱</td></tr><tr><td>★★☆</td><td>条件编译 <code>#if defined(...)</code></td><td>本工程用它同时支持 ARMCC 与 GCC</td></tr><tr><td>★☆☆</td><td><code>union</code></td><td>内存重叠；字节序（M0+ 是小端）</td></tr><tr><td>★☆☆</td><td><code>inline</code> / <code>static inline</code></td><td>只是建议；与宏的取舍</td></tr><tr><td>★☆☆</td><td><code>__weak</code></td><td>弱符号机制（库给默认实现，工程覆盖）</td></tr><tr><td>★☆☆</td><td><code>__attribute__((naked/packed))</code></td><td>用途与风险（packed 后未对齐访问会 HardFault）</td></tr><tr><td>★☆☆</td><td><code>switch</code> / <code>do-while</code> / <code>goto</code></td><td><code>break</code> 贯穿、<code>default</code> 必要性、<code>goto</code> 只用于统一清理</td></tr><tr><td>★☆☆</td><td><code>sizeof</code> / 数组退化</td><td>数组传参后退化成指针，必须另传长度</td></tr><tr><td>★☆☆</td><td>ISR 写法</td><td>函数名由向量表决定；短、不阻塞；"中断打标记、主循环干活"</td></tr></tbody></table></div>
+<h3 id="4-3-相对旧版第四节的说明">4.3 相对旧版第四节的说明<a class="anchor" href="#4-3-相对旧版第四节的说明">#</a></h3>
+<p>下面这张表是<strong>精简版</strong>，详细讲解一律看 <code>C_KEYWORDS_GUIDE.md</code>：</p>
+<div class="tablewrap"><table><thead><tr><th>写法</th><th>一句话要点</th></tr></thead><tbody><tr><td><code>volatile</code></td><td>中断与主循环共享的变量必须加，编译器不能缓存到寄存器</td></tr><tr><td><code>__weak</code></td><td>弱符号：库里给默认实现，工程里重定义即可覆盖（如中断服务函数）</td></tr><tr><td><code>static</code></td><td>函数外用=文件内可见；函数内用=跨调用保持状态</td></tr><tr><td><code>__attribute__((packed))</code></td><td>结构体不填充对齐字节；但成员可能未对齐，M0+ 上直接访问会异常</td></tr><tr><td>位域 <code>a:1</code></td><td>紧凑存布尔标志，省 RAM（8KB 很紧张）；但不能取地址</td></tr><tr><td>定点数（<code>&gt;&gt; 30</code> 之类）</td><td>为什么不用 float：M0+ 没有 FPU，软浮点慢且占 Flash</td></tr><tr><td>中断服务函数</td><td>必须短、不能阻塞、共享变量要 volatile</td></tr></tbody></table></div>
+<h2 id="五-改动纪律-很重要">五、改动纪律（很重要）<a class="anchor" href="#五-改动纪律-很重要">#</a></h2>
+<ol><li><strong>只加注释，不改任何代码逻辑</strong>。哪怕看到疑似 bug，也只在注释里写</li></ol>
+<p><code>/* 注意：这里疑似……，未改动 */</code>，不要动代码。</p>
+<ol><li>注释用<strong>简体中文</strong>，术语首次出现给英文原文，例如"姿态解算（attitude estimation）"。</li><li>保持文件原有缩进与风格；不要重排代码、不要改行尾。</li><li>文件已是 <strong>UTF-8 with BOM</strong>，用 UTF-8 保存即可，<strong>不要改成其他编码</strong>。</li><li>不要删除或改写作者原有的中文注释 —— 它们是作者自己的记录，可以在其后补充说明。</li><li>篇幅要求：<strong>宁详勿略</strong>。核心算法文件（imu/、ctl/）注释量可到代码量的 1~2 倍；</li></ol>
+<p>厂商驱动（icm426/、bmp3）只在文件头和关键函数上写，不做逐行。</p>
+<h2 id="六-文件角色速查-写文件头时用">六、文件角色速查（写文件头时用）<a class="anchor" href="#六-文件角色速查-写文件头时用">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>文件</th><th>角色</th></tr></thead><tbody><tr><td><code>imu/imu.c</code></td><td>姿态解算：把传感器原始数据变成俯仰/横滚/偏航角</td></tr><tr><td><code>imu/accgyro.c</code></td><td>加速度计/陀螺仪数据预处理：量程换算、零偏校准、滤波</td></tr><tr><td><code>imu/pid.c</code></td><td>PID 控制器：角度误差 → 电机修正量</td></tr><tr><td><code>imu/filter.c</code></td><td>数字滤波器（二阶巴特沃斯等），给传感器数据降噪</td></tr><tr><td><code>imu/mlib.c</code></td><td>数学工具库：快速 sin/cos/sqrt 近似、限幅、死区、中值滤波</td></tr><tr><td><code>imu/decode.c</code></td><td>遥控器数据包解码</td></tr><tr><td><code>imu/altitude.c</code></td><td>气压计高度解算（BMP390/BMP3 + 国际标准大气模型）</td></tr><tr><td><code>imu/fc.c</code></td><td>飞行控制状态机：解锁/上锁、飞行模式切换</td></tr><tr><td><code>imu/fc.h</code></td><td>全局飞行状态结构体（本项目的数据中枢）</td></tr><tr><td><code>user/main.c</code></td><td>入口：时钟/外设初始化，主循环调度</td></tr><tr><td><code>user/common.c</code></td><td>通用工具与全局变量定义</td></tr><tr><td><code>user/deal_pack.c</code></td><td>收发数据包组帧/拆帧</td></tr><tr><td><code>user/flip.c</code></td><td>翻滚（特技动作）实现</td></tr><tr><td><code>user/led.c</code></td><td>LED 状态指示与灯语</td></tr><tr><td><code>user/bsp_pwm.c</code></td><td>电机 PWM 输出</td></tr><tr><td><code>user/spi.c</code></td><td>SPI 外设初始化与读写</td></tr><tr><td><code>user/adc.c</code></td><td>ADC 采集（电池电压等）</td></tr><tr><td><code>user/flash.c</code></td><td>片内 Flash 读写（保存校准参数）</td></tr><tr><td><code>user/WDG.c</code></td><td>看门狗</td></tr><tr><td><code>drivers/bsp/bsp.c</code></td><td>板级初始化汇总</td></tr><tr><td><code>drivers/bsp/bsp_pn298.c</code></td><td>PN298 射频芯片驱动（2.4G 通信）</td></tr><tr><td><code>drivers/bsp/bsp_rfspi_sw.c</code></td><td>软件模拟 SPI（驱动射频芯片）</td></tr><tr><td><code>drivers/bsp/bsp_uart.c</code></td><td>串口驱动</td></tr><tr><td><code>drivers/bsp/bsp_timer.c</code> / <code>TIM16.c</code></td><td>定时器 / TIM16 中断</td></tr><tr><td><code>drivers/bsp/bsp_i2c_hw.c</code></td><td>硬件 I2C（接气压计等）</td></tr><tr><td><code>drivers/bsp/config_rf.h</code></td><td>射频参数配置（频率、地址、速率）</td></tr><tr><td><code>icm426/icm42688.c</code></td><td>ICM42688 IMU 芯片封装层（本项目调用它读传感器）</td></tr><tr><td><code>icm426/helperClockCalib.c</code></td><td>ICM42688 时钟校准辅助</td></tr><tr><td><code>user/bmp3.c</code></td><td>BMP390 气压计驱动（原厂 + 本项目适配）</td></tr></tbody></table></div>
+</main>
+</div>
+<div class="toolbar">
+  <button id="totop">↑ 回到顶部</button>
+</div>
+<script>
+// 代码复制按钮
+document.querySelectorAll('.codeblock').forEach(function(box){
+  var btn = box.querySelector('.copy');
+  var code = box.querySelector('pre');
+  if(!btn || !code) return;
+  btn.addEventListener('click', function(){
+    // 代码块：逐行取 .lc（去掉行号）；示意图：直接取 pre 的文本
+    var rows = code.querySelectorAll('.lc');
+    var text = rows.length
+      ? Array.prototype.map.call(rows, function(l){ return l.textContent; }).join('\n')
+      : code.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+    }).catch(function(){ btn.textContent = '复制失败'; setTimeout(function(){ btn.textContent='复制'; }, 1200); });
+  });
+});
+// 滚动高亮当前目录项
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 120, best = 0;
+    for(var i=0;i<targets.length;i++){ if(targets[i] && targets[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+    var h = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+// 回到顶部
+document.getElementById('totop').addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+</script>
+</body>
+</html>

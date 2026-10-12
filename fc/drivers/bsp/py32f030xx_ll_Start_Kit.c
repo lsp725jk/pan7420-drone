@@ -1,0 +1,244 @@
+﻿/**
+ * @file    py32f030xx_ll_Start_Kit.c
+ * @author  MCU Application Team
+ * @brief   This file provides set of firmware functions to manage Leds,
+ * @attention
+ */
+
+/* Includes ------------------------------------------------------------------ */
+#include "py32f030xx_ll_Start_Kit.h"
+
+
+
+/**
+ * @brief PY32F030xx STK BSP Driver version number
+ */
+#define __PY32F030xx_STK_BSP_VERSION_MAIN   (0x01U) /* !< [31:24] main version */
+#define __PY32F030xx_STK_BSP_VERSION_SUB1   (0x00U) /* !< [23:16] sub1 version */
+#define __PY32F030xx_STK_BSP_VERSION_SUB2   (0x00U) /* !< [15:8]  sub2 version */
+#define __PY32F030xx_STK_BSP_VERSION_RC     (0x00U) /* !< [7:0]  release candidate */
+#define __PY32F030xx_STK_BSP_VERSION        ((__PY32F030xx_STK_BSP_VERSION_MAIN << 24) \
+                                            |(__PY32F030xx_STK_BSP_VERSION_SUB1 << 16) \
+                                            |(__PY32F030xx_STK_BSP_VERSION_SUB2 << 8 ) \
+                                            |(__PY32F030xx_STK_BSP_VERSION_RC))
+
+
+
+GPIO_TypeDef* LED_PORT[LEDn] = {LED3_GPIO_PORT};
+const uint16_t LED_PIN[LEDn] = {LED3_PIN};
+
+GPIO_TypeDef* BUTTON_PORT[BUTTONn] = {USER_BUTTON_GPIO_PORT };
+const uint16_t BUTTON_PIN[BUTTONn] = {USER_BUTTON_PIN };
+const uint8_t BUTTON_IRQn[BUTTONn] = {USER_BUTTON_EXTI_IRQn };
+const uint32_t BUTTON_EXTI_LINE[BUTTONn] = {USER_BUTTON_EXTI_LINE };
+
+/* @addtogroup PY32F030xx_STK_Exported_Functions @{ */
+
+
+
+/* 返回 BSP 驱动版本号（0x01000000，仅作标识用）。 */
+uint32_t BSP_GetVersion(void)
+{
+  return __PY32F030xx_STK_BSP_VERSION;
+}
+
+/* @addtogroup LED_Functions @{ */
+
+/* @brief  Configures LED GPIO. @param  Led Specifies the Led to be configured. This parameter can be one of following parameters: @arg  LED3 */
+/* LED 引脚设为输出模式并输出高电平（熄灭）；LL 版默认推挽/低速/无上下拉， 那三项设置在这份官方代码里是注释掉的。 */
+void BSP_LED_Init(Led_TypeDef Led)
+{
+        /* Enable the GPIO_LED Clock */
+  LEDx_GPIO_CLK_ENABLE(Led);
+
+        /* Configure the GPIO_LED pin */
+  LL_GPIO_SetPinMode(LED_PORT[Led], LED_PIN[Led], LL_GPIO_MODE_OUTPUT);
+        /* LL_GPIO_SetPinOutputType(LED_PORT[Led], LED_PIN[Led], LL_GPIO_OUTPUT_PUSHPULL); */
+        /* LL_GPIO_SetPinSpeed(LED_PORT[Led], LED_PIN[Led], LL_GPIO_SPEED_FREQ_LOW); */
+        /* LL_GPIO_SetPinPull(LED_PORT[Led], LED_PIN[Led], LL_GPIO_PULL_NO); */
+
+  LL_GPIO_SetOutputPin(LED_PORT[Led], LED_PIN[Led]);
+}
+
+
+
+/* 先输出低（关灯），再把引脚设成模拟模式（LL_GPIO_MODE_ANALOG）： 模拟模式断开数字输入缓冲，功耗最低且不会因悬空而抖动。 */
+void BSP_LED_DeInit(Led_TypeDef Led)
+{
+        /* Turn off LED */
+  LL_GPIO_ResetOutputPin(LED_PORT[Led], LED_PIN[Led]);
+        /* DeInit the GPIO_LED pin */
+  LL_GPIO_SetPinMode(LED_PORT[Led], LED_PIN[Led], LL_GPIO_MODE_ANALOG);
+        /* LL_GPIO_SetPinOutputType(LED_PORT[Led], LED_PIN[Led], LL_GPIO_OUTPUT_PUSHPULL); */
+        /* LL_GPIO_SetPinSpeed(LED_PORT[Led], LED_PIN[Led], LL_GPIO_SPEED_FREQ_LOW); */
+        /* LL_GPIO_SetPinPull(LED_PORT[Led], LED_PIN[Led], LL_GPIO_PULL_NO); */
+}
+
+/* @brief  Turns selected LED On. @param  Led Specifies the Led to be set on. This parameter can be one of following parameters: @arg  LED3 */
+/* 点亮 LED：LL_GPIO_ResetOutputPin() 输出低（低电平点亮）。 */
+void BSP_LED_On(Led_TypeDef Led)
+{
+  LL_GPIO_ResetOutputPin(LED_PORT[Led], LED_PIN[Led]);
+}
+
+/* @brief  Turns selected LED Off. @param  Led Specifies the Led to be set off. This parameter can be one of following parameters: @arg  LED3 */
+/* 熄灭 LED：LL_GPIO_SetOutputPin() 输出高。 */
+void BSP_LED_Off(Led_TypeDef Led)
+{
+  LL_GPIO_SetOutputPin(LED_PORT[Led], LED_PIN[Led]);
+}
+
+/* @brief  Toggles the selected LED. @param  Led Specifies the Led to be toggled. This parameter can be one of following parameters: @arg  LED3 */
+/* 翻转 LED 电平。 */
+void BSP_LED_Toggle(Led_TypeDef Led)
+{
+  LL_GPIO_TogglePin(LED_PORT[Led], LED_PIN[Led]);
+}
+
+
+
+void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
+{
+        /* Enable the BUTTON Clock */
+  BUTTONx_GPIO_CLK_ENABLE(Button);
+
+        /* Configure GPIO for BUTTON */
+  LL_GPIO_SetPinMode(BUTTON_PORT[Button], BUTTON_PIN[Button], LL_GPIO_MODE_INPUT);
+  LL_GPIO_SetPinPull(BUTTON_PORT[Button], BUTTON_PIN[Button], LL_GPIO_PULL_NO);
+        /* LL_GPIO_SetPinSpeed(BUTTON_PORT[Button], BUTTON_PIN[Button], LL_GPIO_SPEED_FREQ_HIGH); */
+
+  if(ButtonMode == BUTTON_MODE_EXTI)
+  {
+                /* Configure Button pin as input with External interrupt */
+    LL_EXTI_EnableIT(BUTTON_EXTI_LINE[Button]);
+    LL_EXTI_EnableFallingTrig(BUTTON_EXTI_LINE[Button]);
+
+                /* Enable and set Button EXTI Interrupt to the lowest priority */
+    NVIC_SetPriority((IRQn_Type)(BUTTON_IRQn[Button]), 0x0F);
+    NVIC_EnableIRQ((IRQn_Type)(BUTTON_IRQn[Button]));
+  }
+}
+
+
+
+/* 关闭按键对应的 NVIC 中断，并把引脚设为模拟模式释放。 */
+void BSP_PB_DeInit(Button_TypeDef Button)
+{
+  NVIC_DisableIRQ((IRQn_Type)(BUTTON_IRQn[Button]));
+  LL_GPIO_SetPinMode(BUTTON_PORT[Button], BUTTON_PIN[Button], LL_GPIO_MODE_ANALOG);
+        /* LL_GPIO_SetPinSpeed(BUTTON_PORT[Button], BUTTON_PIN[Button], LL_GPIO_SPEED_FREQ_LOW); */
+        /* LL_GPIO_SetPinPull(BUTTON_PORT[Button], BUTTON_PIN[Button], LL_GPIO_PULL_NO); */
+        /* LL_GPIO_SetAFPin_8_15(BUTTON_PORT[Button], BUTTON_PIN[Button], LL_GPIO_AF_0); */
+}
+
+
+
+/* 读按键电平：LL_GPIO_IsInputPinSet() 返回 1 表示引脚为高（未按下，上拉输入）。 */
+uint32_t BSP_PB_GetState(Button_TypeDef Button)
+{
+  return LL_GPIO_IsInputPinSet(BUTTON_PORT[Button], BUTTON_PIN[Button]);
+}
+
+/* @brief  DEBUG_USART GPIO Config,Mode Config,115200 8-N-1 @param  None @retval None */
+
+void BSP_USART_Config(void)
+{
+#if  defined(__GNUC__)
+  setvbuf(stdout, NULL, _IONBF, 0 );
+#endif
+
+  DEBUG_USART_CLK_ENABLE();
+
+        /* USART Init */
+  LL_USART_SetBaudRate(DEBUG_USART, SystemCoreClock, LL_USART_OVERSAMPLING_16, DEBUG_USART_BAUDRATE);
+  LL_USART_SetDataWidth(DEBUG_USART, LL_USART_DATAWIDTH_8B);
+  LL_USART_SetStopBitsLength(DEBUG_USART, LL_USART_STOPBITS_1);
+  LL_USART_SetParity(DEBUG_USART, LL_USART_PARITY_NONE);
+  LL_USART_SetHWFlowCtrl(DEBUG_USART, LL_USART_HWCONTROL_NONE);
+  LL_USART_SetTransferDirection(DEBUG_USART, LL_USART_DIRECTION_TX_RX);
+  LL_USART_Enable(DEBUG_USART);
+  LL_USART_ClearFlag_TC(DEBUG_USART);
+
+        /* USART GPIO Configuration PA2     ------> USART1_TX PA3     ------> USART1_RX */
+  DEBUG_USART_RX_GPIO_CLK_ENABLE();
+  DEBUG_USART_TX_GPIO_CLK_ENABLE();
+
+  LL_GPIO_SetPinMode(DEBUG_USART_TX_GPIO_PORT, DEBUG_USART_TX_PIN, LL_GPIO_MODE_ALTERNATE);
+  LL_GPIO_SetPinSpeed(DEBUG_USART_TX_GPIO_PORT, DEBUG_USART_TX_PIN, LL_GPIO_SPEED_FREQ_VERY_HIGH);
+  LL_GPIO_SetPinPull(DEBUG_USART_TX_GPIO_PORT, DEBUG_USART_TX_PIN, LL_GPIO_PULL_UP);
+  LL_GPIO_SetAFPin_0_7(DEBUG_USART_TX_GPIO_PORT, DEBUG_USART_TX_PIN, DEBUG_USART_TX_AF);
+
+  LL_GPIO_SetPinMode(DEBUG_USART_RX_GPIO_PORT, DEBUG_USART_RX_PIN, LL_GPIO_MODE_ALTERNATE);
+  LL_GPIO_SetPinSpeed(DEBUG_USART_RX_GPIO_PORT, DEBUG_USART_RX_PIN, LL_GPIO_SPEED_FREQ_VERY_HIGH);
+  LL_GPIO_SetPinPull(DEBUG_USART_RX_GPIO_PORT, DEBUG_USART_RX_PIN, LL_GPIO_PULL_UP);
+  LL_GPIO_SetAFPin_0_7(DEBUG_USART_RX_GPIO_PORT, DEBUG_USART_RX_PIN, DEBUG_USART_RX_AF);
+}
+
+#if (defined (__CC_ARM)) || (defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050))
+/* @brief  writes a character to the usart @param  ch f @retval the character */
+/* ARMCC/AC6 的 printf 重定向钩子：写数据寄存器并等发送完成标志 TC。 */
+int fputc(int ch, FILE *f)
+{
+        /* Send a byte to USART */
+  LL_USART_TransmitData8(DEBUG_USART, ch);
+  while (!LL_USART_IsActiveFlag_TC(DEBUG_USART));
+  LL_USART_ClearFlag_TC(DEBUG_USART);
+
+  return (ch);
+}
+
+/* @brief  get a character from the usart @param  *f @retval a character */
+/* ARMCC/AC6 的 scanf 重定向钩子：等 RXNE 标志后读数据寄存器。 */
+int fgetc(FILE *f)
+{
+  int ch;
+  while (!LL_USART_IsActiveFlag_RXNE(DEBUG_USART));
+  ch = LL_USART_ReceiveData8(DEBUG_USART);
+  return (ch);
+}
+
+#elif defined(__ICCARM__)
+/* @brief  writes a character to the usart @param  ch f @retval the character */
+/* IAR（__ICCARM__）的 printf 重定向钩子，作用同 fputc。 */
+int putchar(int ch)
+{
+        /* Send a byte to USART */
+  LL_USART_TransmitData8(DEBUG_USART, ch);
+  while (!LL_USART_IsActiveFlag_TC(DEBUG_USART));
+  LL_USART_ClearFlag_TC(DEBUG_USART);
+
+  return (ch);
+}
+#elif  defined(__GNUC__)
+/* @brief  writes a character to the usart @param  ch @retval the character */
+/* GCC（STM32CubeIDE 风格）的 printf 重定向钩子。 */
+int __io_putchar(int ch)
+{
+        /* Send a byte to USART */
+  LL_USART_TransmitData8(DEBUG_USART, ch);
+  while (!LL_USART_IsActiveFlag_TC(DEBUG_USART));
+  LL_USART_ClearFlag_TC(DEBUG_USART);
+  return ch;
+}
+
+/* GCC + newlib 真正会调用的钩子：printf 的输出最终汇到这里，逐字符发送。 */
+int _write(int file, char *ptr, int len)
+{
+  int DataIdx;
+  for (DataIdx=0;DataIdx<len;DataIdx++)
+  {
+    __io_putchar(*ptr++);
+  }
+  return len;
+}
+
+#endif
+
+// #endif
+/* @} */
+
+/* @} */
+
+/* @} */
+
+/* (C) COPYRIGHT Puya *****END OF FILE */

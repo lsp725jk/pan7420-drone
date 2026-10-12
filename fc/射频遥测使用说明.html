@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>射频遥测使用说明</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+  --sidebar-bg:#f6f8fa; --code-bg:#f6f8fa; --code-border:#d8dee4;
+  --accent:#0969da; --accent-soft:#ddf4ff;
+  --warn-bg:#fff8c5; --warn-border:#d4a72c;
+  --danger-bg:#ffebe9; --danger-border:#cf222e;
+  --ok-bg:#dafbe1; --ok-border:#1a7f37;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d;
+    --sidebar-bg:#161b22; --code-bg:#161b22; --code-border:#30363d;
+    --accent:#58a6ff; --accent-soft:#0c2d6b;
+    --warn-bg:#3a2d00; --warn-border:#9e6a03;
+    --danger-bg:#3d1418; --danger-border:#f85149;
+    --ok-bg:#0f2f1a; --ok-border:#3fb950;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,sans-serif;
+  font-size:16px; line-height:1.75;
+}
+/* ---------- 布局 ---------- */
+.wrap{display:flex; align-items:flex-start; max-width:1500px; margin:0 auto}
+nav{
+  position:sticky; top:0; flex:0 0 300px; height:100vh; overflow-y:auto;
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  padding:20px 0 60px;
+}
+nav .navtitle{
+  padding:0 20px 14px; font-weight:600; font-size:15px;
+  border-bottom:1px solid var(--border); margin-bottom:10px;
+}
+nav a{
+  display:block; padding:4px 20px; color:var(--muted);
+  text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+nav a:hover{color:var(--accent); background:var(--accent-soft)}
+nav a.h1{font-weight:600; color:var(--fg); margin-top:8px}
+nav a.h2{padding-left:32px}
+nav a.h3{padding-left:46px; font-size:12.5px}
+nav a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); font-weight:600}
+main{flex:1 1 auto; min-width:0; padding:32px 44px 120px}
+/* ---------- 页头 ---------- */
+header.page{
+  border-bottom:2px solid var(--border); padding-bottom:20px; margin-bottom:28px;
+}
+header.page h1{margin:0 0 6px; font-size:30px; line-height:1.3; border:0; padding:0}
+header.page .sub{color:var(--muted); font-size:15px}
+header.page .meta{color:var(--muted); font-size:12.5px; margin-top:10px}
+/* ---------- 标题 ---------- */
+h1,h2,h3,h4{line-height:1.35; font-weight:600; scroll-margin-top:16px}
+h1{font-size:26px; margin:44px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+h2{font-size:22px; margin:38px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border)}
+h3{font-size:18px; margin:28px 0 10px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--muted)}
+.anchor{color:var(--border); text-decoration:none; margin-left:8px; font-weight:400; opacity:0}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+/* ---------- 正文元素 ---------- */
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{margin:12px 0; padding-left:26px}
+li{margin:5px 0}
+li>ul,li>ol{margin:5px 0}
+hr{border:0; border-top:1px solid var(--border); margin:34px 0}
+strong{font-weight:600}
+/* 行内代码 */
+code{
+  background:var(--code-bg); border:1px solid var(--code-border);
+  border-radius:5px; padding:.15em .4em; font-size:.875em;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  word-break:break-word;
+}
+/* 代码块 */
+.codeblock{
+  position:relative; margin:16px 0; border:1px solid var(--code-border);
+  border-radius:8px; overflow:hidden; background:var(--code-bg); box-shadow:var(--shadow);
+}
+.codeblock .cbhead{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; background:var(--sidebar-bg); border-bottom:1px solid var(--code-border);
+  font-size:12px; color:var(--muted);
+}
+.codeblock .lang{font-weight:600; letter-spacing:.03em; text-transform:uppercase}
+.codeblock .copy{
+  cursor:pointer; border:1px solid var(--code-border); background:transparent;
+  color:var(--muted); border-radius:5px; padding:2px 9px; font-size:11.5px;
+  font-family:inherit;
+}
+.codeblock .copy:hover{color:var(--accent); border-color:var(--accent)}
+.codeblock pre{
+  margin:0; padding:12px 0; overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px; line-height:1.65;
+}
+.codeblock .line{display:flex; min-width:max-content}
+.codeblock .ln{
+  flex:0 0 auto; width:3.2em; padding-right:12px; text-align:right;
+  color:var(--border); user-select:none;
+}
+.codeblock .lc{padding-right:20px; white-space:pre}
+/* 示意图：不加行号、不换行（换行会毁掉 ASCII 图的列对齐，所以横向滚动） */
+.codeblock.art{background:var(--bg)}
+.codeblock.art .lang{color:var(--accent)}
+.codeblock .artpre{
+  margin:0; padding:14px 16px; overflow-x:auto; white-space:pre;
+  font-family:"Cascadia Mono",Consolas,"MS Gothic","Courier New",monospace;
+  font-size:13px; line-height:1.5; tab-size:4;
+}
+/* 表格 */
+.tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{border-bottom:1px solid var(--border); padding:9px 13px; text-align:left; vertical-align:top}
+th{background:var(--sidebar-bg); font-weight:600; white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sidebar-bg)}
+/* 引用块：按内容分色 */
+blockquote{
+  margin:16px 0; padding:12px 16px; border-left:4px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0;
+}
+blockquote p{margin:6px 0}
+blockquote.warn{border-left-color:var(--warn-border); background:var(--warn-bg)}
+blockquote.danger{border-left-color:var(--danger-border); background:var(--danger-bg)}
+blockquote.ok{border-left-color:var(--ok-border); background:var(--ok-bg)}
+/* 顶部工具条 */
+.toolbar{
+  position:fixed; right:20px; bottom:20px; display:flex; gap:8px; z-index:50;
+}
+.toolbar button{
+  border:1px solid var(--border); background:var(--bg); color:var(--muted);
+  border-radius:20px; padding:8px 16px; cursor:pointer; font-size:13px;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.toolbar button:hover{color:var(--accent); border-color:var(--accent)}
+/* 进度条 */
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; z-index:99}
+/* 窄屏 */
+@media (max-width:900px){
+  nav{display:none}
+  main{padding:20px 18px 100px}
+  .wrap{display:block}
+  body{font-size:15px}
+}
+@media print{
+  nav,.toolbar,#progress{display:none}
+  main{padding:0}
+  .codeblock,.tablewrap{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav>
+  <div class="navtitle">射频遥测使用说明</div>
+  <a class="h2" href="#一-先看数据是怎么走到电脑的" title="一、先看数据是怎么走到电脑的">一、先看数据是怎么走到电脑的</a>
+  <a class="h2" href="#二-需要买什么-你目前没有硬件" title="二、需要买什么（你目前没有硬件）">二、需要买什么（你目前没有硬件）</a>
+  <a class="h2" href="#三-接线" title="三、接线">三、接线</a>
+  <a class="h3" href="#遥控器侧-这是要接到电脑的那一端" title="遥控器侧（这是要接到电脑的那一端）">遥控器侧（这是要接到电脑的那一端）</a>
+  <a class="h3" href="#飞机侧-仅地面调试用" title="飞机侧（仅地面调试用）">飞机侧（仅地面调试用）</a>
+  <a class="h2" href="#四-打开两个开关-默认都是关的" title="四、打开两个开关（默认都是关的）">四、打开两个开关（默认都是关的）</a>
+  <a class="h2" href="#五-电脑侧操作" title="五、电脑侧操作">五、电脑侧操作</a>
+  <a class="h3" href="#1-装依赖" title="1) 装依赖">1) 装依赖</a>
+  <a class="h3" href="#2-先看串口有没有" title="2) 先看串口有没有">2) 先看串口有没有</a>
+  <a class="h3" href="#3-纯文本模式-先用这个确认通了" title="3) 纯文本模式（先用这个确认通了）">3) 纯文本模式（先用这个确认通了）</a>
+  <a class="h3" href="#4-图形模式" title="4) 图形模式">4) 图形模式</a>
+  <a class="h3" href="#5-存-CSV-事后分析" title="5) 存 CSV 事后分析">5) 存 CSV 事后分析</a>
+  <a class="h2" href="#六-能看到哪些数据" title="六、能看到哪些数据">六、能看到哪些数据</a>
+  <a class="h2" href="#七-精度与已知限制-请务必读这一节" title="七、精度与已知限制（请务必读这一节）">七、精度与已知限制（请务必读这一节）</a>
+  <a class="h3" href="#7-1-量化精度-实测" title="7.1 量化精度（实测）">7.1 量化精度（实测）</a>
+  <a class="h3" href="#7-2-刷新率限制" title="7.2 刷新率限制">7.2 刷新率限制</a>
+  <a class="h3" href="#7-3-两端-字节编号-存在不一致-原有问题-未改动" title="7.3 ⚠ 两端&quot;字节编号&quot;存在不一致（原有问题，未改动）">7.3 ⚠ 两端&quot;字节编号&quot;存在不一致（原有问题，未改动）</a>
+  <a class="h3" href="#7-4-其他限制" title="7.4 其他限制">7.4 其他限制</a>
+  <a class="h2" href="#八-排查-收不到数据怎么办" title="八、排查：收不到数据怎么办">八、排查：收不到数据怎么办</a>
+  <a class="h2" href="#九-这套东西的文件清单" title="九、这套东西的文件清单">九、这套东西的文件清单</a>
+  <a class="h2" href="#十-与其它资料的关系" title="十、与其它资料的关系">十、与其它资料的关系</a>
+</nav>
+<main>
+<header class="page">
+  <h1>射频遥测使用说明</h1>
+  <div class="sub">飞行时在电脑上看姿态与状态：接线、开关、操作、精度与限制</div>
+  <div class="meta">PAN 飞控工程 · PY32F030 (Cortex-M0+) · 由 build-gcc/tools/md_to_html.py 生成</div>
+</header>
+<blockquote class=""><p><strong>这份文档回答</strong>：怎么让飞机在飞行时把姿态和状态发到电脑上显示。
+包含接线、开关、操作步骤、能看到什么、以及<strong>精度与已知限制</strong>。</p></blockquote>
+<hr>
+<h2 id="一-先看数据是怎么走到电脑的">一、先看数据是怎么走到电脑的<a class="anchor" href="#一-先看数据是怎么走到电脑的">#</a></h2>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">   ┌─────────────┐   PN298 2.4G（唯一无线通道）
+   │  飞机        │ ──────────────────────────────►  ┌──────────┐
+   │ imu/        │   遥测帧搭在 ACK 载荷里回传         │  遥控器   │
+   │ rf_telemetry│   （12 字节，用 [2..11]）           │ 转发      │
+   └─────────────┘                                    └────┬─────┘
+                                                          │ USART2
+                                                          │ 有线（遥控器拿在手上，线不碍事）
+                                                          ▼
+                                                    ┌──────────┐
+                                                    │ USB-TTL  │
+                                                    └────┬─────┘
+                                                         ▼
+                                                    ┌──────────┐
+                                                    │  电脑     │
+                                                    │ 曲线显示  │
+                                                    └──────────┘</pre></div>
+<p><strong>为什么必须绕这一圈</strong>：飞机上有串口，但飞行中不能拉线（会被扯断、接头会松）。 所以飞机的串口只能用于<strong>地面调试</strong>；飞行时只能靠射频。而射频的"飞机 → 遥控器" 通道本来就有（ACK 应答），我们把遥测数据搭在它上面就行。</p>
+<hr>
+<h2 id="二-需要买什么-你目前没有硬件">二、需要买什么（你目前没有硬件）<a class="anchor" href="#二-需要买什么-你目前没有硬件">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>物品</th><th>说明</th><th>参考价</th></tr></thead><tbody><tr><td><strong>USB-TTL 转接器</strong></td><td>CH340 / CP2102 / FT232 都行，<strong>要 3.3V 电平</strong>的</td><td>5~15 元</td></tr><tr><td>杜邦线 3 根</td><td>接 TX / GND（见下方接线）</td><td>—</td></tr><tr><td>（可选）焊接工具</td><td>如果遥控器板上没引出排针</td><td>—</td></tr></tbody></table></div>
+<blockquote class=""><p><strong>一定要用 3.3V 的转接器</strong>。PY32F030 是 3.3V 芯片，
+5V 电平长期接上去可能损坏引脚。多数 CH340 模块有 3.3V/5V 跳线，选 3.3V。</p></blockquote>
+<hr>
+<h2 id="三-接线">三、接线<a class="anchor" href="#三-接线">#</a></h2>
+<h3 id="遥控器侧-这是要接到电脑的那一端">遥控器侧（这是要接到电脑的那一端）<a class="anchor" href="#遥控器侧-这是要接到电脑的那一端">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>遥控器引脚</th><th>接到 USB-TTL</th></tr></thead><tbody><tr><td><strong>USART2_TX = GPIO_PIN_4</strong></td><td>→ 转接器的 <strong>RXD</strong></td></tr><tr><td><strong>GND</strong></td><td>→ 转接器的 <strong>GND</strong></td></tr></tbody></table></div>
+<p>依据：<code>遥控器/user_driver/bsp_uart.c:17</code> 定义 <code>UARTx_TX_PIN = GPIO_PIN_4</code>， <code>:14</code> 定义 <code>UARTx = USART2</code>，<code>:15</code> 波特率 <strong>115200</strong>。</p>
+<blockquote class="warn"><p>⚠ <strong>只接 TX 和 GND 就够</strong>（单向，电脑只收）。不要接 5V/3.3V 电源线 ——
+遥控器自己有电池，接了反而可能产生电源冲突。</p></blockquote>
+<h3 id="飞机侧-仅地面调试用">飞机侧（仅地面调试用）<a class="anchor" href="#飞机侧-仅地面调试用">#</a></h3>
+<p>飞控的调试串口是 <strong>USART1：TX = PB8、RX = PB2，115200 8N1</strong> （依据：<code>飞控/drivers/bsp/bsp_uart.c:75-77</code>）。</p>
+<p>地面调试时：<strong>PB8 → USB-TTL 的 RXD</strong>，<strong>GND → GND</strong>。 此时不用管遥控器，直接看飞机自己 <code>printf</code> 的内容。</p>
+<hr>
+<h2 id="四-打开两个开关-默认都是关的">四、打开两个开关（默认都是关的）<a class="anchor" href="#四-打开两个开关-默认都是关的">#</a></h2>
+<p>代码里的遥测功能<strong>默认关闭</strong>，所以现在的固件行为与你改动前<strong>完全一致</strong>。 要用就得打开两个开关：</p>
+<div class="tablewrap"><table><thead><tr><th>位置</th><th>开关</th><th>改成</th></tr></thead><tbody><tr><td><code>飞控/imu/rf_telemetry.h</code></td><td><code>#define RF_TELEMETRY_ENABLE   0</code></td><td><strong>1</strong></td></tr><tr><td><code>遥控器/user/main.c</code></td><td><code>#define RC_TELEMETRY_FORWARD_ENABLE   0</code></td><td><strong>1</strong></td></tr></tbody></table></div>
+<p>然后：</p>
+<ul><li><strong>飞机</strong>：用 <code>build-gcc\build-gcc.ps1 -Project fc</code> 重新编译烧录（已经验证可编译，占 <strong>528 字节 Flash</strong>）</li><li><strong>遥控器</strong>：用 MDK-ARM（Keil）重新编译烧录</li></ul>
+<blockquote class=""><p><strong>为什么要两个开关</strong>：飞机负责"打包进 ACK"，遥控器负责"从串口转发"。
+只开一个都不会有数据 —— 这是排查时最该先确认的地方。</p></blockquote>
+<hr>
+<h2 id="五-电脑侧操作">五、电脑侧操作<a class="anchor" href="#五-电脑侧操作">#</a></h2>
+<h3 id="1-装依赖">1) 装依赖<a class="anchor" href="#1-装依赖">#</a></h3>
+<div class="codeblock"><div class="cbhead"><span class="lang">powershell</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">pip install pyserial</span></div><div class="line"><span class="ln">2</span><span class="lc"># 想要图形显示再加：</span></div><div class="line"><span class="ln">3</span><span class="lc">pip install matplotlib</span></div></pre></div>
+<h3 id="2-先看串口有没有">2) 先看串口有没有<a class="anchor" href="#2-先看串口有没有">#</a></h3>
+<div class="codeblock"><div class="cbhead"><span class="lang">powershell</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">python build-gcc\tools\telemetry_view.py --list</span></div></pre></div>
+<h3 id="3-纯文本模式-先用这个确认通了">3) 纯文本模式（<strong>先用这个确认通了</strong>）<a class="anchor" href="#3-纯文本模式-先用这个确认通了">#</a></h3>
+<div class="codeblock"><div class="cbhead"><span class="lang">powershell</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">python build-gcc\tools\telemetry_view.py COM5</span></div></pre></div>
+<p>正常的话每 0.5 秒会滚出这样一行：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">横滚角=1.23 | 俯仰角=-0.45 | 偏航角=89.01 | 电池电压=3.85 | ...</span></div><div class="line"><span class="ln">2</span><span class="lc">   状态: 已解锁   收帧=248 坏CRC=0 丢帧≈3</span></div></pre></div>
+<p><strong>"坏CRC=0、收帧不断增长"就说明链路通了。</strong> 如果一直是 <code>收帧=0</code>，按第六节排查。</p>
+<h3 id="4-图形模式">4) 图形模式<a class="anchor" href="#4-图形模式">#</a></h3>
+<div class="codeblock"><div class="cbhead"><span class="lang">powershell</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">python build-gcc\tools\telemetry_view.py COM5 --plot</span></div></pre></div>
+<p>会画出<strong>姿态角曲线</strong>和<strong>四个电机输出曲线</strong>两张图，实时滚动。</p>
+<h3 id="5-存-CSV-事后分析">5) 存 CSV 事后分析<a class="anchor" href="#5-存-CSV-事后分析">#</a></h3>
+<div class="codeblock"><div class="cbhead"><span class="lang">powershell</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">python build-gcc\tools\telemetry_view.py COM5 --csv run.csv</span></div></pre></div>
+<hr>
+<h2 id="六-能看到哪些数据">六、能看到哪些数据<a class="anchor" href="#六-能看到哪些数据">#</a></h2>
+<p>遥测帧只有 10 字节，装不下所有量，所以<strong>按组轮转发送</strong>（约 50Hz 发送， 12 组轮转 ⇒ 每个量约 4Hz 刷新）。</p>
+<div class="tablewrap"><table><thead><tr><th>组</th><th>数据</th><th>单位 / 倍率</th></tr></thead><tbody><tr><td>0</td><td>横滚角、俯仰角</td><td>度（飞机侧是"度×100"，脚本已换算）</td></tr><tr><td>1</td><td>偏航角、电池电压</td><td>度；伏</td></tr><tr><td>2</td><td>估计高度、定高 PID 输出</td><td>毫米；原始值</td></tr><tr><td>3</td><td>加速度 X、Y</td><td>g（1g = 4096 LSB）</td></tr><tr><td>4</td><td>加速度 Z、平滑加速度 Z</td><td>g</td></tr><tr><td>5</td><td>角速度 X、Y</td><td>度/秒</td></tr><tr><td>6</td><td>角速度 Z、平滑加速度 X</td><td>度/秒；g</td></tr><tr><td>7</td><td>电机 0、1</td><td>千分比 0~1000</td></tr><tr><td>8</td><td>电机 2、3</td><td>千分比 0~1000</td></tr><tr><td>9</td><td>内部指令 横滚、俯仰</td><td>-500~+500</td></tr><tr><td>10</td><td>内部指令 油门、偏航</td><td>1000~2000；-500~+500</td></tr><tr><td>11</td><td><strong>状态标志位</strong>、遥控原始横滚</td><td>位域；原值</td></tr></tbody></table></div>
+<p><strong>状态标志位含义</strong>（组 11 的第 1 个数字）：</p>
+<div class="tablewrap"><table><thead><tr><th>位</th><th>含义</th></tr></thead><tbody><tr><td>bit0</td><td>已解锁（motorArmed）</td></tr><tr><td>bit1</td><td>怠速（motorIdle）</td></tr><tr><td>bit2</td><td>起飞中</td></tr><tr><td>bit3</td><td>降落中</td></tr><tr><td>bit4</td><td>有新指令</td></tr><tr><td>bit5</td><td>允许校准</td></tr><tr><td><strong>bit9</strong></td><td><strong>失联</strong>（超过 5 秒没收到有效遥控包）</td></tr><tr><td><strong>bit10</strong></td><td><strong>低电</strong></td></tr></tbody></table></div>
+<p>脚本会直接把位域翻译成文字（"已解锁、失联"这样）。</p>
+<hr>
+<h2 id="七-精度与已知限制-请务必读这一节">七、精度与已知限制（<strong>请务必读这一节</strong>）<a class="anchor" href="#七-精度与已知限制-请务必读这一节">#</a></h2>
+<h3 id="7-1-量化精度-实测">7.1 量化精度（实测）<a class="anchor" href="#7-1-量化精度-实测">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>量</th><th>精度</th><th>说明</th></tr></thead><tbody><tr><td>姿态角</td><td><strong>0.01 度</strong></td><td>不缩放，无损</td></tr><tr><td>加速度</td><td>±0.002 g</td><td>右移 4 位（÷16）</td></tr><tr><td>角速度</td><td>±0.12 度/秒</td><td>右移 2 位（÷4）</td></tr><tr><td>高度</td><td>±8 毫米</td><td>右移 4 位（÷16）</td></tr><tr><td>电机 / 指令</td><td>无损</td><td>量程本身就在 int16 内</td></tr></tbody></table></div>
+<p><strong>够用来</strong>：看姿态对不对、看趋势、调参、判断失联/低电。</p>
+<p><strong>不够用来</strong>：分析传感器噪声、算振动频谱。 那需要原始 32 位值，请用<strong>有线串口</strong>或调试器看。</p>
+<blockquote class=""><p>想提高角速度精度：把 <code>rf_telemetry.c</code> 的 <code>RF_TLM_SHIFT_GYRO</code> 从 2 改成 1
+（÷2），精度翻倍、范围仍达 ±4000°/s。<strong>改完必须同步改</strong>
+<code>telemetry_view.py</code> 里的倍率表，否则数字会错一倍。</p></blockquote>
+<h3 id="7-2-刷新率限制">7.2 刷新率限制<a class="anchor" href="#7-2-刷新率限制">#</a></h3>
+<ul><li>遥控器每 <strong>50Hz</strong> 发一次数据（<code>loop50HzFlag</code>），遥测搭在这个 ACK 上</li><li>12 组轮转 ⇒ <strong>每个量约 4Hz 刷新</strong></li><li>姿态角的两个量在同一组，所以看到的姿态是 <strong>4Hz 的完整快照</strong></li></ul>
+<p>对"看姿态"够用。<strong>想更快</strong>：把 <code>rf_telemetry.c</code> 的 <code>RF_TLM_GROUP_COUNT</code> 改小、 或让姿态组多轮几次（在 <code>rf_get_group</code> 的 switch 里给 case 0 多留几个组号）。</p>
+<h3 id="7-3-两端-字节编号-存在不一致-原有问题-未改动">7.3 ⚠ 两端"字节编号"存在不一致（原有问题，未改动）<a class="anchor" href="#7-3-两端-字节编号-存在不一致-原有问题-未改动">#</a></h3>
+<p>摸底时发现一处<strong>原有</strong>的不一致，与本次遥测无关，但你该知道：</p>
+<ul><li>飞机把<strong>低电标记</strong>写在 <code>temp_buff[1]</code>（<code>user/adc.c:245/254</code>，值 = 2）</li><li>遥控器读的是 <code>ack_buff[0]</code> 判断低电（<code>遥控器/user/main.c:243</code>，</li></ul>
+<p><code>deal_data.h:28</code> 的 <code>LOW_VOL = 2</code>）</p>
+<ul><li>而 <code>ack_buff[0]</code> 是<strong>遥控器自己写进去的</strong>对码标志（<code>遥控器/user/main.c:166</code>）</li></ul>
+<p><strong>下标差一位，所以遥控器的低压蜂鸣很可能不会响。</strong> 本次<strong>没有改动</strong>它（避免影响未验证的原有行为）。遥测用的是 <code>[2..11]</code>， 与前两字节无关，所以<strong>不影响遥测</strong>。</p>
+<p>如果你希望修这个，改法是把飞机侧的写入改成 <code>temp_buff[0]</code>， 或把遥控器的判断改成 <code>ack_buff[1]</code> —— 但<strong>两者改动方向相反</strong>， 必须先确认哪个字节约定才是设计意图（建议对照遥控器上低压提示的实际表现来定）。</p>
+<h3 id="7-4-其他限制">7.4 其他限制<a class="anchor" href="#7-4-其他限制">#</a></h3>
+<ul><li><strong>只在"正常模式"转发</strong>。遥控器还有个 CRSF 模式（串口 400000 波特，</li></ul>
+<p>给外置高频头用），那一路不转发遥测。</p>
+<ul><li><strong>飞机侧 GCC 构建、遥控器侧 MDK 构建</strong>：我只验证了飞机侧的编译</li></ul>
+<p>（<code>build-gcc</code> 用的是 arm-none-eabi-gcc）。<strong>遥控器侧改动未经编译验证</strong> —— 你那边用 Keil 编译时如果报错，把错误发我。</p>
+<ul><li><strong>没有实测上机</strong>：CRC 与倍率已做<strong>端到端回环测试</strong>（PC 上两端算法对拍，全部通过），</li></ul>
+<p>但真实射频链路上的表现（丢包率、ACK 是否总能带回 12 字节）<strong>需要你上机验证</strong>。</p>
+<hr>
+<h2 id="八-排查-收不到数据怎么办">八、排查：收不到数据怎么办<a class="anchor" href="#八-排查-收不到数据怎么办">#</a></h2>
+<p>按这个顺序查（每步都能独立确认）：</p>
+<div class="tablewrap"><table><thead><tr><th>步骤</th><th>怎么查</th><th>正常表现</th></tr></thead><tbody><tr><td>1</td><td>飞机侧开关开了吗？（<code>RF_TELEMETRY_ENABLE</code>）</td><td>飞机固件里确实包含遥测代码</td></tr><tr><td>2</td><td>遥控器侧开关开了吗？（<code>RC_TELEMETRY_FORWARD_ENABLE</code>）</td><td>遥控器会转发</td></tr><tr><td>3</td><td><strong>用飞机侧有线串口</strong>接电脑，看有没有 <code>printf</code> 输出</td><td>看到"对码成功"等文字 → 说明飞机在跑</td></tr><tr><td>4</td><td>遥控器串口接对了吗？TX(PIN_4) → <strong>RXD</strong>（不是 TXD）</td><td>常见错误：TX 接 TX</td></tr><tr><td>5</td><td>串口号选对了吗？被串口助手占用了吗？</td><td>关掉其他串口软件</td></tr><tr><td>6</td><td>遥控器<strong>正常模式</strong>吗？（不是 CRSF 模式）</td><td>正常模式下才转发</td></tr><tr><td>7</td><td>拿 <code>--raw</code> 看原始十六进制</td><td>有 <code>5A ..</code> 开头 → 帧在，是解析问题</td></tr></tbody></table></div>
+<div class="codeblock"><div class="cbhead"><span class="lang">powershell</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">python build-gcc\tools\telemetry_view.py COM5 --raw</span></div></pre></div>
+<p><strong>如果第 7 步看到 <code>5A</code> 开头的帧但脚本报 CRC 错</strong>：说明飞机侧与电脑侧版本不一致 （比如你改了缩放常量但没同步脚本）。重跑一遍自检：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">powershell</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">python build-gcc\tools\test_telemetry_roundtrip3.py</span></div></pre></div>
+<p>它会<strong>从飞机侧源文件直接读缩放常量</strong>，然后对拍两端算法 —— 全部 ✅ 才算一致。</p>
+<hr>
+<h2 id="九-这套东西的文件清单">九、这套东西的文件清单<a class="anchor" href="#九-这套东西的文件清单">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>文件</th><th>作用</th></tr></thead><tbody><tr><td><code>飞控/imu/rf_telemetry.h</code></td><td><strong>协议定义</strong>（帧格式、倍率表、开关）—— 权威来源</td></tr><tr><td><code>飞控/imu/rf_telemetry.c</code></td><td>飞机侧打包实现</td></tr><tr><td><code>飞控/user/main.c</code></td><td>主循环里调用 <code>rf_telemetry_pack()</code>（受开关控制）</td></tr><tr><td><code>飞控/user/adc.c</code></td><td>新增 <code>battery_voltage</code> 全局量（供上报）</td></tr><tr><td><code>遥控器/user/main.c</code></td><td><code>RC_TELEMETRY_FORWARD_ENABLE</code> 开关 + 转发调用</td></tr><tr><td><code>build-gcc/tools/telemetry_view.py</code></td><td><strong>电脑侧显示程序</strong>（文本 / 曲线 / CSV）</td></tr><tr><td><code>build-gcc/tools/test_telemetry_roundtrip3.py</code></td><td><strong>两端一致性自检</strong>（改完必跑）</td></tr><tr><td><code>build-gcc/common/projects.cmake</code></td><td>构建列表里加了 <code>rf_telemetry.c</code></td></tr></tbody></table></div>
+<hr>
+<h2 id="十-与其它资料的关系">十、与其它资料的关系<a class="anchor" href="#十-与其它资料的关系">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>想了解</th><th>看哪份</th></tr></thead><tbody><tr><td>射频/信道/ACK/载荷这些术语是什么意思</td><td><code>术语解析手册.md</code> 第 4 章</td></tr><tr><td>为什么 ACK 能带数据、有哪几种无线回传方案</td><td><code>术语伴读04-06_射频看门狗与对码的来龙去脉.md</code></td></tr><tr><td>主循环的调度周期（遥测为什么放在那里）</td><td><code>main函数全表.md</code> 第三节</td></tr><tr><td>已经纠正过的错误说法</td><td><code>_术语伴读_勘误汇总.md</code></td></tr><tr><td>编译烧录流程</td><td><code>VSCODE_使用说明.md</code></td></tr></tbody></table></div>
+</main>
+</div>
+<div class="toolbar">
+  <button id="totop">↑ 回到顶部</button>
+</div>
+<script>
+// 代码复制按钮
+document.querySelectorAll('.codeblock').forEach(function(box){
+  var btn = box.querySelector('.copy');
+  var code = box.querySelector('pre');
+  if(!btn || !code) return;
+  btn.addEventListener('click', function(){
+    // 代码块：逐行取 .lc（去掉行号）；示意图：直接取 pre 的文本
+    var rows = code.querySelectorAll('.lc');
+    var text = rows.length
+      ? Array.prototype.map.call(rows, function(l){ return l.textContent; }).join('\n')
+      : code.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+    }).catch(function(){ btn.textContent = '复制失败'; setTimeout(function(){ btn.textContent='复制'; }, 1200); });
+  });
+});
+// 滚动高亮当前目录项
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 120, best = 0;
+    for(var i=0;i<targets.length;i++){ if(targets[i] && targets[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+    var h = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+// 回到顶部
+document.getElementById('totop').addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+</script>
+</body>
+</html>

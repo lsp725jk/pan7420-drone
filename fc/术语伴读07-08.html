@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>术语伴读：心跳与姿态解算的来龙去脉</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+  --sidebar-bg:#f6f8fa; --code-bg:#f6f8fa; --code-border:#d8dee4;
+  --accent:#0969da; --accent-soft:#ddf4ff;
+  --warn-bg:#fff8c5; --warn-border:#d4a72c;
+  --danger-bg:#ffebe9; --danger-border:#cf222e;
+  --ok-bg:#dafbe1; --ok-border:#1a7f37;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d;
+    --sidebar-bg:#161b22; --code-bg:#161b22; --code-border:#30363d;
+    --accent:#58a6ff; --accent-soft:#0c2d6b;
+    --warn-bg:#3a2d00; --warn-border:#9e6a03;
+    --danger-bg:#3d1418; --danger-border:#f85149;
+    --ok-bg:#0f2f1a; --ok-border:#3fb950;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,sans-serif;
+  font-size:16px; line-height:1.75;
+}
+/* ---------- 布局 ---------- */
+.wrap{display:flex; align-items:flex-start; max-width:1500px; margin:0 auto}
+nav{
+  position:sticky; top:0; flex:0 0 300px; height:100vh; overflow-y:auto;
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  padding:20px 0 60px;
+}
+nav .navtitle{
+  padding:0 20px 14px; font-weight:600; font-size:15px;
+  border-bottom:1px solid var(--border); margin-bottom:10px;
+}
+nav a{
+  display:block; padding:4px 20px; color:var(--muted);
+  text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+nav a:hover{color:var(--accent); background:var(--accent-soft)}
+nav a.h1{font-weight:600; color:var(--fg); margin-top:8px}
+nav a.h2{padding-left:32px}
+nav a.h3{padding-left:46px; font-size:12.5px}
+nav a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); font-weight:600}
+main{flex:1 1 auto; min-width:0; padding:32px 44px 120px}
+/* ---------- 页头 ---------- */
+header.page{
+  border-bottom:2px solid var(--border); padding-bottom:20px; margin-bottom:28px;
+}
+header.page h1{margin:0 0 6px; font-size:30px; line-height:1.3; border:0; padding:0}
+header.page .sub{color:var(--muted); font-size:15px}
+header.page .meta{color:var(--muted); font-size:12.5px; margin-top:10px}
+/* ---------- 标题 ---------- */
+h1,h2,h3,h4{line-height:1.35; font-weight:600; scroll-margin-top:16px}
+h1{font-size:26px; margin:44px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+h2{font-size:22px; margin:38px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border)}
+h3{font-size:18px; margin:28px 0 10px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--muted)}
+.anchor{color:var(--border); text-decoration:none; margin-left:8px; font-weight:400; opacity:0}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+/* ---------- 正文元素 ---------- */
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{margin:12px 0; padding-left:26px}
+li{margin:5px 0}
+li>ul,li>ol{margin:5px 0}
+hr{border:0; border-top:1px solid var(--border); margin:34px 0}
+strong{font-weight:600}
+/* 行内代码 */
+code{
+  background:var(--code-bg); border:1px solid var(--code-border);
+  border-radius:5px; padding:.15em .4em; font-size:.875em;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  word-break:break-word;
+}
+/* 代码块 */
+.codeblock{
+  position:relative; margin:16px 0; border:1px solid var(--code-border);
+  border-radius:8px; overflow:hidden; background:var(--code-bg); box-shadow:var(--shadow);
+}
+.codeblock .cbhead{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; background:var(--sidebar-bg); border-bottom:1px solid var(--code-border);
+  font-size:12px; color:var(--muted);
+}
+.codeblock .lang{font-weight:600; letter-spacing:.03em; text-transform:uppercase}
+.codeblock .copy{
+  cursor:pointer; border:1px solid var(--code-border); background:transparent;
+  color:var(--muted); border-radius:5px; padding:2px 9px; font-size:11.5px;
+  font-family:inherit;
+}
+.codeblock .copy:hover{color:var(--accent); border-color:var(--accent)}
+.codeblock pre{
+  margin:0; padding:12px 0; overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px; line-height:1.65;
+}
+.codeblock .line{display:flex; min-width:max-content}
+.codeblock .ln{
+  flex:0 0 auto; width:3.2em; padding-right:12px; text-align:right;
+  color:var(--border); user-select:none;
+}
+.codeblock .lc{padding-right:20px; white-space:pre}
+/* 示意图：不加行号、不换行（换行会毁掉 ASCII 图的列对齐，所以横向滚动） */
+.codeblock.art{background:var(--bg)}
+.codeblock.art .lang{color:var(--accent)}
+.codeblock .artpre{
+  margin:0; padding:14px 16px; overflow-x:auto; white-space:pre;
+  font-family:"Cascadia Mono",Consolas,"MS Gothic","Courier New",monospace;
+  font-size:13px; line-height:1.5; tab-size:4;
+}
+/* 表格 */
+.tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{border-bottom:1px solid var(--border); padding:9px 13px; text-align:left; vertical-align:top}
+th{background:var(--sidebar-bg); font-weight:600; white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sidebar-bg)}
+/* 引用块：按内容分色 */
+blockquote{
+  margin:16px 0; padding:12px 16px; border-left:4px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0;
+}
+blockquote p{margin:6px 0}
+blockquote.warn{border-left-color:var(--warn-border); background:var(--warn-bg)}
+blockquote.danger{border-left-color:var(--danger-border); background:var(--danger-bg)}
+blockquote.ok{border-left-color:var(--ok-border); background:var(--ok-bg)}
+/* 顶部工具条 */
+.toolbar{
+  position:fixed; right:20px; bottom:20px; display:flex; gap:8px; z-index:50;
+}
+.toolbar button{
+  border:1px solid var(--border); background:var(--bg); color:var(--muted);
+  border-radius:20px; padding:8px 16px; cursor:pointer; font-size:13px;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.toolbar button:hover{color:var(--accent); border-color:var(--accent)}
+/* 进度条 */
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; z-index:99}
+/* 窄屏 */
+@media (max-width:900px){
+  nav{display:none}
+  main{padding:20px 18px 100px}
+  .wrap{display:block}
+  body{font-size:15px}
+}
+@media print{
+  nav,.toolbar,#progress{display:none}
+  main{padding:0}
+  .codeblock,.tablewrap{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav>
+  <div class="navtitle">术语伴读：心跳与姿态解算的来龙去脉</div>
+  <a class="h2" href="#0-先说清三件事" title="0. 先说清三件事">0. 先说清三件事</a>
+  <a class="h3" href="#0-1-历史与动机叙述的定位-请先读这一句" title="0.1 历史与动机叙述的定位（请先读这一句）">0.1 历史与动机叙述的定位（请先读这一句）</a>
+  <a class="h3" href="#0-2-证据分级-沿用事实清单的三档" title="0.2 证据分级（沿用事实清单的三档）">0.2 证据分级（沿用事实清单的三档）</a>
+  <a class="h3" href="#0-3-关于行号的一个提醒-本机实测" title="0.3 关于行号的一个提醒（🟢 本机实测）">0.3 关于行号的一个提醒（🟢 本机实测）</a>
+  <a class="h1" href="#第-7-章-心跳-软定时器-失效保护" title="第 7 章　心跳、软定时器、失效保护">第 7 章　心跳、软定时器、失效保护</a>
+  <a class="h2" href="#7A-主线图-这一章的三样东西怎么串起来" title="7A　主线图：这一章的三样东西怎么串起来">7A　主线图：这一章的三样东西怎么串起来</a>
+  <a class="h2" href="#7-1-心跳-Heartbeat" title="7.1 心跳（Heartbeat）">7.1 心跳（Heartbeat）</a>
+  <a class="h3" href="#①-它是怎么出现的" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它" title="③ 我该怎么理解它">③ 我该怎么理解它</a>
+  <a class="h4" href="#7-1-1-本工程有三层-心跳-别搞混" title="7.1.1 本工程有三层&quot;心跳&quot;，别搞混">7.1.1 本工程有三层&quot;心跳&quot;，别搞混</a>
+  <a class="h4" href="#7-1-2-本工程的通信心跳是-隐式-的-而且带双向确认" title="7.1.2 本工程的通信心跳是&quot;隐式&quot;的，而且带双向确认">7.1.2 本工程的通信心跳是&quot;隐式&quot;的，而且带双向确认</a>
+  <a class="h4" href="#7-1-3-心跳-看门狗-最容易混的一对" title="7.1.3 心跳 ≠ 看门狗（最容易混的一对）">7.1.3 心跳 ≠ 看门狗（最容易混的一对）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h3" href="#7-1-小结-三句话" title="7.1 小结（三句话）">7.1 小结（三句话）</a>
+  <a class="h2" href="#7-2-软定时器-Soft-Timer" title="7.2 软定时器（Soft Timer）">7.2 软定时器（Soft Timer）</a>
+  <a class="h3" href="#①-它是怎么出现的-2" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-2" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-2" title="③ 我该怎么理解它">③ 我该怎么理解它</a>
+  <a class="h4" href="#7-2-1-本工程的实测细节-逐条给行号-这是本节最该记住的部分" title="7.2.1 本工程的实测细节（逐条给行号，这是本节最该记住的部分）">7.2.1 本工程的实测细节（逐条给行号，这是本节最该记住的部分）</a>
+  <a class="h4" href="#a-计数器的定义与自增" title="（a）计数器的定义与自增">（a）计数器的定义与自增</a>
+  <a class="h4" href="#b-主循环怎么消费它们" title="（b）主循环怎么消费它们">（b）主循环怎么消费它们</a>
+  <a class="h4" href="#c-实际周期是-N-1-ms-是怎么来的-可自己验算" title="（c）&quot;实际周期是 N+1 ms&quot;是怎么来的（🟢 可自己验算）">（c）&quot;实际周期是 N+1 ms&quot;是怎么来的（🟢 可自己验算）</a>
+  <a class="h4" href="#d-为什么-_cnt1s-是-uint16_t-而其它是-uint8_t-可从回绕边界推出" title="（d）为什么 _cnt1s 是 uint16_t 而其它是 uint8_t（🟢 可从回绕边界推出）">（d）为什么 _cnt1s 是 uint16_t 而其它是 uint8_t（🟢 可从回绕边界推出）</a>
+  <a class="h4" href="#e-这些计数器都不是-volatile-本机实测-这是本节最该警惕的一条" title="（e）这些计数器都不是 volatile（🟢 本机实测，这是本节最该警惕的一条）">（e）这些计数器都不是 volatile（🟢 本机实测，这是本节最该警惕的一条）</a>
+  <a class="h4" href="#f-主循环的时间预算-代码注释标注的实测耗时" title="（f）主循环的时间预算（🟢 代码注释标注的实测耗时）">（f）主循环的时间预算（🟢 代码注释标注的实测耗时）</a>
+  <a class="h4" href="#g-baroUpdateTimer-altitudeCtrlTimer-软定时器的第二种用法" title="（g）baroUpdateTimer / altitudeCtrlTimer：软定时器的第二种用法">（g）baroUpdateTimer / altitudeCtrlTimer：软定时器的第二种用法</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-2" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h3" href="#7-2-小结" title="7.2 小结">7.2 小结</a>
+  <a class="h2" href="#7-3-失效保护-失控保护-Failsafe" title="7.3 失效保护 / 失控保护（Failsafe）">7.3 失效保护 / 失控保护（Failsafe）</a>
+  <a class="h3" href="#①-它是怎么出现的-3" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-3" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-3" title="③ 我该怎么理解它">③ 我该怎么理解它</a>
+  <a class="h4" href="#7-3-1-两套判据-两个动作-方向不同-本机实测" title="7.3.1 两套判据、两个动作，方向不同（🟢 本机实测）">7.3.1 两套判据、两个动作，方向不同（🟢 本机实测）</a>
+  <a class="h4" href="#7-3-2-保护动作的选择-本工程选了-缓降-落地停机" title="7.3.2 保护动作的选择（🟢 本工程选了&quot;缓降 + 落地停机&quot;）">7.3.2 保护动作的选择（🟢 本工程选了&quot;缓降 + 落地停机&quot;）</a>
+  <a class="h4" href="#7-3-3-HAL_GetTick-相减写法的坑-事实清单可证" title="7.3.3 HAL_GetTick() 相减写法的坑（🟢 事实清单可证）">7.3.3 HAL_GetTick() 相减写法的坑（🟢 事实清单可证）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-3" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h4" href="#表-7-3-1-保护动作的选择-发现失联之后干什么" title="表 7-3-1　保护动作的选择（发现失联之后干什么）">表 7-3-1　保护动作的选择（发现失联之后干什么）</a>
+  <a class="h4" href="#表-7-3-2-判据的实现方法-失联-这件事怎么判出来" title="表 7-3-2　判据的实现方法（&quot;失联&quot;这件事怎么判出来）">表 7-3-2　判据的实现方法（&quot;失联&quot;这件事怎么判出来）</a>
+  <a class="h3" href="#7-3-小结与检查清单" title="7.3 小结与检查清单">7.3 小结与检查清单</a>
+  <a class="h1" href="#第-8-章-传感器-姿态-滤波-姿态解算" title="第 8 章　传感器、姿态、滤波、姿态解算">第 8 章　传感器、姿态、滤波、姿态解算</a>
+  <a class="h2" href="#8A-主线图-从物理世界到-angle-和-EstAlt" title="8A　主线图：从物理世界到 angle[] 和 EstAlt">8A　主线图：从物理世界到 angle[] 和 EstAlt</a>
+  <a class="h2" href="#8-1-IMU-Inertial-Measurement-Unit-惯性测量单元" title="8.1 IMU（Inertial Measurement Unit，惯性测量单元）">8.1 IMU（Inertial Measurement Unit，惯性测量单元）</a>
+  <a class="h3" href="#①-它是怎么出现的-4" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-4" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-4" title="③ 我该怎么理解它">③ 我该怎么理解它</a>
+  <a class="h4" href="#8-1-1-本工程用的是-ICM-42688-P-六轴-无磁力计" title="8.1.1 本工程用的是 ICM-42688-P（六轴，无磁力计）">8.1.1 本工程用的是 ICM-42688-P（六轴，无磁力计）</a>
+  <a class="h4" href="#8-1-2-加速度计在这里的真正作用-提供-重力的方向" title="8.1.2 加速度计在这里的真正作用：提供&quot;重力的方向&quot;">8.1.2 加速度计在这里的真正作用：提供&quot;重力的方向&quot;</a>
+  <a class="h4" href="#8-1-3-没有磁力计的后果-可以从代码直接看出来" title="8.1.3 没有磁力计的后果（🟢 可以从代码直接看出来）">8.1.3 没有磁力计的后果（🟢 可以从代码直接看出来）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-4" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h2" href="#8-2-量程-分辨率-零偏-校准" title="8.2 量程、分辨率、零偏、校准">8.2 量程、分辨率、零偏、校准</a>
+  <a class="h3" href="#①-它们各自是怎么出现的-解决什么问题" title="① 它们各自是怎么出现的 / 解决什么问题">① 它们各自是怎么出现的 / 解决什么问题</a>
+  <a class="h3" href="#②-为什么量程和分辨率是矛盾的-可自行验算" title="② 为什么量程和分辨率是矛盾的（🟢 可自行验算）">② 为什么量程和分辨率是矛盾的（🟢 可自行验算）</a>
+  <a class="h3" href="#③-我该怎么理解零偏-把-漂移-算成一个数" title="③ 我该怎么理解零偏：把&quot;漂移&quot;算成一个数">③ 我该怎么理解零偏：把&quot;漂移&quot;算成一个数</a>
+  <a class="h3" href="#④-本工程的校准流程-逐行可核对" title="④ 本工程的校准流程（🟢 逐行可核对）">④ 本工程的校准流程（🟢 逐行可核对）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-5" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h3" href="#8-2-小结" title="8.2 小结">8.2 小结</a>
+  <a class="h2" href="#8-3-姿态解算-Attitude-Estimation" title="8.3 姿态解算（Attitude Estimation）">8.3 姿态解算（Attitude Estimation）</a>
+  <a class="h3" href="#①-它是怎么出现的-5" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-5" title="② 它要解决什么问题（没有它会怎样）">② 它要解决什么问题（没有它会怎样）</a>
+  <a class="h3" href="#③-我该怎么理解它-5" title="③ 我该怎么理解它">③ 我该怎么理解它</a>
+  <a class="h4" href="#8-3-1-三种姿态表示-各自的-病-结构性事实-工程评价" title="8.3.1 三种姿态表示，各自的&quot;病&quot;（🟢 结构性事实 + 🟡 工程评价）">8.3.1 三种姿态表示，各自的&quot;病&quot;（🟢 结构性事实 + 🟡 工程评价）</a>
+  <a class="h4" href="#8-3-2-互补滤波-Mahony-的方框图-结构对照代码" title="8.3.2 互补滤波 / Mahony 的方框图（🟢 结构对照代码）">8.3.2 互补滤波 / Mahony 的方框图（🟢 结构对照代码）</a>
+  <a class="h4" href="#8-3-3-本工程的其余实测细节-逐条给行号" title="8.3.3 本工程的其余实测细节（逐条给行号）">8.3.3 本工程的其余实测细节（逐条给行号）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-6" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h3" href="#8-3-小结" title="8.3 小结">8.3 小结</a>
+  <a class="h2" href="#8-4-滤波-Filter" title="8.4 滤波（Filter）">8.4 滤波（Filter）</a>
+  <a class="h3" href="#①-它是怎么出现的-6" title="① 它是怎么出现的">① 它是怎么出现的</a>
+  <a class="h3" href="#②-不滤会怎样-滤过头会怎样-一对反向的代价" title="② 不滤会怎样 / 滤过头会怎样（一对反向的代价）">② 不滤会怎样 / 滤过头会怎样（一对反向的代价）</a>
+  <a class="h3" href="#③-我该怎么理解-截止频率-定义-选取经验" title="③ 我该怎么理解&quot;截止频率&quot;（🟢 定义 + 🟡 选取经验）">③ 我该怎么理解&quot;截止频率&quot;（🟢 定义 + 🟡 选取经验）</a>
+  <a class="h3" href="#④-本工程到底用了什么-本节最重要的部分-全部从代码读出" title="④ 本工程到底用了什么（🟢 本节最重要的部分，全部从代码读出）">④ 本工程到底用了什么（🟢 本节最重要的部分，全部从代码读出）</a>
+  <a class="h4" href="#a-陀螺仪-PT1-一阶低通-240Hz-dT-1-25ms" title="（a）陀螺仪：PT1 一阶低通，240Hz，dT = 1.25ms">（a）陀螺仪：PT1 一阶低通，240Hz，dT = 1.25ms</a>
+  <a class="h4" href="#b-加速度计-biquad-二阶低通-30Hz-采样周期写-1250µs" title="（b）加速度计：biquad 二阶低通，30Hz，采样周期写 1250µs">（b）加速度计：biquad 二阶低通，30Hz，采样周期写 1250µs</a>
+  <a class="h4" href="#c-气压计-中值-滑动平均-低通-死区-四件套" title="（c）气压计：中值 + 滑动平均 + 低通 + 死区（四件套）">（c）气压计：中值 + 滑动平均 + 低通 + 死区（四件套）</a>
+  <a class="h4" href="#d-还有一个-藏在-PID-里-的滤波" title="（d）还有一个&quot;藏在 PID 里&quot;的滤波（🟢）">（d）还有一个&quot;藏在 PID 里&quot;的滤波（🟢）</a>
+  <a class="h4" href="#e-陷波器-代码里有-本工程没有用-本机实测" title="（e）陷波器：代码里有，本工程没有用（🟢 本机实测）">（e）陷波器：代码里有，本工程没有用（🟢 本机实测）</a>
+  <a class="h4" href="#f-一个真实的-参数与假设不一致-推理-但依据是代码事实" title="（f）一个真实的&quot;参数与假设不一致&quot;（🟡 推理，但依据是代码事实）">（f）一个真实的&quot;参数与假设不一致&quot;（🟡 推理，但依据是代码事实）</a>
+  <a class="h3" href="#④-实现方法有哪些-取舍对照表-7" title="④ 实现方法有哪些（取舍对照表）">④ 实现方法有哪些（取舍对照表）</a>
+  <a class="h3" href="#8-4-小结" title="8.4 小结">8.4 小结</a>
+  <a class="h2" href="#8-5-气压计与定高" title="8.5 气压计与定高">8.5 气压计与定高</a>
+  <a class="h3" href="#①-它是怎么出现的-物理链条" title="① 它是怎么出现的（物理链条，🟢）">① 它是怎么出现的（物理链条，🟢）</a>
+  <a class="h3" href="#②-它要解决什么问题-没有它会怎样-它自己的问题" title="② 它要解决什么问题（没有它会怎样）/ 它自己的问题">② 它要解决什么问题（没有它会怎样）/ 它自己的问题</a>
+  <a class="h3" href="#③-为什么要和加速度计融合-结构-图" title="③ 为什么要和加速度计融合（🟢 结构 + 图）">③ 为什么要和加速度计融合（🟢 结构 + 图）</a>
+  <a class="h3" href="#④-本工程的定高-BMP390-串级高度环-全部实测" title="④ 本工程的定高：BMP390 + 串级高度环（🟢 全部实测）">④ 本工程的定高：BMP390 + 串级高度环（🟢 全部实测）</a>
+  <a class="h3" href="#⑤-实现方法有哪些-取舍对照表" title="⑤ 实现方法有哪些（取舍对照表）">⑤ 实现方法有哪些（取舍对照表）</a>
+  <a class="h3" href="#8-5-小结" title="8.5 小结">8.5 小结</a>
+  <a class="h1" href="#附录-A-本工程实际用了什么-总表-全部可逐行核对" title="附录 A　&quot;本工程实际用了什么&quot;总表（🟢 全部可逐行核对）">附录 A　&quot;本工程实际用了什么&quot;总表（🟢 全部可逐行核对）</a>
+  <a class="h2" href="#A-1-第-7-章相关" title="A.1　第 7 章相关">A.1　第 7 章相关</a>
+  <a class="h2" href="#A-2-第-8-章相关" title="A.2　第 8 章相关">A.2　第 8 章相关</a>
+  <a class="h1" href="#附录-B-证据分级统计" title="附录 B　证据分级统计">附录 B　证据分级统计</a>
+  <a class="h2" href="#B-1-计数" title="B.1　计数">B.1　计数</a>
+  <a class="h2" href="#B-2-按主题分布-哪一类结论最依赖" title="B.2　按主题分布（哪一类结论最依赖🟡）">B.2　按主题分布（哪一类结论最依赖🟡）</a>
+  <a class="h1" href="#附录-C-故意省略了什么-诚实清单" title="附录 C　故意省略了什么（诚实清单）">附录 C　故意省略了什么（诚实清单）</a>
+  <a class="h1" href="#附录-D-手册正文疑似事实问题清单-只指出-不修改" title="附录 D　手册正文疑似事实问题清单（只指出，不修改）">附录 D　手册正文疑似事实问题清单（只指出，不修改）</a>
+  <a class="h2" href="#D-1-与代码不符-建议优先核对" title="D.1　与代码不符（建议优先核对）">D.1　与代码不符（建议优先核对）</a>
+  <a class="h3" href="#D-1-第-8-2-节-手册第-931-933-行-引用的代码片段与代码不符" title="D-1（第 8.2 节，手册第 931-933 行）引用的代码片段与代码不符">D-1（第 8.2 节，手册第 931-933 行）引用的代码片段与代码不符</a>
+  <a class="h3" href="#D-2-第-8-2-节-手册第-923-行-分辨率-一行的示例值与本工程量程不符" title="D-2（第 8.2 节，手册第 923 行）&quot;分辨率&quot;一行的示例值与本工程量程不符">D-2（第 8.2 节，手册第 923 行）&quot;分辨率&quot;一行的示例值与本工程量程不符</a>
+  <a class="h3" href="#D-3-第-8-4-节-手册第-965-行-陷波器一行容易被读成-工程在用它" title="D-3（第 8.4 节，手册第 965 行）陷波器一行容易被读成&quot;工程在用它&quot;">D-3（第 8.4 节，手册第 965 行）陷波器一行容易被读成&quot;工程在用它&quot;</a>
+  <a class="h3" href="#D-4-第-8-3-节-手册第-951-952-行-欧拉角的来源写成了四元数" title="D-4（第 8.3 节，手册第 951-952 行）欧拉角的来源写成了四元数">D-4（第 8.3 节，手册第 951-952 行）欧拉角的来源写成了四元数</a>
+  <a class="h3" href="#D-5-第-8-5-节-手册第-988-行-串级-高度环-姿态环-的措辞" title="D-5（第 8.5 节，手册第 988 行）&quot;串级（高度环 + 姿态环）&quot;的措辞">D-5（第 8.5 节，手册第 988 行）&quot;串级（高度环 + 姿态环）&quot;的措辞</a>
+  <a class="h2" href="#D-2-引用漂移-结论对-位置老了" title="D.2　引用漂移（结论对、位置老了）">D.2　引用漂移（结论对、位置老了）</a>
+  <a class="h2" href="#D-3-不是错误-但可以更精确-低优先级" title="D.3　不是错误、但可以更精确（低优先级）">D.3　不是错误、但可以更精确（低优先级）</a>
+  <a class="h1" href="#附录-E-代码注释与代码不一致-本文件顺手记录-未改动任何文件" title="附录 E　代码注释与代码不一致（本文件顺手记录，未改动任何文件）">附录 E　代码注释与代码不一致（本文件顺手记录，未改动任何文件）</a>
+  <a class="h1" href="#附录-F-如果只记五句话" title="附录 F　如果只记五句话">附录 F　如果只记五句话</a>
+</nav>
+<main>
+<header class="page">
+  <h1>术语伴读：心跳与姿态解算的来龙去脉</h1>
+  <div class="sub">心跳/软定时器/失效保护、IMU/量程校准/姿态解算/滤波/气压计定高</div>
+  <div class="meta">PAN 飞控工程 · PY32F030 (Cortex-M0+) · 由 build-gcc/tools/md_to_html.py 生成</div>
+</header>
+<blockquote class=""><p><strong>这份文档是什么</strong>：《术语解析手册》第 7、8 章讲的是「<strong>这个词是什么意思、在你工程的哪一行</strong>」；
+这份伴读补的是「<strong>它当初要解决什么麻烦、没有它会怎样、有哪几条路可选、本工程选了哪条</strong>」。
+手册正文照旧是主教材，本文件是它的背景注释，<strong>不替代正文</strong>。</p><p><strong>怎么读</strong>：每个术语按同样四个问题展开 ——
+<strong>① 它是怎么出现的　② 它要解决什么问题（没有它会怎样）　③ 我该怎么理解它（配图）　④ 实现方法有哪些（取舍对照表 + 本工程用的是哪种）</strong>。
+只想查"这行代码干什么"的读者，看手册就够了；想知道"为什么长这样"的读者，看这里。</p></blockquote>
+<hr>
+<h2 id="0-先说清三件事">0. 先说清三件事<a class="anchor" href="#0-先说清三件事">#</a></h2>
+<h3 id="0-1-历史与动机叙述的定位-请先读这一句">0.1 历史与动机叙述的定位（请先读这一句）<a class="anchor" href="#0-1-历史与动机叙述的定位-请先读这一句">#</a></h3>
+<blockquote class=""><p><strong>本文件里所有关于"为什么会有这个东西""当初遇到什么麻烦"的叙述，只用于建立直觉；
+技术结论一律以《术语解析手册》正文、<code>_术语事实清单.md</code> 和本机代码实测为准。</strong></p></blockquote>
+<p>本书<strong>不出现</strong>任何未经核实的人名、年份、论文名、"某年某人提出"式的发明故事。 算法名（Mahony、Madgwick、EKF 这类）可以照实写，因为它们是工程界通用的<strong>名字</strong>， 但本文件不会给它们配"谁在哪一年提出"的句子 —— 那类信息我无法在本机核实， 写了也不给读者增加可判断的内容。详见 §C 的省略清单。</p>
+<h3 id="0-2-证据分级-沿用事实清单的三档">0.2 证据分级（沿用事实清单的三档）<a class="anchor" href="#0-2-证据分级-沿用事实清单的三档">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>标记</th><th>含义</th><th>读者该怎么用</th></tr></thead><tbody><tr><td>🟢 <strong>确证</strong></td><td>有手册页码 / 事实清单 / <strong>本机代码可逐行核对</strong>（含 <code>文件名:行号</code>），或是可自行验算的物理/数学链条</td><td>可以直接引用</td></tr><tr><td>🟡 <strong>通说</strong></td><td>控制工程/嵌入式领域广泛记载，方向可靠，<strong>具体数值可能有出入</strong></td><td>当作背景理解，别当设计依据</td></tr><tr><td>🟠 <strong>说法</strong></td><td>没把握、或流传版本互相矛盾</td><td><strong>请自行查证</strong>，不要写进正式设计文档</td></tr></tbody></table></div>
+<p>三条补充约定：</p>
+<ol><li>凡是"<strong>本工程实际是什么</strong>"，一律标 🟢 并附 <code>文件名:行号</code> —— 这类事实你可以自己打开文件核对。</li><li>凡是"<strong>芯片规格</strong>"（量程、精度、噪声密度之类），能引 <code>_术语事实清单.md</code> 的引事实清单并标 🟢；</li></ol>
+<p>事实清单里没有的（如 ICM-42688-P、BMP390 的数据手册参数），<strong>本文件一律不编页码</strong>， 改成把"代码里能读到的那部分"标 🟢，把"需要查芯片手册才能确认的那部分"标 🟡 并明确说明"未在本机核实"。</p>
+<ol><li>凡是"<strong>控制工程的经验结论</strong>"（振动会污染积分、截止频率要低于振动频率之类）标 🟡 —— 它们是通说，不是本机实测。</li></ol>
+<h3 id="0-3-关于行号的一个提醒-本机实测">0.3 关于行号的一个提醒（🟢 本机实测）<a class="anchor" href="#0-3-关于行号的一个提醒-本机实测">#</a></h3>
+<p>本文件引用的 <code>文件名:行号</code> 都以<strong>当前工作副本</strong>为准，我逐条用检索工具核对过。 但请注意：这份工程的源文件后来被加进了大量中文注释，<strong>行号整体下移过</strong>， 所以早期文档里的行号可能已经失效。两个实例：</p>
+<div class="tablewrap"><table><thead><tr><th>引用出处</th><th>里面写的</th><th>当前实际位置</th></tr></thead><tbody><tr><td><code>_术语事实清单.md:95</code>、<code>术语解析手册.md:493/512/1091/1119</code></td><td><code>main.c:249</code>（<code>ch_change_arr[1] = pair_data.rf_ch</code>）</td><td><strong><code>main.c:265</code></strong></td></tr><tr><td><code>术语解析手册.md:1108</code></td><td>飞控失联判据在 <code>main.c:446</code></td><td><strong><code>main.c:462</code></strong></td></tr></tbody></table></div>
+<p>这不是内容错误，是<strong>引用漂移</strong>：结论对，位置老了。你自己核对时以检索结果为准。</p>
+<hr>
+<h1 id="第-7-章-心跳-软定时器-失效保护">第 7 章　心跳、软定时器、失效保护<a class="anchor" href="#第-7-章-心跳-软定时器-失效保护">#</a></h1>
+<blockquote class=""><p><strong>本章主线</strong>：这三样东西解决的是同一个大问题的三个侧面 ——
+<strong>"我怎么知道对方/自己还活着？"</strong></p><p>- <strong>心跳</strong>：判断<strong>别人</strong>（遥控器）还活着 → 通信层的"生命体征"；
+- <strong>软定时器</strong>：判断<strong>自己</strong>的时间到了没有 → 一个时基撑起几十个周期任务；
+- <strong>失效保护</strong>：判断出"对方不在了"之后<strong>怎么办</strong> → 把"通信故障"翻译成"安全动作"。</p><p>三者的关系是<strong>串联</strong>的：心跳提供判据，软定时器提供计时，失效保护消费判据做出动作。缺任何一环，
+另外两环都落不了地。</p></blockquote>
+<h2 id="7A-主线图-这一章的三样东西怎么串起来">7A　主线图：这一章的三样东西怎么串起来<a class="anchor" href="#7A-主线图-这一章的三样东西怎么串起来">#</a></h2>
+<p>这一节回答一个问题：<strong>心跳、软定时器、失效保护在数据流上是怎样接在一起的？</strong></p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">┌───────────────────────────────────────────────────────────────────────────────┐
+│ ① 时间从哪来：硬件时基（唯一的一个）                                          │
+│                                                                               │
+│   48MHz ──/480──&gt; 100kHz ──数到100──&gt; TIM17 每 1ms 中断一次                   │
+│   （事实清单"本工程的实际配置"：TIM17 /480/100 → 1kHz）                        │
+│                          │                                                    │
+│                          ▼                                                    │
+│   bsp_timer.c:178-190  中断里只做 +1：_cnt10ms/_cnt4ms/_cnt100ms/_cnt1s        │
+│                                       baroUpdateTimer/altitudeCtrlTimer       │
+└───────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│ ② 一个时基扇出多个"软定时器"（第 7.2 节）                                     │
+│                                                                               │
+│   _cnt10ms  ──&gt; 主循环每约 11ms  ──&gt; decode_pack()：收遥控包      ← 心跳的入口 │
+│   _cnt4ms   ──&gt; 主循环每约 5ms   ──&gt; Mode_Controler()：空翻状态机              │
+│   _cnt100ms ──&gt; 主循环每约 101ms ──&gt; 喂狗 + 灯语（视觉心跳）                   │
+│   _cnt1s    ──&gt; 主循环每约 1.001s──&gt; 读电池电压                                │
+└───────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│ ③ 心跳：收到合法包就刷新时间戳（第 7.1 节）                                   │
+│                                                                               │
+│   deal_pack.c:154  帧头 0xAA + 本机 device_ID 双重校验通过                    │
+│   deal_pack.c:257  connection_nowtime = HAL_GetTick();   ← 唯一的刷新点       │
+└───────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│ ④ 失效保护：时间戳老了就动手（第 7.3 节）                                     │
+│                                                                               │
+│   main.c:462   if (HAL_GetTick() - connection_nowtime &gt; 5000)                 │
+│   main.c:465       fc.flags.bLanding = 1;     ← 交给飞行状态机"自动降落"      │
+│   main.c:470       bsp_pn298_rx_mode();       ← 射频切回接收，等重连          │
+└───────────────────────────────────────────────────────────────────────────────┘</pre></div>
+<p><strong>读法</strong>：沿着箭头自上而下，"时间"逐步变成"判断"，最后变成"动作"。 这一章的所有细节都可以挂在这条链上：任何一个环节的取舍（1ms 还是 10ms、5 秒还是 1 秒、 降落还是停桨）都是这条链上某个节点的参数选择。</p>
+<hr>
+<h2 id="7-1-心跳-Heartbeat">7.1 心跳（Heartbeat）<a class="anchor" href="#7-1-心跳-Heartbeat">#</a></h2>
+<blockquote class=""><p><strong>这一节回答什么问题</strong>：接收方怎么知道"对方还在"，而不是"只是这一帧没收到"？</p></blockquote>
+<h3 id="①-它是怎么出现的">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的">#</a></h3>
+<p>🟡 <strong>通说</strong>：单向无线链路有一个绕不开的困境 —— 接收方<strong>没有</strong>任何直接手段确认发送方是否存活。 它手上只有一件事：<strong>"到目前为止，还没有收到下一帧。"</strong> 而这一件事至少有三种成因：</p>
+<ol><li>发送方死了（没电、程序卡死、被关掉）；</li><li>链路暂时断了（距离太远、被遮挡、天线朝向变了、同频干扰）；</li><li>帧正在路上，还没到（正常延迟）。</li></ol>
+<p>🟢 <strong>确证（本工程的通信前提）</strong>：本工程用的是 PN298 这类 2.4GHz 无线收发芯片， <code>_术语事实清单.md</code> 记明它支持<strong>自动重传</strong>（<code>SETUP_RETR</code> 默认 <code>ARD=250µs</code>、<code>ARC=3</code> 次重传， 超限产生 <code>MAX_RT</code> 中断；手册第 17、33 页），并且每包带 <strong>2 位 PID</strong>（Packet ID，包序号；手册第 19 页）用于识别重发包。 换句话说：<strong>"这一帧没收到"这件事，射频芯片自己已经帮你区分了一部分</strong> —— 重传 3 次仍然失败才会报 <code>MAX_RT</code>。但<strong>它仍然无法回答"对方是死了还是暂时不通"</strong>， 因为两种情况在芯片看来都是"没 ACK"。</p>
+<p>→ 于是需要一个<strong>主动的、周期性的、可被超时判定的</strong>信号。这就是心跳。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样">#</a></h3>
+<p>心跳要解决的核心问题，用一句话说：</p>
+<blockquote class=""><p><strong>把"一次收不到"（不可判定）变成"连续 N 次收不到"（可判定）。</strong></p></blockquote>
+<p>要做到这个判定，链路两端必须<strong>事先约定三件事</strong>，缺一不可：</p>
+<div class="tablewrap"><table><thead><tr><th>要素</th><th>作用</th><th>没有它会怎样</th></tr></thead><tbody><tr><td><strong>周期 T</strong>（多久发一次）</td><td>给"连续"下一个定义</td><td>无法定义"多久算久"，只能永远等下去</td></tr><tr><td><strong>接收方本地时钟</strong></td><td>度量"已经过去多久"</td><td>没有时间轴，就没有"超时"这个概念</td></tr><tr><td><strong>阈值 N</strong>（多少个 T）</td><td>把"概率"翻译成"判决"</td><td>阈值太短 → 丢一帧就报警；太长 → 危险窗口大</td></tr></tbody></table></div>
+<p>🟢 <strong>确证（本工程的三个要素都齐）</strong>：</p>
+<ul><li><strong>周期 T</strong>：遥控器由 TIM16 中断节拍驱动发包（<code>遥控器/user_driver/tim16.c:48-90</code>）；</li><li><strong>本地时钟</strong>：飞控侧用 <code>HAL_GetTick()</code>（SysTick 驱动的 1ms 毫秒计数，<code>main.c:462</code>），</li></ul>
+<p>遥控器侧用 TIM16 的 1ms 中断计数（<code>遥控器/user_driver/tim16.c:76-87</code>）；</p>
+<ul><li><strong>阈值 N</strong>：飞控侧 5000、遥控器侧 1000（详见 7.3）。</li></ul>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 2　心跳与超时判定的时间轴：三种情形
+
+ 约定：T = 心跳周期（发包间隔）        N = 阈值（连续多少个 T 没到就判失联）
+       ◆ = 一次成功收到                      ✗ = 一次没收到
+
+【情形 A：正常】
+ 遥控器  ◆────◆────◆────◆────◆────◆────◆────◆────◆────◆────►  时间
+ 飞控    收到  收到  收到  收到  收到  收到  收到  收到  收到  收到
+ 判据    └─ 每次收到都把时间戳刷新，差值始终 ≈ T（远小于 N×T）
+ 结果    链路正常
+
+【情形 B：丢帧（链路在，只是这一帧没了）】
+ 遥控器  ◆────◆────✗────◆────◆────✗────✗────◆────◆────◆────►
+ 飞控    收到  收到  —   收到  收到  —    —   收到  收到  收到
+ 判据    最长的"空白"是 2T ── 只要 2T &lt; N×T 就仍然判"正常"
+ 结果    正常。这就是"阈值不能太短"的原因
+
+【情形 C：失联（发送方死了或链路真断了）】
+ 遥控器  ◆────◆────◆────✗    （此后永远没有包）
+ 飞控    收到  收到  收到  ┌────────── 时间戳停止刷新 ──────────┐
+                          │                                    │
+                          │  差值随时间线性增长                 │
+                          │                                    │
+                          └──────────────► 到 N×T 的那一刻：判失联
+ 结果    触发失效保护（第 7.3 节）</pre></div>
+<p><strong>这张图要看出的一点</strong>：情形 B 和情形 C 在<strong>前几个周期里长得一模一样</strong>。 心跳机制的全部意义，就是<strong>用"连续 N 次"把两者分开</strong>。 这与《第 5 章 看门狗》是同一类思路 —— 只不过看门狗判断的是"自己没卡死"， 心跳判断的是"别人还活着"。两者的对照见本节末尾的表 7-1-3。</p>
+<h3 id="③-我该怎么理解它">③ 我该怎么理解它<a class="anchor" href="#③-我该怎么理解它">#</a></h3>
+<h4 id="7-1-1-本工程有三层-心跳-别搞混">7.1.1 本工程有三层"心跳"，别搞混<a class="anchor" href="#7-1-1-本工程有三层-心跳-别搞混">#</a></h4>
+<p>🟢 <strong>确证（逐条可核对）</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>层面</th><th>是什么</th><th>本工程的位置</th><th>判据/表现</th></tr></thead><tbody><tr><td><strong>硬件心跳</strong></td><td>1ms 定时中断，全系统时间基准</td><td><code>drivers/bsp/bsp_timer.c:168-183</code></td><td>中断每 1ms 触发一次，给所有软定时器 +1</td></tr><tr><td><strong>通信心跳</strong></td><td>遥控器周期性发数据包</td><td>飞控侧接收：<code>user/deal_pack.c:138-257</code>；遥控器侧发送：<code>遥控器/user/user/main.c</code> 主循环按 <code>loop50HzFlag</code> 发包</td><td>收到合法包 → 刷新 <code>connection_nowtime</code>（<code>deal_pack.c:257</code>）</td></tr><tr><td><strong>视觉心跳</strong></td><td>LED 周期性闪烁，给人看</td><td><code>user/led.c</code> 的 <code>Led_Process()</code>；优先级见 <code>user/led.h:84-88</code></td><td>正常=常亮/慢闪；失联=200ms 快闪（<code>main.c:464</code>）；低电=500ms（<code>adc.c:247</code>）</td></tr></tbody></table></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 1　三层心跳：时间尺度、服务对象、失效后果都不同
+
+ 硬件心跳（TIM17 1ms）
+   │  服务对象：所有软定时器、姿态解算的节拍
+   │  失效后果：整个时间基准崩掉 → PID 的 dt 全错
+   │  谁来兜底：看门狗 IWDG（约 0.5s，事实清单"本工程的实际配置"）
+   ▼
+ 通信心跳（遥控器 ~10ms 一包）
+   │  服务对象：失效保护判据、遥控指令流
+   │  失效后果：飞机收不到指令 → 飞走
+   │  谁来兜底：失效保护（5s → 自动降落，main.c:462-465）
+   ▼
+ 视觉心跳（LED 200~500ms 闪烁）
+   │  服务对象：飞手（人的眼睛）
+   │  失效后果：人不知道飞机什么状态 → 误操作
+   │  谁来兜底：没有兜底，它本身就是"给人看的兜底"
+   ▼
+  （人）</pre></div>
+<h4 id="7-1-2-本工程的通信心跳是-隐式-的-而且带双向确认">7.1.2 本工程的通信心跳是"隐式"的，而且带双向确认<a class="anchor" href="#7-1-2-本工程的通信心跳是-隐式-的-而且带双向确认">#</a></h4>
+<p>🟢 <strong>确证</strong>：本工程<strong>没有</strong>单独的心跳包。心跳功能是<strong>寄生在数据帧上的</strong>：</p>
+<ul><li>遥控器每轮发一包 12 字节的遥控数据（帧头 <code>0xAA</code> + 设备 ID）；</li><li>飞控每收到一包就刷新一次时间戳（<code>deal_pack.c:257</code>）；</li><li><strong>"一直有数据"本身就等价于"对方还活着"</strong> —— 这叫<strong>隐式心跳</strong>（implicit heartbeat）。</li></ul>
+<p>🟢 <strong>确证（本工程更值得注意的一点）</strong>：这条链路<strong>不是单向的</strong>。 飞控收到包之后，会在射频芯片给的应答窗口里<strong>回填一包 ACK 载荷</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* drivers/bsp/bsp_pn298.c:1202-1206 —— 收包与回 ACK 在同一个函数里，顺序不能换 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if(ack)</span></div><div class="line"><span class="ln">3</span><span class="lc">{</span></div><div class="line"><span class="ln">4</span><span class="lc">    bsp_pn298_write_reg(FLUSH_TX, 0);                     // 先清发送缓冲</span></div><div class="line"><span class="ln">5</span><span class="lc">    bsp_pn298_write_buf(W_ACK_PAYLOAD, ack_data, len);    // 把 ack_data 装进 ACK 载荷</span></div><div class="line"><span class="ln">6</span><span class="lc">}</span></div><div class="line"><span class="ln">7</span><span class="lc">delay_us(30);                                             // 留出"组织 ACK、切到发射"的时间</span></div><div class="line"><span class="ln">8</span><span class="lc">bsp_pn298_read_buf(R_RX_PAYLOAD, rx_data, len);           // 然后才读收到的包</span></div></pre></div>
+<p>而飞控传进去的 <code>ack_data</code> 就是 <code>temp_buff[]</code>（<code>user/deal_pack.c:148</code> 的第二个实参）。 于是这一包 ACK 同时干了两件事：</p>
+<ol><li><strong>告诉遥控器"飞机还在"</strong> —— 遥控器只有拿到 ACK 才清零它的失联计时</li></ol>
+<p>（<code>遥控器/user_driver/pn298/bsp_pn298.c:424-431</code>，看到 <code>RX_TX_FLAG</code> 就 <code>sign_timer_running = 0</code>）；</p>
+<ol><li><strong>顺便当遥测下行通道</strong> —— 例如低电标志就搭这个车上传：</li></ol>
+<p><code>adc.c:245</code> 写 <code>temp_buff[1] = 2</code>，遥控器侧 <code>遥控器/user/user/main.c:243</code> 读 <code>ack_buff[0]==LOW_VOL</code> 就响蜂鸣器。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 3　一次心跳往返（一个"来回"里套了心跳 + 遥控 + 遥测三件事）
+
+   遥控器                                          飞控
+     │                                              │
+     │  ① 发 12 字节遥控包（0xAA + device_ID + 通道值）│
+     │ ────────────────────────────────────────────► │
+     │                                              │ ② 帧头 + 设备 ID 双重校验
+     │                                              │    （deal_pack.c:154）
+     │                                              │ ③ 刷新 connection_nowtime
+     │                                              │    （deal_pack.c:257）
+     │  ④ ACK 载荷 = temp_buff[]（含低电标志）        │
+     │ ◄──────────────────────────────────────────── │
+     │                                              │
+     ▼                                              │
+   收到 ACK ⇒ sign_timer_running = 0                  │
+   计时清零，信号正常                                  │
+   （遥控器 bsp_pn298.c:429-431）                      │
+     │                                              │
+   收不到 ACK（MAX_RT）⇒ 启动 1ms 计时                 │
+   （遥控器 bsp_pn298.c:451-457）                      │</pre></div>
+<p><strong>为什么这件事重要</strong>：它把"心跳"从"我猜你还活着"升级成了"<strong>你回了话，所以我确定你活着</strong>"。 在通信工程里这叫<strong>确认机制</strong>（acknowledgement）。代价是：链路的可靠性现在取决于<strong>双向</strong>都通 （如果飞机能收、但回不去 ACK，遥控器会判失联 —— 而飞机自己认为一切正常）。 本工程两侧阈值差 5 倍（1000ms vs 5000ms），恰好给这种"单边通"留了缓冲：遥控器先报警， 飞机 5 秒后才动作。🟡 <strong>通说（这条因果是我推的）</strong>：代码里没有注释说明这是有意设计， 所以只当"效果上如此"，不当"设计意图"。</p>
+<p>🟢 <strong>确证（噪声不会冒充心跳）</strong>：刷新时间戳的位置在<strong>双重校验之后</strong>（<code>deal_pack.c:154</code> 的 <code>rx_buff[0]==0xaa &amp;&amp; rx_buff[1]==device_ID</code>），所以"收到噪声字节"<strong>不算</strong>收到心跳。 这一点手册 7.3 已强调过，这里补一句它的代价：<strong>校验越严，误判失联的概率越高</strong> （比如旁边的遥控器用了同一个 device_ID，或者飞机换了遥控器但没重新对码）。</p>
+<h4 id="7-1-3-心跳-看门狗-最容易混的一对">7.1.3 心跳 ≠ 看门狗（最容易混的一对）<a class="anchor" href="#7-1-3-心跳-看门狗-最容易混的一对">#</a></h4>
+<div class="tablewrap"><table><thead><tr><th></th><th><strong>看门狗（Watchdog）</strong></th><th><strong>心跳（Heartbeat）</strong></th></tr></thead><tbody><tr><td>判断谁</td><td><strong>自己</strong>有没有卡死</td><td><strong>对方</strong>还在不在</td></tr><tr><td>谁在计时</td><td>硬件计数器（IWDG 由 LSI 驱动，事实清单：参考手册第 339 页）</td><td>软件时间戳（<code>connection_nowtime</code>）</td></tr><tr><td>触发后谁动手</td><td>硬件<strong>复位芯片</strong></td><td>软件执行<strong>安全动作</strong>（降落）</td></tr><tr><td>本工程阈值</td><td>约 0.5 秒（事实清单：LSI 32768/32/512）</td><td>5 秒（<code>main.c:462</code>）</td></tr><tr><td>本工程的"喂"点</td><td><code>main.c:414</code> <code>HAL_IWDG_Refresh()</code>，每约 101ms 一次</td><td><code>deal_pack.c:257</code>，每收到一个合法包一次</td></tr><tr><td>失效的后果</td><td>芯片复位 → 电机停转 → 掉下来</td><td>自动降落 → 有机会软着陆</td></tr></tbody></table></div>
+<p><strong>记法</strong>：看门狗是"<strong>我要按时报到</strong>"，心跳是"<strong>你要按时出声</strong>"。 两者在工程里是<strong>互补</strong>的：遥控器死了（对方问题）心跳管；主循环卡死了（自己问题）看门狗管。</p>
+<h3 id="④-实现方法有哪些-取舍对照表">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表">#</a></h3>
+<p><strong>这一节回答什么问题</strong>：想把"对方还活着"这件事判断出来，业界有哪几条路？本工程走的是哪条？</p>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>怎么做的</th><th>优点</th><th>代价 / 什么情况下会骗你</th><th>本工程</th></tr></thead><tbody><tr><td><strong>① 每帧都算心跳</strong>（隐式心跳）</td><td>不发专门的心跳包，把"收到数据帧"直接当心跳</td><td>零额外带宽、零额外代码；数据本身越密，判断越快</td><td>① 只有"有数据可发"时才有效 —— 对<strong>空闲时不说话</strong>的链路（如应答式、事件式协议）无效；② 数据停了就分不清"没话说"还是"人没了"</td><td><strong>✅ 本工程就是这个</strong>（<code>deal_pack.c:257</code>）</td></tr><tr><td><strong>② 独立心跳包</strong></td><td>固定周期发一个专门的短包，只表示"我在"</td><td>语义清晰；与业务数据解耦（业务空闲也能证明存活）；可以做得比数据包更短更鲁棒</td><td>占用带宽；多一套包类型要维护；心跳周期与数据周期两套节拍</td><td>❌ 本工程没有独立心跳包</td></tr><tr><td><strong>③ 序号 + 时间戳</strong></td><td>每包带递增序号和/或发送时刻，接收方据此算丢包率和延迟</td><td>不仅能判生死，还能<strong>量化链路质量</strong>（丢包率、抖动）；能识别"乱序/重复"</td><td>每包多几个字节；需要两端时钟关系（或只比差值）；序号回绕要处理</td><td>🟡 部分等价物：PN298 硬件层带 <strong>2 位 PID</strong>（事实清单：手册第 19 页）用于识别重发包；<code>OBSERVE_TX(08)</code> 有 <code>PLOS_CNT</code>/<code>ARC_CNT</code> 丢包与重传计数（手册第 35 页）—— <strong>但飞控代码没有读它</strong></td></tr><tr><td><strong>④ 看门狗式</strong>（只在"一段时间没数据"时报警）</td><td>不做周期判定，只挂一个"最后收到时间"，超时就报警</td><td>实现最省；天然容忍抖动</td><td>报警时<strong>已经晚了</strong>（等于把 N 设成了唯一参数）；阈值必须拍一个数，拍不准就误报/漏报</td><td>✅ 本工程失效保护就是这个形态（<code>main.c:462</code>），但阈值取得较长（5s）</td></tr></tbody></table></div>
+<p><strong>本工程的选择</strong>：</p>
+<ul><li>用 <strong>①（每帧都算）</strong> 当心跳，因为遥控器本来就以 ~10ms 的节奏连续发包（见 7.3 的推算），</li></ul>
+<p>数据流足够密，<strong>没有必要再单独发心跳</strong>；</p>
+<ul><li>用 <strong>④（超时报警）</strong> 当判据，因为动作是"降落"这种重量级操作，宁慢勿误；</li><li><strong>③ 的能力被硬件免费提供了一部分</strong>（<strong>CRC</strong>（Cyclic Redundancy Check，循环冗余校验）、扰码、PID、重传计数都在 PN298 里，事实清单第二节），</li></ul>
+<p>但<strong>固件没有消费这些统计量</strong> —— 这是一处"想做得更好时可以从哪下手"的位置。</p>
+<blockquote class=""><p><strong>🟢 顺带一个可以自己验证的检查点</strong>：<code>bsp_pn298_read_reg(OBSERVE_TX)</code> 就能拿到
+<code>PLOS_CNT</code>（丢包计数）和 <code>ARC_CNT</code>（重传计数）。如果将来要做"链路质量指示"，
+这是最便宜的数据源 —— 不用改协议，只读一个寄存器。</p></blockquote>
+<h3 id="7-1-小结-三句话">7.1 小结（三句话）<a class="anchor" href="#7-1-小结-三句话">#</a></h3>
+<ol><li>心跳要解决的是"<strong>发送方死了</strong>"与"<strong>链路暂时断了</strong>"无法区分的问题；</li><li>区分手段是"<strong>周期性信号 + 超时判定</strong>"，三个要素：周期 T、本地时钟、阈值 N；</li><li>本工程的心跳是<strong>寄生在数据帧上的隐式心跳</strong>，并且靠 <strong>ACK 载荷</strong>做了一次双向确认，</li></ol>
+<p>顺带当遥测下行通道。</p>
+<hr>
+<h2 id="7-2-软定时器-Soft-Timer">7.2 软定时器（Soft Timer）<a class="anchor" href="#7-2-软定时器-Soft-Timer">#</a></h2>
+<blockquote class=""><p><strong>这一节回答什么问题</strong>：芯片只有有限几个硬件定时器，而程序有几十个不同周期的任务，
+这个矛盾怎么解决？</p></blockquote>
+<h3 id="①-它是怎么出现的-2">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-2">#</a></h3>
+<p>🟢 <strong>确证（本工程的硬件现实）</strong>：<code>_术语事实清单.md</code> 的"本工程的实际配置"表里， 这个 48MHz 的 PY32F030 已经用掉了四个定时器干四件完全不同的事：</p>
+<div class="tablewrap"><table><thead><tr><th>定时器</th><th>分频/重载</th><th>实际频率</th><th>用途</th></tr></thead><tbody><tr><td>TIM16</td><td><code>/48</code> → 1MHz（不用中断）</td><td>1µs 分辨率</td><td>自由计数器（给 <code>micros16()</code> 用）</td></tr><tr><td>TIM17</td><td><code>/480/100</code> → 1kHz</td><td><strong>1ms</strong></td><td>整个飞控的控制节拍（心跳）</td></tr><tr><td>TIM3</td><td><code>/3/1000</code></td><td>16kHz</td><td>四路电机 PWM（脉宽调制）</td></tr><tr><td>TIM1</td><td><code>/4/600</code></td><td>20kHz</td><td>RGB 灯 PWM</td></tr></tbody></table></div>
+<p>而程序实际需要的<strong>周期任务</strong>有多少？看主循环就够了：</p>
+<p>🟢 <strong>确证（本机实测）</strong>：<code>user/main.c:371-489</code> 的主循环里，按周期分派的任务至少有 <strong>6 个不同节拍</strong>：收遥控（~11ms）、空翻状态机（~5ms）、定高（每圈 + 20ms 高度环）、 姿态控制（每圈，内部再限 1.25ms）、喂狗+灯语（~101ms）、读电压（~1.001s）， 再加上气压计自己的 ~25ms/5ms 两档节拍（<code>user/common.c:496/510/514/540</code>）。</p>
+<p><strong>如果给每个周期任务配一个硬件定时器</strong>：4 个任务就把芯片的定时器用光了， 而且每个定时器还要占一个中断向量、一段初始化代码、一份 NVIC（Nested Vectored Interrupt Controller，嵌套向量中断控制器）优先级配置。<strong>这就是软定时器出现的直接原因。</strong></p>
+<h3 id="②-它要解决什么问题-没有它会怎样-2">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-2">#</a></h3>
+<blockquote class=""><p><strong>软定时器的核心思想一句话：把"时间的度量"和"时间的消费"分开。</strong></p><p><strong>一个</strong>硬件时基负责"度量"（每 1ms 打一拍），<strong>任意多个</strong>软件计数值负责"消费"
+（每个任务自己数到几算到点）。</p></blockquote>
+<p>没有它会怎样？只有两条更难走的路：</p>
+<div class="tablewrap"><table><thead><tr><th>替代方案</th><th>具体形态</th><th>为什么在本工程行不通</th></tr></thead><tbody><tr><td><strong>中断里直接干活</strong></td><td>每 1ms 在 TIM17 中断里把姿态解算、PID、串口打印全跑掉</td><td>🟢 <code>bsp_timer.c:48-51</code> 的注释写明理由：中断里跑耗时函数会<strong>破坏 1ms 节拍</strong>，而且功能函数会访问外设，与主循环<strong>重入冲突</strong></td></tr><tr><td><strong>一个任务一个硬件定时器</strong></td><td>收遥控用 TIM14、喂狗用 TIM15……</td><td>定时器数量不够（本工程已用 4 个）；中断优先级只有 4 级（事实清单：参考手册第 119 页），优先级不够分</td></tr></tbody></table></div>
+<h3 id="③-我该怎么理解它-2">③ 我该怎么理解它<a class="anchor" href="#③-我该怎么理解它-2">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 4　软定时器原理：一个时基，扇出多个计数值（本工程的实际结构）
+
+                    ┌───────────────────────────────────────────────┐
+                    │  TIM17 硬件：48MHz /480 = 100kHz，数到 100     │
+                    │  → 每 1ms 产生一次更新中断（唯一的时间源）      │
+                    └───────────────────────────────────────────────┘
+                                        │
+                                        │ 每 1ms 一次
+                                        ▼
+        ┌───────────────────────────────────────────────────────────────────┐
+        │  HAL_TIM_PeriodElapsedCallback()    bsp_timer.c:168-194           │
+        │  中断里只做 "+1"，几条指令，微秒级返回                              │
+        │                                                                   │
+        │    baroUpdateTimer++          ← 气压计自己的节拍（common.c 读）    │
+        │    altitudeCtrlTimer++        ← 高度环自己的节拍（altitude.c 读）  │
+        │    _cnt10ms++                 ┐                                   │
+        │    _cnt4ms++                  │ 主循环读阈值，到点干活、清零       │
+        │    _cnt100ms++                │                                   │
+        │    _cnt1s++                   ┘                                   │
+        │    if(++_cnt20ms &gt;= 20) {     ← static 局部变量做 20ms 分频        │
+        │        calibrationEnbTimer++;                                     │
+        │        powerupTimer++;                                            │
+        │    }                                                              │
+        └───────────────────────────────────────────────────────────────────┘
+              │            │             │              │
+              ▼            ▼             ▼              ▼
+        ┌──────────┐ ┌───────────┐ ┌────────────┐ ┌──────────────┐
+        │ _cnt10ms │ │ _cnt4ms   │ │ _cnt100ms  │ │ _cnt1s       │
+        │ &gt;= 10    │ │ &gt;= 4      │ │ &gt;= 100     │ │ &gt;= 1000      │
+        └────┬─────┘ └─────┬─────┘ └──────┬─────┘ └──────┬───────┘
+             ▼             ▼              ▼              ▼
+        decode_pack()  Mode_       HAL_IWDG_      get_voltage()
+        annexCode()    Controler()  Refresh()      （电池）
+        （收遥控包）    （空翻）     Led_Process()
+             │                        （喂狗+灯语）
+             ▼
+        connection_nowtime = HAL_GetTick()   ← 心跳的时间戳在这里被刷新
+             │
+             ▼
+        （第 7.3 节）失效保护判据</pre></div>
+<p><strong>这个结构的三个要点</strong>：</p>
+<ol><li><strong>中断短、主循环重</strong>（🟢 <code>bsp_timer.c:48-51</code> 注释）：中断里只有自增；耗时的解析、</li></ol>
+<p>控制、打印全在主循环。所以中断不会打乱节拍。</p>
+<ol><li><strong>任务天然串行</strong>（🟢 <code>main.c:41-43</code> 注释）：因为都在一个 <code>while(1)</code> 里顺序执行，</li></ol>
+<p><strong>不需要考虑重入和竞态</strong>。代价是"任务耗时相加 = 最小循环周期"。</p>
+<ol><li><strong>优先级靠代码顺序</strong>（🟢 <code>main.c:371-489</code>）：写在前面的分支先被检查。</li></ol>
+<p>这跟 RTOS 的抢占式调度是两回事。</p>
+<h4 id="7-2-1-本工程的实测细节-逐条给行号-这是本节最该记住的部分">7.2.1 本工程的实测细节（逐条给行号，这是本节最该记住的部分）<a class="anchor" href="#7-2-1-本工程的实测细节-逐条给行号-这是本节最该记住的部分">#</a></h4>
+<h4 id="a-计数器的定义与自增">（a）计数器的定义与自增<a class="anchor" href="#a-计数器的定义与自增">#</a></h4>
+<p>🟢 <strong>确证</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* drivers/bsp/bsp_timer.c:113-116 —— 文件级全局变量，类型不同 */
+uint8_t  _cnt10ms;
+uint8_t  _cnt4ms;
+uint8_t  _cnt100ms;
+uint16_t _cnt1s;        /* ← 只有它用 uint16_t */</pre></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* drivers/bsp/bsp_timer.c:175-190 —— 每 1ms 全部 +1 */
+if (htim-&gt;Instance == TIM17) {
+    static uint8_t _cnt20ms;        /* ← 注意：这个是函数内 static，不是全局 */
+    baroUpdateTimer++;
+    altitudeCtrlTimer++;
+    _cnt10ms++;
+    _cnt4ms++;
+    _cnt100ms++;
+    _cnt1s++;
+    if(++_cnt20ms &gt;= 20) {          /* ← 前缀 ++：先加后判 */
+        _cnt20ms = 0;
+        calibrationEnbTimer++;
+        powerupTimer++;
+    }
+}</pre></div>
+<h4 id="b-主循环怎么消费它们">（b）主循环怎么消费它们<a class="anchor" href="#b-主循环怎么消费它们">#</a></h4>
+<div class="tablewrap"><table><thead><tr><th>计数器</th><th>类型</th><th>中断里</th><th>主循环里的判断</th><th>实际周期</th><th>做的事</th><th>行号</th></tr></thead><tbody><tr><td><code>_cnt10ms</code></td><td><code>uint8_t</code></td><td>每 1ms +1</td><td><code>if(_cnt10ms &gt;= 10)</code> → 清零</td><td><strong>≈11ms</strong></td><td><code>decode_pack()</code> + <code>annexCode()</code></td><td><code>main.c:374</code> / <code>main.c:387</code></td></tr><tr><td><code>_cnt4ms</code></td><td><code>uint8_t</code></td><td>每 1ms +1</td><td><code>if(_cnt4ms &gt;= 4)</code> → 清零</td><td><strong>≈5ms</strong></td><td><code>Mode_Controler()</code>（空翻状态机）</td><td><code>main.c:390</code> / <code>main.c:395</code></td></tr><tr><td><code>_cnt100ms</code></td><td><code>uint8_t</code></td><td>每 1ms +1</td><td><code>if(_cnt100ms &gt;= 100)</code> → 清零</td><td><strong>≈101ms</strong></td><td><strong>喂狗</strong> + <code>Led_Process()</code></td><td><code>main.c:411</code> / <code>main.c:413</code></td></tr><tr><td><code>_cnt1s</code></td><td><code>uint16_t</code></td><td>每 1ms +1</td><td><code>if(_cnt1s&gt;=1000)</code> → 清零</td><td><strong>≈1.001s</strong></td><td><code>get_voltage()</code></td><td><code>main.c:445</code> / <code>main.c:447</code></td></tr><tr><td><code>_cnt20ms</code></td><td><code>uint8_t</code>（static 局部）</td><td>中断内 <code>if(++_cnt20ms &gt;= 20)</code> 自清</td><td><strong>不参与主循环</strong></td><td>20ms</td><td>给 <code>calibrationEnbTimer</code>/<code>powerupTimer</code> 提供节拍</td><td><code>bsp_timer.c:176/185-190</code></td></tr><tr><td><code>baroUpdateTimer</code></td><td><code>uint8_t</code></td><td>每 1ms +1</td><td><code>altitude.c</code>/<code>common.c</code> 内部读阈值</td><td>1ms 基数</td><td>气压计状态机节拍</td><td><code>bsp_timer.c:178</code>、<code>common.c:479</code></td></tr><tr><td><code>altitudeCtrlTimer</code></td><td><code>uint8_t</code></td><td>每 1ms +1</td><td><code>if(altitudeCtrlTimer &gt;= 20)</code> 自清</td><td><strong>20ms</strong></td><td>高度环（<code>getEstimatedAltitude()</code>）</td><td><code>bsp_timer.c:179</code>、<code>altitude.c:416-419</code></td></tr></tbody></table></div>
+<h4 id="c-实际周期是-N-1-ms-是怎么来的-可自己验算">（c）"实际周期是 N+1 ms"是怎么来的（🟢 可自己验算）<a class="anchor" href="#c-实际周期是-N-1-ms-是怎么来的-可自己验算">#</a></h4>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 5　N+1 的由来：判断、清零、和"中断不会停"三者叠加
+
+ 时刻(ms)   0    1    2    3    4    5    6 ...
+ 中断       ↓    ↓    ↓    ↓    ↓    ↓    ↓      每 1ms 无条件 +1
+ _cnt4ms    1    2    3    4    5→0  1    2
+                 ▲         ▲
+                 │         │
+                 │         └─ 第 5 次中断：主循环这一圈看到 _cnt4ms==5
+                 │            条件成立 → 清零 → 跑 Mode_Controler()
+                 │            （注意：中断在这 1ms 内已经把 4 加成了 5）
+                 └─ 第 4 次中断后 _cnt4ms==4，但主循环这一圈**还没轮到**
+                    读它（或者读到时中断又加了一次）
+
+ 结论：`if(_cnt &gt;= N) { _cnt = 0; ... }` 的实际周期是 (N+1) 个时基
+       —— 不是代码写错，而是"清零发生在判断之后、而中断永不停止"的必然结果</pre></div>
+<p>🟢 <strong>确证（工程自己也承认了）</strong>：<code>main.c:365-367</code> 的注释原文写着 "_cnt4ms&gt;=4 实际约 5ms、_cnt100ms&gt;=100 实际约 101ms、_cnt1s&gt;=1000 实际约 1.001s"。</p>
+<p>🟢 <strong>确证（这处偏差真的被下游处理了）</strong>：<code>user/flip.c</code> 里的 <code>dt</code> 不是写死 4ms， 而是按"两次调用间隔"实测取值（<code>main.c:367</code> 注释明确指出这一点）。 <strong>这是本工程里值得学的一处工程习惯：时间敏感的地方要实测，不要假设标称值。</strong></p>
+<h4 id="d-为什么-_cnt1s-是-uint16_t-而其它是-uint8_t-可从回绕边界推出">（d）为什么 <code>_cnt1s</code> 是 <code>uint16_t</code> 而其它是 <code>uint8_t</code>（🟢 可从回绕边界推出）<a class="anchor" href="#d-为什么-_cnt1s-是-uint16_t-而其它是-uint8_t-可从回绕边界推出">#</a></h4>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 6　计数器位宽与回绕边界（决定"选 uint8_t 还是 uint16_t"的唯一理由）
+
+  uint8_t 上限 255：
+   · _cnt10ms  需要数到 10+  → 只需 4 位，用 8 位很宽裕
+   · _cnt4ms   需要数到 4+   → 只需 3 位
+   · _cnt100ms 需要数到 100+ → 只需 7 位（余量 2.5 倍）
+   · _cnt1s    需要数到 1000+ → 8 位最多 255，**不够**，必须 16 位
+     （若硬用 uint8_t：1ms 加一次，255ms 后回绕成 0，条件 &gt;=1000 永远不成立
+       —— "读电池电压"这个任务会彻底不执行，而且不报错）
+
+ 另一个容易忽略的边界：_cnt20ms 是 uint8_t，20ms 一格
+   → 255 格 = 5.1 秒就回绕
+   → 所以 calibrationEnbTimer / powerupTimer 只能用于"几秒内"的判断
+     （bsp_timer.c:141-143 的注释明确写了这一点）</pre></div>
+<h4 id="e-这些计数器都不是-volatile-本机实测-这是本节最该警惕的一条">（e）<strong>这些计数器都不是 volatile</strong>（🟢 本机实测，这是本节最该警惕的一条）<a class="anchor" href="#e-这些计数器都不是-volatile-本机实测-这是本节最该警惕的一条">#</a></h4>
+<p>🟢 <strong>确证</strong>：<code>bsp_timer.c:113-116</code> 的定义里<strong>没有</strong> <code>volatile</code>； <code>main.c:205-208</code> 的 <code>extern</code> 声明里也<strong>没有</strong>。<code>main.c:199-203</code> 与 <code>bsp_timer.c:83-96</code> 的注释都<strong>主动承认了这一点</strong>，并解释"为什么现在还能跑"：</p>
+<blockquote class=""><p>主循环里是"<strong>读一次、比较、然后赋值 0</strong>"的写法（不是空转等待），
+编译器没有机会做那种跨语句的缓存优化 —— 属于"<strong>侥幸正确</strong>"。</p></blockquote>
+<p><strong>风险场景（🟢 注释里点名的两种）</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>场景</th><th>会发生什么</th></tr></thead><tbody><tr><td>把判断改成空转等待（如 <code>while(_cnt10ms &lt; 10);</code>）</td><td>编译器可能只读一次内存、缓存在寄存器里反复比较 → <strong>死等</strong>，中断改了也看不到</td></tr><tr><td>提高优化等级（GCC <code>-O2/-O3</code>、Keil <code>-O2</code>）</td><td>同样的缓存优化可能被启用 → 代码逻辑完全正确但<strong>不工作</strong>，且极难查</td></tr></tbody></table></div>
+<p>🟢 <strong>另一条同样重要的事实（<code>bsp_timer.c:99-109</code> 注释）</strong>：<strong><code>volatile</code> 不保证原子性</strong>。 <code>_cnt10ms++</code> 在 Cortex-M0+ 上是"读 → 加一 → 写回"三条指令； 如果主循环的 <code>_cnt10ms = 0</code>（<code>main.c:387</code>）恰好插在中断的"读"和"写回"之间， 中断加的那一次会被主循环的写回<strong>覆盖</strong>（丢失更新）。本工程靠"中断只加、主循环只清零" 这种<strong>单向约定</strong>侥幸避开，但这是<strong>约定</strong>不是<strong>语言保证</strong>。</p>
+<h4 id="f-主循环的时间预算-代码注释标注的实测耗时">（f）主循环的时间预算（🟢 代码注释标注的实测耗时）<a class="anchor" href="#f-主循环的时间预算-代码注释标注的实测耗时">#</a></h4>
+<p>🟢 <strong>确证（来自代码注释，不是我实测的）</strong>：<code>main.c:399-402</code> 标了两处耗时：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 7　超级循环的时间预算（注释值，非本次实测）
+
+ 一圈主循环：
+ ├─ decode_pack() + annexCode()      仅在 _cnt10ms 到点时执行(注释: 7us)
+ ├─ Mode_Controler()                 仅在 _cnt4ms  到点时执行
+ ├─ altitude_ctrl()   ┃ 2.1 ~ 3.873 ms   ← 每圈都跑
+ ├─ flight_ctrl()     ┃ 2.493 ~ 3.446 ms ← 每圈都跑
+ ├─ 失联检测 / 解锁判断（几个比较，微秒级）
+ └─ 喂狗 + 灯语                     仅在 _cnt100ms 到点时执行
+
+ 合计每圈 ≈ 4.6 ~ 7.3 ms
+ ─────────────────────────────────────────────────────────────
+ 由此可以推出两件事（🟡 推理，非实测）：
+  ① 主循环的最小周期由"任务耗时之和"决定，不是由 1ms 时基决定
+  ② flight_ctrl() 内部的门限是 deltaT &gt;= 1.25ms（fc.c:82），但实际调用间隔
+     被主循环拖到 ~5~7ms → 姿态/**PID**（Proportional-Integral-Derivative，比例-积分-微分控制器）的真实执行率明显低于 800Hz 的设计值</pre></div>
+<p>🟢 <strong>顺带一条同源的注释</strong>：<code>main.c:368-369</code> 指出"如果某一圈耗时超过某个计数器周期， 该计数器的条件会'立刻又成立'，相当于该任务被连续执行两次 —— 这是超级循环的固有特性"。</p>
+<h4 id="g-baroUpdateTimer-altitudeCtrlTimer-软定时器的第二种用法">（g）<code>baroUpdateTimer</code> / <code>altitudeCtrlTimer</code>：软定时器的第二种用法<a class="anchor" href="#g-baroUpdateTimer-altitudeCtrlTimer-软定时器的第二种用法">#</a></h4>
+<p>前面 4 个 <code>_cnt*</code> 是"中断计数 + 主循环比较阈值"； 这两个是"中断计数 + <strong>消费者自己</strong>比较阈值"，好处是<strong>阈值可以随状态改变</strong>：</p>
+<p>🟢 <strong>确证</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/altitude.c:416-419 —— 高度环固定 20ms 一次 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if (altitudeCtrlTimer &gt;= 20) {</span></div><div class="line"><span class="ln">3</span><span class="lc">    altitudeCtrlTimer = 0;</span></div><div class="line"><span class="ln">4</span><span class="lc">    getEstimatedAltitude();</span></div><div class="line"><span class="ln">5</span><span class="lc">}</span></div></pre></div>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/common.c:479 —— 气压计状态机：阈值是三档，随状态切换 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if(baroUpdateTimer &gt;= baroUpdateCyc) {</span></div><div class="line"><span class="ln">3</span><span class="lc">    baroUpdateTimer = 0;</span></div><div class="line"><span class="ln">4</span><span class="lc">    switch(baroState) { ... }</span></div><div class="line"><span class="ln">5</span><span class="lc">}</span></div><div class="line"><span class="ln">6</span><span class="lc">/* 三档阈值：触发测量后等 25（≈25ms）；等数据就绪时 1；读完再等 5 进下一轮</span></div><div class="line"><span class="ln">7</span><span class="lc">   —— common.c:496 / :510 / :514 / :540</span></div><div class="line"><span class="ln">8</span><span class="lc">   注释推算的测量周期 ≈ 25+5 ms（约 30~40Hz），对定高足够 */</span></div></pre></div>
+<p><strong>这演示了软定时器的一个进阶用法</strong>：把"节拍值"变成<strong>状态机的参数</strong>， 就得到了一个"可变周期的软件定时器"，不需要动硬件。</p>
+<h3 id="④-实现方法有哪些-取舍对照表-2">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-2">#</a></h3>
+<p><strong>这一节回答什么问题</strong>：除了"软件计数"，还有哪些做法？各自的代价是什么？</p>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>怎么做的</th><th>优点</th><th>代价</th><th>适用规模</th><th>本工程</th></tr></thead><tbody><tr><td><strong>① 软件计数（本工程）</strong></td><td>一个时基中断 + N 个全局计数值，主循环轮询阈值</td><td>代码最短、零额外 RAM、完全可预测（没有调度器）</td><td>① 精度受主循环周期限制；② <strong>忘记清零就永久失效</strong>；③ 任务多了以后主循环变成一长串 <code>if</code>，可读性下降</td><td>几个 ~ 十几个周期任务</td><td><strong>✅ <code>bsp_timer.c</code> + <code>main.c</code> 主循环</strong></td></tr><tr><td><strong>② 滴答链表（tick list）</strong></td><td>每个待执行任务挂一个"到期时刻"，中断里只递减最近的一个</td><td>中断开销与任务数无关；经典 RTOS 做法</td><td>需要链表/有序插入的代码；插入删除要临界区保护</td><td>几十个任务</td><td>❌</td></tr><tr><td><strong>③ 时间轮（timing wheel）</strong></td><td>把"未来 N 拍"做成一个环形数组，中断只推进指针</td><td>O(1) 插入与触发；任务数很大时仍然快</td><td>实现比链表更绕；需要处理"跨圈"任务</td><td>几百个以上</td><td>❌</td></tr><tr><td><strong>④ RTOS 软件定时器</strong></td><td>交给 RTOS 的定时器服务任务（如 FreeRTOS 的 <code>xTimerCreate</code>）</td><td>有优先级、有阻塞/唤醒、API 规范</td><td>要引入 RTOS：内核占用 Flash/RAM（本工程 Flash 已用到 95%，<code>bsp_timer.c:110-111</code> 注释提到）；调度开销与不确定性</td><td>中大型项目</td><td>❌ 本工程是纯裸机超级循环</td></tr><tr><td><strong>⑤ 硬件定时器阵列</strong></td><td>一个任务一个硬件定时器/比较通道</td><td>精度最高（不受主循环影响）、可硬件触发</td><td>定时器数量硬限制；中断向量与优先级有限（事实清单：参考手册第 119 页，<strong>4 个可编程优先级</strong>）</td><td>少数高精度需求</td><td>🟡 部分采用：真正需要"硬精度"的地方用了硬件 —— TIM17 做 1ms 时基、TIM16 做 1µs 自由计数、TIM1/TIM3 直接由硬件产生 PWM 波形</td></tr></tbody></table></div>
+<p><strong>本工程的取舍一句话</strong>：<strong>用一个 1ms 硬件时基 + N 个软件计数器，换掉 N-1 个硬件定时器； 代价是"周期不精确（N+1）"和"精度受主循环限制" —— 并且这个代价值得， 因为需要精度的三个场合（1ms 节拍、1µs 计时、PWM 波形）都已经用了硬件。</strong></p>
+<h3 id="7-2-小结">7.2 小结<a class="anchor" href="#7-2-小结">#</a></h3>
+<ol><li>软定时器解决的是"硬件定时器数量有限 vs 周期任务有几十个"的矛盾，</li></ol>
+<p>办法是<strong>一个时基扇出多个计数值</strong>；</p>
+<ol><li>代价是三条：<strong>精度受主循环限制</strong>、<strong>实际周期是 N+1</strong>、<strong>忘记清零就永久失效</strong></li></ol>
+<p>（本工程还有第四条：<strong>没加 <code>volatile</code></strong>）；</p>
+<ol><li>本工程的实测形态：<code>_cnt10ms/_cnt4ms/_cnt100ms</code>（<code>uint8_t</code>）与 <code>_cnt1s</code>（<code>uint16_t</code>）</li></ol>
+<p>每 1ms 自增（<code>bsp_timer.c:113-116</code>、<code>:180-183</code>），主循环读阈值清零 （<code>main.c:374/390/411/445</code>），<strong>都不是 <code>volatile</code></strong>；</p>
+<ol><li>位宽不是随便选的：<code>_cnt1s</code> 必须 16 位（8 位数不到 1000），<code>_cnt20ms</code> 因为 20ms 一格，</li></ol>
+<p>8 位只能表示 5.1 秒，所以 <code>calibrationEnbTimer</code>/<code>powerupTimer</code> 不能当长时间计时用。</p>
+<hr>
+<h2 id="7-3-失效保护-失控保护-Failsafe">7.3 失效保护 / 失控保护（Failsafe）<a class="anchor" href="#7-3-失效保护-失控保护-Failsafe">#</a></h2>
+<blockquote class=""><p><strong>这一节回答什么问题</strong>：当判据说"失联"之后，飞机<strong>应该做什么</strong>？
+以及<strong>判据的阈值该取多长</strong>？</p></blockquote>
+<h3 id="①-它是怎么出现的-3">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-3">#</a></h3>
+<p>🟡 <strong>通说</strong>：遥控链路一定会断，只是迟早的问题。断的原因至少有四类：</p>
+<ol><li><strong>发射端没电</strong>（遥控器电池耗尽、被误关）；</li><li><strong>超出距离</strong>（2.4GHz 的视距链路，距离/遮挡一变就差很多）；</li><li><strong>环境遮挡/多径</strong>（人体、树、建筑、机身碳纤维）；</li><li><strong>同频干扰</strong>（2.4GHz <strong>ISM</strong>（Industrial, Scientific and Medical，工业/科学/医疗免许可）频段拥挤 —— 事实清单：PN298 在 2400~2483MHz，</li></ol>
+<p>手册第 8 页，并且带 CRC + 自动扰码就是为这个场景准备的，手册第 9 页）。</p>
+<p><strong>如果什么都不做</strong>：飞控会<strong>保持最后一次收到的舵量</strong>继续输出。 这在"最后指令是悬停"时看起来没事，但只要最后一帧是"油门 60% 向前"， 飞机就会<strong>沿着那个方向一直飞</strong>直到撞上什么 —— 这就是俗称的"放风筝"。 🟡 <strong>通说</strong>：这是早期多旋翼最典型的一类事故原因。</p>
+<p>→ 所以必须有<strong>失效保护</strong>：把"通信故障"这个<strong>信息层</strong>的事件，翻译成"安全动作"这个<strong>物理层</strong>的事件。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样-3">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-3">#</a></h3>
+<p>失效保护要同时解决两个问题，而且这两个问题的答案是<strong>互相冲突</strong>的：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 8　失效保护的判据与动作决策树（本工程的实际取值）
+
+                        ┌─────────────────────────────┐
+                        │ 主循环每一圈都在问：         │
+                        │ 已经多久没收到合法遥控包了？  │
+                        └──────────────┬──────────────┘
+                                       │
+                        HAL_GetTick() - connection_nowtime
+                                       │
+              ┌────────────────────────┼────────────────────────┐
+              │                        │                        │
+          &lt; 5000ms                 &gt; 5000ms                 （对照）
+              │                        │                        │
+              ▼                        ▼                        ▼
+   ┌────────────────────┐  ┌──────────────────────┐  ┌────────────────────┐
+   │ 判为"链路正常"      │  │ 判为"失联"            │  │ 遥控器侧的另一套判据│
+   │                    │  │                      │  │ （阈值 1000ms）     │
+   │ 清失联报警：        │  │ ① 点 200ms 快闪灯     │  │ 收到 ACK → 清零     │
+   │ Led_SetAlert(...OFF)│  │ ② fc.flags.bLanding=1│  │ 收不到(MAX_RT) → 计时│
+   │ main.c:486         │  │ ③ 射频切回接收模式    │  │ 满 1000ms → 报警+重连│
+   └────────────────────┘  └──────────┬───────────┘  └────────────────────┘
+                                      │
+                                      ▼
+                        ┌─────────────────────────────────┐
+                        │ 谁来执行 bLanding？              │
+                        │ imu/decode.c:123-134 的状态机：  │
+                        │   setVelocity = -650（缓降）     │
+                        │   直到 accData[2] &gt; 6500 判为落地│
+                        │   → motorArmed = 0（停机）       │
+                        └─────────────────────────────────┘</pre></div>
+<p><strong>第一个问题：阈值取多长？</strong>（判据的灵敏度）</p>
+<div class="tablewrap"><table><thead><tr><th>阈值取向</th><th>会怎样</th><th>具体到本工程</th></tr></thead><tbody><tr><td><strong>太短</strong>（比如 50ms）</td><td>一次遮挡、一次重传就把飞机判失联 → <strong>误触发</strong>。对"降落"这种不可逆动作来说，误触发本身就是事故</td><td>🟢 按本工程遥控器发包节奏（约 10ms 一包）推算，50ms ≈ 5 个包；而射频芯片本身允许重传 3 次（事实清单：手册第 33 页 <code>ARC=3</code>），一次遮挡就可能丢掉十几个包</td></tr><tr><td><strong>太长</strong>（比如 30s）</td><td>飞手已经彻底失去控制，飞机还在按最后舵量飞 → <strong>危险窗口大</strong>。手册 7.3 原话："飞机还会按最后指令飞 5 秒"</td><td>🟢 本工程取 5000ms</td></tr><tr><td><strong>合适</strong></td><td>要同时满足"容忍正常抖动"与"危险窗口可接受" —— 这是个<strong>工程判断</strong>，没有公式</td><td>🟡 见下面的推算</td></tr></tbody></table></div>
+<p>🟢 <strong>确证（本工程的阈值，两个数差 5 倍）</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>侧</th><th>阈值</th><th>代码位置</th><th>计时对象</th><th>动作</th></tr></thead><tbody><tr><td><strong>飞控侧</strong></td><td><strong>5000ms</strong></td><td><code>user/main.c:462</code> <code>if (HAL_GetTick() - connection_nowtime &gt; 5000)</code></td><td>"多久没收到合法包"</td><td><code>bLanding=1</code>（自动降落）+ 200ms 快闪 + 射频切接收（<code>main.c:464-470</code>）</td></tr><tr><td><strong>遥控器侧</strong></td><td><strong>1000ms</strong></td><td><code>遥控器/user_driver/tim16.c:76-87</code> <code>if (sign_timer_cnt &gt;= 1000)</code></td><td>"多久没收到 ACK"</td><td><code>signal_lost_flag=1</code> + LED2 200ms 快闪 + 重新初始化射频（<code>bsp_pn298_re_sign_init()</code>）+ 串口打印"信号丢失（超过1秒无响应）"</td></tr></tbody></table></div>
+<p>🟢 <strong>确证（时间戳的唯一刷新点）</strong>：<code>connection_nowtime</code> <strong>只在</strong>这里被赋值：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/deal_pack.c:257 —— 在帧头 0xAA 与 device_ID 双重校验通过之后 */</span></div><div class="line"><span class="ln">2</span><span class="lc">connection_nowtime = HAL_GetTick();</span></div></pre></div>
+<p>🟢 该函数内<strong>没有</strong>第二处赋值（我已全文检索 <code>connection_nowtime</code>：定义在 <code>deal_pack.c:91</code>， 刷新只有 <code>:257</code>，判断只有 <code>main.c:462</code>，声明只有 <code>main.c:92</code>）。 <strong>这就是手册 7.3 强调的那个关键细节的完整证据</strong>：判据不是"收到任意字节"， 而是"收到<strong>校验通过的完整包</strong>"。</p>
+<p>🟡 <strong>通说（阈值为什么是 5 秒，我的推算，非代码注释）</strong>： 按遥控器实际发包节奏推算（见下），5 秒 ≈ <strong>几百个</strong>心跳周期。 这个数量级说明设计意图是"<strong>只在链路真的死了才动作</strong>"，而不是"丢几个包就报警"。 对"自动降落"这种不可逆动作，这个取向是合理的；代价是危险窗口确实长。</p>
+<blockquote class=""><p><strong>🟢 顺便推算一下发包节奏</strong>（可自行核对）：遥控器的发包标志由 TIM16 中断产生，
+中断周期 1ms（<code>遥控器/user_driver/tim16.c:25-26</code>：Period=1000-1、Prescaler=48-1，
+而遥控器的系统时钟也是 HSI 24MHz × PLL 2 = 48MHz，见 <code>遥控器/user_driver/board.c:29-38</code>）。
+但 <code>loop50HzCnt++</code> 在同一个回调里<strong>连续出现了两次</strong>（<code>tim16.c:51-61</code>），
+所以 <code>&gt;= 20</code> 实际是 <strong>10ms</strong> 一次，而不是变量名暗示的 20ms。
+→ <strong>按代码推算：约 10ms 一包（≈100 次/秒）</strong>；
+→ 5000ms ≈ <strong>500 个发包周期</strong>，1000ms ≈ <strong>100 个</strong>。
+变量名 <code>loop50HzCnt</code>（50Hz）与推算值（100Hz）不一致，这里<strong>只记录不改动</strong> ——
+它的绝对数值不影响本章任何结论，只影响"阈值相当于多少个心跳"的换算。</p></blockquote>
+<h3 id="③-我该怎么理解它-3">③ 我该怎么理解它<a class="anchor" href="#③-我该怎么理解它-3">#</a></h3>
+<h4 id="7-3-1-两套判据-两个动作-方向不同-本机实测">7.3.1 两套判据、两个动作，方向不同（🟢 本机实测）<a class="anchor" href="#7-3-1-两套判据-两个动作-方向不同-本机实测">#</a></h4>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 9　双向失效检测：飞控怕"遥控器没了"，遥控器怕"飞机没了"
+
+  ┌──────────────────────────── 遥控器 ────────────────────────────┐
+  │ 每约 10ms 发一包遥控数据                                        │
+  │                                                                │
+  │  bsp_pn298_tx_data_ack() 里看射频状态寄存器：                    │
+  │    status == RX_TX_FLAG（收到 ACK）                             │
+  │        → sign_timer_running = 0; sign_timer_cnt = 0;            │
+  │          signal_lost_flag = 0;      （bsp_pn298.c:424-431）      │
+  │                                                                 │
+  │    status == MAX_RT_FLAG（重传 3 次仍失败）                      │
+  │        → sign_timer_running = 1; sign_timer_cnt = 0;            │
+  │          （bsp_pn298.c:451-457）                                │
+  │                                                                 │
+  │  TIM16 中断里（1ms 一拍）累计：                                  │
+  │    sign_timer_cnt &gt;= 1000  → signal_lost_flag = 1               │
+  │        + LED2 200ms 快闪 + 重新初始化射频 + 打印"信号丢失"        │
+  │          （tim16.c:76-87）                                      │
+  │                                                                 │
+  │  动作性质：**可逆**（重新对频、提示飞手，飞机没动）               │
+  │  → 所以阈值可以敏感：1000ms                                     │
+  └────────────────────────────────────────────────────────────────┘
+                                  ▲
+                                  │ ACK（载荷 = 飞控的 temp_buff[]）
+                                  │
+  ┌──────────────────────────── 飞控 ──────────────────────────────┐
+  │ 主循环每约 11ms 调一次 decode_pack()（main.c:374）              │
+  │                                                                │
+  │  收到 0xAA + 本机 device_ID → connection_nowtime = HAL_GetTick()│
+  │      （deal_pack.c:154 → :257）                                 │
+  │                                                                │
+  │  主循环每圈判断（main.c:462）：                                  │
+  │    HAL_GetTick() - connection_nowtime &gt; 5000                    │
+  │        → Led_SetAlert(RC_LOST, 200ms)         （main.c:464）     │
+  │        → fc.flags.bLanding = 1                （main.c:465）     │
+  │        → bsp_pn298_rx_mode()（等重连）         （main.c:470）     │
+  │                                                                │
+  │  动作性质：**不可逆**（一旦降落就落地）                          │
+  │  → 所以阈值必须保守：5000ms                                     │
+  └────────────────────────────────────────────────────────────────┘</pre></div>
+<p><strong>这张图想让你记住的一件事</strong>：<strong>阈值不是一个技术常数，而是"动作代价"的函数。</strong> 动作可逆（提示灯、重连）→ 阈值可以短；动作不可逆（降落、切断动力）→ 阈值必须长。 本工程两侧 5 倍的差距，正好对应两种动作的可逆性差异。🟡（这条因果是我推的， 代码注释里没有明说 —— <code>main.c:457-459</code> 只解释了"要留出容忍时间，又不能太长"。）</p>
+<h4 id="7-3-2-保护动作的选择-本工程选了-缓降-落地停机">7.3.2 保护动作的选择（🟢 本工程选了"缓降 + 落地停机"）<a class="anchor" href="#7-3-2-保护动作的选择-本工程选了-缓降-落地停机">#</a></h4>
+<p>🟢 <strong>确证（动作链条，可逐行核对）</strong>：飞控侧失联后<strong>不是</strong>立刻停桨，而是：</p>
+<ol><li><code>main.c:465</code> 置 <code>fc.flags.bLanding = 1</code>；</li><li><code>imu/decode.c:123-134</code> 的状态机接管：</li></ol>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/decode.c:123-134 —— bLanding 的实际后果 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if(fc.flags.bLanding) {</span></div><div class="line"><span class="ln">3</span><span class="lc">    fc.flags.bVelocityControl = 1;</span></div><div class="line"><span class="ln">4</span><span class="lc">    setVelocity = -650;                 /* 目标垂直速度 -650（缓降，不是自由落体） */</span></div><div class="line"><span class="ln">5</span><span class="lc">    if(setVelocity &lt; VELOCITY_SPEEDDOWN_MAX) setVelocity = VELOCITY_SPEEDDOWN_MAX;</span></div><div class="line"><span class="ln">6</span><span class="lc">    if(accgyro.accData[2] &gt; 6500)       /* Z 轴加速度 &gt; 6500 ⇒ 判定"已经落地" */</span></div><div class="line"><span class="ln">7</span><span class="lc">    {</span></div><div class="line"><span class="ln">8</span><span class="lc">        fc.flags.motorArmed = 0;        /* 这时才停机 */</span></div><div class="line"><span class="ln">9</span><span class="lc">        fc.flags.motorIdle  = 0;</span></div><div class="line"><span class="ln">10</span><span class="lc">        fc.flags.bLanding   = 0;</span></div><div class="line"><span class="ln">11</span><span class="lc">    }</span></div><div class="line"><span class="ln">12</span><span class="lc">}</span></div></pre></div>
+<p>🟢 <strong>确证（同一个"降落"出口还接了一路低电保护）</strong>：<code>user/adc.c:234-251</code> 检测到电池电压 连续 6 次偏低（注释推算约 6 秒，<code>adc.c:240-243</code>）后，也会置 <code>fc.flags.bLanding = 1</code> 并写回传标志 <code>temp_buff[1] = 2</code>。 <strong>所以 <code>bLanding</code> 是一个"多源汇入、单点执行"的安全动作出口</strong> —— 这是很好的设计： 新增一种危险来源时，只需要"置这一个标志"，不用再写一套降落逻辑。</p>
+<p>🟢 <strong>确证（一处值得你自己评估的细节）</strong>：<code>main.c:466-468</code> 的注释指出， 工程里<strong>没有任何地方把 <code>bLanding</code> 清回 0</strong>（只有 <code>decode.c:133</code> 在"判定落地"那一支里清它， 以及 <code>decode.c:94/103</code> 在手动上锁/解锁时清）。</p>
+<ul><li>对失效保护来说，<strong>方向是安全的</strong>：一次失联触发后不会自动恢复飞行；</li><li>但手册 7.3 的检查点 3（"恢复通信后能不能自动解除"）的答案就是：</li></ul>
+<p><strong>只有在判定已经落地之后才会清掉降落状态</strong>，通信恢复本身不会取消降落。</p>
+<h4 id="7-3-3-HAL_GetTick-相减写法的坑-事实清单可证">7.3.3 <code>HAL_GetTick()</code> 相减写法的坑（🟢 事实清单可证）<a class="anchor" href="#7-3-3-HAL_GetTick-相减写法的坑-事实清单可证">#</a></h4>
+<p>🟢 <strong>确证</strong>：事实清单记明本工程 SysTick 校准为 1ms 时基（参考手册第 119 页 12.1.2）。 于是 <code>HAL_GetTick()</code> 是 32 位毫秒计数，<code>2^32 ms ≈ 49.7 天</code>回绕一次。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 10（小卡）　为什么必须写成"当前 - 上次"
+
+  ✅ 正确：HAL_GetTick() - connection_nowtime &gt; 5000
+     无符号减法天然按 2^32 取模：
+       回绕瞬间  当前=5, 上次=4294967000
+       差值 = (5 - 4294967000) mod 2^32 = 296 ≈ 296ms  →  判"正常" ✅
+
+  ❌ 错误：HAL_GetTick() &gt; connection_nowtime + 5000
+     回绕瞬间  4294967000 + 5000 溢出成很小的数
+       → 条件是"真"  →  刚上电就判失联 ❌
+
+  ❌ 错误：用有符号差值 if ((int32_t)(now-last) &gt; 5000)
+     只要间隔小于 2^31 ms 其实也对，但一旦超过就翻符号
+     —— 本工程用无符号，读者不要"顺手优化"成有符号</pre></div>
+<h3 id="④-实现方法有哪些-取舍对照表-3">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-3">#</a></h3>
+<h4 id="表-7-3-1-保护动作的选择-发现失联之后干什么">表 7-3-1　保护动作的选择（发现失联之后干什么）<a class="anchor" href="#表-7-3-1-保护动作的选择-发现失联之后干什么">#</a></h4>
+<div class="tablewrap"><table><thead><tr><th>动作</th><th>具体做法</th><th>优点</th><th>代价 / 风险</th><th>适用场景</th><th>本工程</th></tr></thead><tbody><tr><td><strong>① 保持最后舵量</strong></td><td>什么都不做，继续输出上一帧指令</td><td>零代码</td><td>飞机会<strong>沿着最后方向飞走</strong>（"放风筝"）；单旋翼会持续带坡度盘旋</td><td>❌ 任何场景都不该作为默认</td><td>❌</td></tr><tr><td><strong>② 回中 / 回水平</strong></td><td>姿态通道回 0，油门不动</td><td>姿态不会继续倾斜</td><td>高度不受控：可能一直爬升或一直下沉</td><td>有定高功能的机型</td><td>❌</td></tr><tr><td><strong>③ 缓降（受控下降）</strong></td><td>目标垂直速度设成一个小的负值，等落地判定后停机</td><td>有软着陆机会；可逆性最好；对人和物最安全</td><td>需要高度估计可靠（气压计/加速度计融合，见 8.5）</td><td>多旋翼，有高度环</td><td><strong>✅ 本工程</strong>（<code>decode.c:127</code> <code>setVelocity = -650</code>）</td></tr><tr><td><strong>④ 自动返航（RTH, Return To Home）</strong></td><td>用 <strong>GPS</strong>（Global Positioning System，全球定位系统）/光流导航回到起飞点</td><td>飞机能回来</td><td>需要<strong>位置估计</strong>（本工程没有 GPS）；返航路径本身有撞障碍风险</td><td>带 <strong>GNSS</strong>（Global Navigation Satellite System，全球导航卫星系统）的机型</td><td>❌ 本工程无位置传感器</td></tr><tr><td><strong>⑤ 切断动力（停桨）</strong></td><td>立刻把四个电机置停转</td><td>最简单、最"安全"（不会飞走）</td><td>从空中<strong>自由落体</strong> → 摔机；如果失联是误判（一次遮挡）损失更大</td><td>极少数场景（如室内桨叶防护良好的小机）</td><td>❌ 只在"落地判定通过"后才停机（<code>decode.c:131</code>）</td></tr></tbody></table></div>
+<p>🟢 <strong>手册 7.3 与本节的结论一致</strong>：手册写"通常是<strong>降低油门/停转电机/自动降落</strong>"； 本工程的实际选择是 <strong>③ 缓降 + 落地后停机</strong>，并且代码注释（<code>main.c:50-51</code>） 明确写了设计意图："比直接切电机更安全（骤然停桨会摔机）"。</p>
+<h4 id="表-7-3-2-判据的实现方法-失联-这件事怎么判出来">表 7-3-2　判据的实现方法（"失联"这件事怎么判出来）<a class="anchor" href="#表-7-3-2-判据的实现方法-失联-这件事怎么判出来">#</a></h4>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>判据</th><th>优点</th><th>代价</th><th>本工程</th></tr></thead><tbody><tr><td><strong>① 超时计数</strong></td><td>一个时间戳 + 一个阈值</td><td>最简单；行为完全可预测</td><td>阈值只能拍；丢了几个包和彻底失联用同一个判据</td><td><strong>✅ 两侧都是这个</strong>（<code>main.c:462</code>、<code>遥控器 tim16.c:79</code>）</td></tr><tr><td><strong>② 序号/计数判定</strong></td><td>连续 N 个周期没收到序号递增</td><td>不依赖绝对时间，抗时钟漂移</td><td>需要一个"周期"的概念（数据必须周期性）；序号回绕要处理</td><td>🟡 硬件层有 PID 位可识别重发包（事实清单：PN298 手册第 19 页），固件未消费</td></tr><tr><td><strong>③ 信号质量 + 超时</strong></td><td>结合 RSSI（接收信号强度）/丢包率，分档处理</td><td>能在"快要失联"时提前降级（比如先限高、先返航）</td><td>需要读芯片的 RSSI/丢包统计并做分档策略</td><td>❌（但 <code>OBSERVE_TX</code> 的 <code>PLOS_CNT</code>/<code>ARC_CNT</code> 是现成的数据源，事实清单：手册第 35 页）</td></tr><tr><td><strong>④ 双向确认</strong></td><td>只有收到 ACK 才算对方活着</td><td>能发现"单向通"（能收不能发）这种隐性故障</td><td>链路的两端都必须能发；一侧坏了会被另一侧判失联</td><td><strong>✅ 遥控器侧就是靠 ACK 判活</strong>（<code>遥控器 bsp_pn298.c:424-431</code>）</td></tr><tr><td><strong>⑤ 分级失效保护</strong></td><td>按"失联多久"分档：短 → 警告、中 → 悬停/限高、长 → 降落</td><td>危险窗口与误触发可以同时优化</td><td>状态多、调参复杂</td><td>❌ 本工程是"单阈值单动作"，无分档</td></tr></tbody></table></div>
+<h3 id="7-3-小结与检查清单">7.3 小结与检查清单<a class="anchor" href="#7-3-小结与检查清单">#</a></h3>
+<p><strong>手册 7.3 留了三个检查点，这里给出本工程的答案（🟢 全部可核对）</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>检查点</th><th>本工程的答案</th></tr></thead><tbody><tr><td>1. 超时阈值是多少</td><td>飞控 <strong>5000ms</strong>（<code>main.c:462</code>）；遥控器 <strong>1000ms</strong>（<code>遥控器 tim16.c:79</code>）。对飞控来说偏长，意味着遥控器关掉后飞机还会按最后指令飞 5 秒</td></tr><tr><td>2. 触发后具体做什么</td><td>闪灯（200ms）+ <code>bLanding=1</code> → <strong>缓降</strong>（目标垂直速度 -650）→ 落地判定（<code>accData[2]&gt;6500</code>）→ 停机。<strong>确实动了油门，不是只闪灯</strong></td></tr><tr><td>3. 恢复通信后能不能自动解除</td><td><strong>不能自动取消降落</strong>（只有判定落地后才清 <code>bLanding</code>，<code>decode.c:133</code>）；但失联<strong>报警灯</strong>会随通信恢复而清除（<code>main.c:486</code>），且射频已切回接收模式（<code>main.c:470</code>）会自动重连</td></tr></tbody></table></div>
+<p><strong>本节的四句话总结</strong>：</p>
+<ol><li>失效保护存在的唯一理由是：<strong>遥控失联时飞行器不能保持最后的舵量继续飞</strong>；</li><li>判据的阈值不是技术常数，而是<strong>动作代价的函数</strong>（可逆动作可以敏感，不可逆动作必须保守）；</li><li>本工程的动作是<strong>缓降而非直接停桨</strong>，并且"降落"这个动作有<strong>两个触发源</strong></li></ol>
+<p>（失联 <code>main.c:465</code> / 低电 <code>adc.c:244</code>）汇入同一个标志；</p>
+<ol><li>判据的可靠性来自<strong>时间戳只在合法包处刷新</strong>（<code>deal_pack.c:257</code>）——</li></ol>
+<p>这是整个失效保护链条上最关键的一行。</p>
+<hr>
+<h1 id="第-8-章-传感器-姿态-滤波-姿态解算">第 8 章　传感器、姿态、滤波、姿态解算<a class="anchor" href="#第-8-章-传感器-姿态-滤波-姿态解算">#</a></h1>
+<blockquote class=""><p><strong>本章主线</strong>：这一章讲的是"<strong>飞机怎么知道自己是什么姿态、在什么高度</strong>"。
+它比第 7 章更"物理"，因为这里所有麻烦都来自<strong>传感器本身的缺陷</strong>：
+陀螺仪会漂、加速度计会抖、气压计会受气流影响。整章可以概括成一句话 ——</p><p><strong>没有任何一个传感器是好用的，姿态与高度都是"两个都不完美的传感器互相纠正"的结果。</strong></p><p>- <strong>IMU（第 8.1 节）</strong>：提供两个互补的传感器（一个短期准、一个长期准）；
+- <strong>量程/分辨率/零偏/校准（第 8.2 节）</strong>：把"传感器输出"变成"可信的物理量"；
+- <strong>姿态解算（第 8.3 节）</strong>：把两组测量融合成一个姿态（本工程用 Mahony）；
+- <strong>滤波（第 8.4 节）</strong>：把"振动噪声"和"真实运动"分开；
+- <strong>气压计与定高（第 8.5 节）</strong>：把"气压"变成"高度"，再和加速度计融合。</p></blockquote>
+<h2 id="8A-主线图-从物理世界到-angle-和-EstAlt">8A　主线图：从物理世界到 angle[] 和 EstAlt<a class="anchor" href="#8A-主线图-从物理世界到-angle-和-EstAlt">#</a></h2>
+<p>这一节回答一个问题：<strong>第 8 章的五个知识点在数据流上是怎样接起来的？</strong></p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 11　本工程从"物理量"到"控制量"的完整数据流（每条边都标了代码位置）
+
+ ┌────────────── 姿态通道（快，~1.25ms 起） ──────────────────────────────────┐
+ │                                                                          │
+ │  ICM-42688-P                                                             │
+ │   ├─ 加速度计（8g）    accgyro.accRaw[]      ▲ spi.c → icm42688.c         │
+ │   └─ 陀螺仪（2000dps） gyroRaw[]             │   accgyro.c:96 bsp_IcmGetRawData
+ │                          │                                                │
+ │                          ▼ ① 减去零偏（来自 Flash 或上电校准）             │
+ │      accgyro.c:120-121   accValue[] / gyroValue[]                          │
+ │                          │                                                │
+ │                          ▼ ② 滤波（本章 8.4 的关键）                       │
+ │      accgyro.c:126       accData[] = biquad LPF 30Hz                      │
+ │      accgyro.c:127       gyroData[] = PT1 LPF 240Hz                       │
+ │                          │                                                │
+ │                          ▼ ③ 8 点滑动平均（再降一次加速度噪声）            │
+ │      imu.c:426           accSmooth[]                                      │
+ │                          │                                                │
+ │                          ▼ ④ Mahony 融合（用加速度计修正陀螺积分）         │
+ │      imu.c:438-440       imuMahonyAHRSupdate()  →  四元数 q0..q3           │
+ │                          │                                                │
+ │                          ▼ ⑤ 四元数 → 旋转矩阵 → 欧拉角                    │
+ │      imu.c:348           rMat[3][3]                                       │
+ │      imu.c:375-377       angle[]（俯仰/横滚/偏航，单位"度×100"）           │
+ └──────────────────────────┬───────────────────────────────────────────────┘
+                            │
+                            ▼
+                   imu/pid.c：串级 PID（角度环 → 角速度环）→ motorPWMValue[4]
+                            │
+                            ▼
+                   user/bsp_pwm.c → TIM3 → 电调 → 电机
+
+ ┌────────────── 高度通道（慢，~20~30ms） ───────────────────────────────────┐
+ │                                                                          │
+ │  BMP390（气压计）                                                         │
+ │   └─ 原始气压+温度 → 原厂补偿 → baroPressure（Pa）                        │
+ │      common.c:527-533   bmp3_get_sensor_data()                            │
+ │                          │                                                │
+ │                          ▼ ① 中值滤波 5 点（去野值）                       │
+ │      altitude.c:67-95    applyBarometerMedianFilter()                     │
+ │                          ▼ ② 滑动平均 6 点（平滑）                         │
+ │      altitude.c:123-139  baroPressureAvg                                   │
+ │                          ▼ ③ 大气模型 → 相对高度（mm）                     │
+ │      altitude.c:150/164  baro_pow_0p295()（自研幂函数，见手册 8.5）        │
+ │                          ▼ ④ 低通（α=0.1）                                 │
+ │      altitude.c:169      BaroAlt                                          │
+ │                          │                                                │
+ │  加速度计 ──► 机体→地球坐标变换 ──► 去重力 ──► 二次积分 ──► accAlt        │
+ │      imu.c:207-229 / altitude.c:225-247                                    │
+ │                          │                                                │
+ │                          ▼ ⑤ 互补滤波（加速度计高频 + 气压计低频）          │
+ │      altitude.c:259      accAlt = accAlt*0.985 + BaroAlt*0.015            │
+ │      altitude.c:268      vel    = vel*0.995    + baroVel*0.005            │
+ │                          │                                                │
+ │                          ▼ ⑥ 串级高度环（位置环 → 速度环）→ BaroPID        │
+ │      altitude.c:312-383                                                   │
+ │                          │                                                │
+ │                          ▼ ⑦ 叠加到油门中位                                        │
+ │      pid.c:122           constrain(1500+BaroPID, 1000, 2000) + 姿态修正    │
+ └──────────────────────────────────────────────────────────────────────────┘</pre></div>
+<p><strong>读法</strong>：姿态通道与高度通道是<strong>两条独立的链路</strong>，只在 PID 混控那一层汇合 （<code>pid.c:118-127</code> 的 <code>PIDMIX</code>）。两条链路都遵循同一个套路： <strong>原始值 → 去零偏 → 滤波 → 融合 → 控制</strong>。本章每节讲的就是这条套路上的一个环节。</p>
+<hr>
+<h2 id="8-1-IMU-Inertial-Measurement-Unit-惯性测量单元">8.1 IMU（Inertial Measurement Unit，惯性测量单元）<a class="anchor" href="#8-1-IMU-Inertial-Measurement-Unit-惯性测量单元">#</a></h2>
+<blockquote class=""><p><strong>这一节回答什么问题</strong>：飞机要知道自己的姿态，为什么不直接装一个"角度传感器"，
+而要装两个都测不准的东西？</p></blockquote>
+<h3 id="①-它是怎么出现的-4">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-4">#</a></h3>
+<p>🟡 <strong>通说</strong>：姿态估计这件事，历史上一直是靠<strong>外部参照</strong>解决的 —— 看地平线（光学）、 看磁北（罗盘）、看星星。这些手段各有各的死穴，在小型飞行器上尤其致命：</p>
+<div class="tablewrap"><table><thead><tr><th>外部参照</th><th>能给出什么</th><th>死穴</th></tr></thead><tbody><tr><td><strong>GPS（Global Positioning System，全球定位系统）</strong></td><td>位置、地速（对地速度）、时间</td><td>🟡 更新率远低于控制周期（典型 5~10Hz 量级）；<strong>不给姿态角</strong>；室内/遮挡环境直接失效</td></tr><tr><td><strong>磁力计（罗盘）</strong></td><td>航向（相对磁北），可给出偏航的绝对参考</td><td>🟡 怕磁干扰：电机电流、电调、扬声器、铁质螺丝、附近钢筋都会让读数偏掉；靠近地面/室内更明显</td></tr><tr><td><strong>气压计</strong></td><td>高度（相对气压面）</td><td>见 8.5 —— 噪声、气流、天气漂移</td></tr><tr><td><strong>视觉/光流</strong></td><td>位置、速度</td><td>🟡 依赖光照与纹理，算力开销大</td></tr></tbody></table></div>
+<p>→ 剩下的路只有一条：<strong>用惯性器件自己"算"出姿态</strong>。 惯性器件的最大优点是<strong>不依赖外界</strong>（不受遮挡、不受磁干扰、不依赖光照）， 最大缺点是<strong>没有绝对参照</strong>（所以会漂）。这就是 IMU 出现的理由。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样-4">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-4">#</a></h3>
+<p>IMU 里为什么要放<strong>两个</strong>传感器？因为<strong>这两个传感器的误差特性恰好相反</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 12　陀螺仪与加速度计的误差特性对比（这是整章的物理基础）
+
+ 误差
+  ▲
+  │   【陀螺仪：短期准、长期漂】
+  │                                          ╱
+  │                                        ╱   ← 积分漂移：随时间线性增长
+  │                                      ╱       （零偏 × 时间）
+  │                                    ╱
+  │  ────────────────────────────────╱───────────► 时间
+  │       ↑ 短时间（1 秒内）几乎贴着 0
+  │
+  │   【加速度计：长期准、短期抖】
+  │
+  │        ╱╲    ╱╲        ← 噪声：高频抖动，但**均值为 0**
+  │  ╱╲  ╱  ╲  ╱  ╲  ╱╲
+  │ ╱  ╲╱    ╲╱    ╲╱  ╲
+  │ ─────────────────────────────────────────────► 时间
+  │      ↑ 只要静止，长时间平均下来**不会跑偏**（因为测的是重力方向）
+  │
+  └──────────────────────────────────────────────────────────────────────
+
+ 🟢 两条说法在本工程代码里的落点：
+   · 陀螺仪会漂  → 所以要"校准零偏"（accgyro.c:201-248），
+                    还要在解算里用加速度计"慢慢修正"（imu.c:288-290 的叉积误差）
+   · 加速度计有噪声 → 所以要先滤波（accgyro.c:71 的 30Hz 双二阶），
+                    再用"是否接近 1g"来判断它当次是否可信（imu.c:354-368）</pre></div>
+<p><strong>一句话概括</strong>：🟡 <strong>陀螺仪短期准、长期漂；加速度计长期准、短期抖 —— 两者互补， 所以必须融合。</strong> 这句话是第 8.1、8.3、8.5 三节的共同主线（加速度计在这里的角色， 与气压计在 8.5 里的角色<strong>完全对称</strong>：都是"低频准、高频差"的那个）。</p>
+<h3 id="③-我该怎么理解它-4">③ 我该怎么理解它<a class="anchor" href="#③-我该怎么理解它-4">#</a></h3>
+<h4 id="8-1-1-本工程用的是-ICM-42688-P-六轴-无磁力计">8.1.1 本工程用的是 ICM-42688-P（六轴，无磁力计）<a class="anchor" href="#8-1-1-本工程用的是-ICM-42688-P-六轴-无磁力计">#</a></h4>
+<p>🟢 <strong>确证（逐条可核对）</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>事实</th><th>证据</th></tr></thead><tbody><tr><td>工程编译时定义的型号宏是 <strong><code>ICM42688P</code></strong></td><td><code>project/mdk_arm/project.uvprojx:341</code> 的 <code>&lt;Define&gt;USE_HAL_DRIVER,PY32F030x8,ICM42688P,BMP3_FLOAT_COMPENSATION&lt;/Define&gt;</code></td></tr><tr><td>该型号的 <strong>WHO_AM_I（芯片身份寄存器）值为 <code>0x47</code></strong></td><td><code>icm426/Icm426xxDefs.h:46</code> <code>#define ICM42688P_WHOAMI 0x47</code>；<code>Icm426xxDefs.h:70-71</code> 按型号宏选定 <code>ICM_WHOAMI</code></td></tr><tr><td>是<strong>六轴</strong>：3 轴加速度 + 3 轴陀螺仪</td><td>数据结构只有这两组原始值：<code>icm426/icm42688.h:38-48</code>；取数函数 <code>bsp_IcmGetRawData(accgyro.accRaw, accgyro.gyroRaw)</code>（<code>imu/accgyro.c:96</code>）</td></tr><tr><td><strong>无磁力计</strong></td><td>全工程没有磁力计读数路径；后果见 8.1.3</td></tr><tr><td>量程配置：加速度 <strong>±8g</strong>、陀螺 <strong>±2000dps</strong></td><td><code>imu/accgyro.c:64-66</code>：<code>ICM426XX_ACCEL_CONFIG0_FS_SEL_8g</code>、<code>ICM426XX_GYRO_CONFIG0_FS_SEL_2000dps</code></td></tr><tr><td>输出数据率配置：两者都是 <strong>200Hz</strong></td><td>同上（<strong>ODR</strong> = Output Data Rate，输出数据率）：<code>ICM426XX_ACCEL_CONFIG0_ODR_200_HZ</code>、<code>ICM426XX_GYRO_CONFIG0_ODR_200_HZ</code>；取值处 <code>icm426/Icm426xxDefs.h:750/801</code>，注释写明 "200 Hz (5 ms)"</td></tr><tr><td>低噪声模式使能</td><td><code>imu/accgyro.c:9</code> <code>#define IS_LOW_NOISE_MODE 1</code>，传给 <code>ConfigureInvDevice()</code>（<code>accgyro.c:64</code>）</td></tr><tr><td>安装方向做了 90° 校正</td><td><code>imu/accgyro.c:98-99</code> <code>apply_sensor_alignment(..., CW90_DEG)</code></td></tr></tbody></table></div>
+<p>🟡 <strong>不写页码的理由</strong>：ICM-42688-P 的数据手册<strong>不在本机</strong>（我检索了整个工程目录， 只有 PY32F030、PN298、PAN742x 三份手册，见 <code>_术语事实清单.md</code> 的来源说明）。 所以本文件里凡是"这颗芯片的规格"（噪声密度、零偏稳定性、灵敏度误差范围）， 我一律不写具体数字、也不编页码 —— 上面所有数字都是<strong>从代码里读出来的配置值</strong>， 不是数据手册参数。</p>
+<h4 id="8-1-2-加速度计在这里的真正作用-提供-重力的方向">8.1.2 加速度计在这里的真正作用：提供"重力的方向"<a class="anchor" href="#8-1-2-加速度计在这里的真正作用-提供-重力的方向">#</a></h4>
+<p>🟢 <strong>确证</strong>：本工程判断加速度计数据是否可用，用的判据是<strong>模长是否接近 1g</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/imu.c:354-368 —— 只看模长，不看方向 */</span></div><div class="line"><span class="ln">2</span><span class="lc">accMagnitude = Σ (accSmooth[axis]²) * 100 / acc_1G²;</span></div><div class="line"><span class="ln">3</span><span class="lc">return (81 &lt; accMagnitude) &amp;&amp; (accMagnitude &lt; 121);   /* 即 0.90g ~ 1.10g */</span></div></pre></div>
+<ul><li>静止时，加速度计测到的<strong>只有重力</strong>（1g），方向朝上 → 据此可以算出"倾斜了多少"；</li><li>一旦<strong>真的在加速</strong>（比如猛推油门、急停），测到的就是"重力 + 运动加速度"，</li></ul>
+<p>模长就偏离 1g → 此时它的"重力方向"不可信，<strong>宁可不修正</strong>（<code>imu.c:431-433</code>）。</p>
+<p>🟡 <strong>通说</strong>：这条门限（0.9g~1.1g）是飞控里的常见做法，本工程的取值与注释一致 （<code>imu.c:365-367</code> 的注释就写 "Accept accel readings only in range 0.90g - 1.10g"）。 <strong>注意它只判"模长"，不判"方向"</strong> —— 所以飞机在持续匀速倾斜加速的极端情况下仍会误信， 这属于该判据的固有局限（🟡 通说，不是本工程的 bug）。</p>
+<h4 id="8-1-3-没有磁力计的后果-可以从代码直接看出来">8.1.3 没有磁力计的后果（🟢 可以从代码直接看出来）<a class="anchor" href="#8-1-3-没有磁力计的后果-可以从代码直接看出来">#</a></h4>
+<p>🟢 <strong>确证</strong>：<code>imu/pid.c:245-247</code> 把这句做成了显式动作：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* 强制偏航角为 0：本项目不做航向锁定（没有磁力计做绝对航向），</span></div><div class="line"><span class="ln">2</span><span class="lc"> * 偏航只做角速度控制，所以把偏航角清零避免它参与角度环计算。 */</span></div><div class="line"><span class="ln">3</span><span class="lc">angle[2] = 0;</span></div></pre></div>
+<p><strong>意思是</strong>：俯仰/横滚有重力当绝对参照（所以能长期准）， <strong>偏航没有任何绝对参照</strong> —— 陀螺仪积分出来的偏航角只会一直漂。 所以本工程干脆<strong>放弃偏航角</strong>，偏航只做"角速度控制"（你打舵 → 它就转，松手就停转， 但"转到哪个朝向"它不知道也不关心）。这是无磁力计方案的标准取舍。</p>
+<h3 id="④-实现方法有哪些-取舍对照表-4">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-4">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>组成部分</th><th>能得到什么</th><th>代价 / 得不到什么</th><th>本工程</th></tr></thead><tbody><tr><td><strong>① 单陀螺仪</strong></td><td>3 轴陀螺</td><td>姿态<strong>变化率</strong>（角速度），短期内姿态可积分出来</td><td>零偏让角度<strong>持续漂移</strong>，几分钟就偏几十度（见 8.2 的定量）；没有绝对参照</td><td>❌</td></tr><tr><td><strong>② 六轴 IMU（本工程）</strong></td><td>3 轴陀螺 + 3 轴加速度计</td><td>俯仰/横滚可长期稳定（重力当参照）；偏航只能做角速度控制</td><td>偏航无绝对参照；加速度计在"真加速"时不可用</td><td><strong>✅ <code>accgyro.c:64-66</code>、<code>imu.c:261</code></strong></td></tr><tr><td><strong>③ 九轴（六轴 + 磁力计）</strong></td><td>再加 3 轴磁力计</td><td>偏航有绝对参照 → 可以做航向锁定、可以自动返航时保持航向</td><td>磁干扰要标定/补偿；室内与近铁件环境不可靠；多一套校准流程</td><td>❌</td></tr><tr><td><strong>④ IMU + 气压计 + GPS 组合导航</strong></td><td>再加气压计、GNSS（Global Navigation Satellite System，全球导航卫星系统）</td><td>位置、高度、地速、航向都能给；可做自动返航、航线飞行</td><td>传感器多、融合算法复杂（通常要 EKF）；依赖卫星可见性</td><td>🟡 <strong>部分</strong>：本工程有 <strong>IMU + 气压计</strong>（8.5），<strong>没有 GNSS</strong></td></tr></tbody></table></div>
+<p><strong>本工程的取舍一句话</strong>：<strong>用"六轴 + 气压计"覆盖了室内小四轴的刚需 （姿态稳定 + 定高），主动放弃了"航向"和"位置"这两件需要额外传感器的事。</strong></p>
+<hr>
+<h2 id="8-2-量程-分辨率-零偏-校准">8.2 量程、分辨率、零偏、校准<a class="anchor" href="#8-2-量程-分辨率-零偏-校准">#</a></h2>
+<blockquote class=""><p><strong>这一节回答什么问题</strong>：传感器输出的是"数字"（比如一个 int16），
+这个数字怎么变成可信的物理量？以及为什么必须先校准才能用？</p></blockquote>
+<h3 id="①-它们各自是怎么出现的-解决什么问题">① 它们各自是怎么出现的 / 解决什么问题<a class="anchor" href="#①-它们各自是怎么出现的-解决什么问题">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>概念</th><th>它解决什么问题</th><th>没有它（或选错它）会怎样</th></tr></thead><tbody><tr><td><strong>量程 / FSR</strong>（Full Scale Range，满量程）</td><td>"我能测多大的范围" —— 决定了<strong>不削顶</strong>的安全边界</td><td>选小了：飞机翻滚/急加速时加速度计<strong>饱和削顶</strong>，读数卡在最大值 → 姿态解算拿到错误的重力方向；选大了：见下一行</td></tr><tr><td><strong>分辨率 / LSB</strong>（Least Significant Bit，最低有效位）</td><td>"我能分辨多小的变化" —— 决定了噪声地板与最小可测变化</td><td>分辨率太粗：静止时的微小振动全部落进同一个码值（量化噪声），滤波后仍然粗糙</td></tr><tr><td><strong>零偏（Bias / Offset）</strong></td><td>"静止时输出不为 0"这个<strong>系统误差</strong>要被减掉</td><td>陀螺零偏会被<strong>积分</strong>成角度 → 角度持续漂移（这是最致命的一条）；加速度零偏会让"水平"判断整体偏掉</td></tr><tr><td><strong>校准（Calibration）</strong></td><td>把零偏（以及比例误差）<strong>测出来、存起来、每次都减掉</strong></td><td>每次都手动修正；或者干脆带着零偏飞</td></tr><tr><td><strong>噪声密度</strong></td><td>决定"滤波参数该怎么选"（截止频率、平滑窗口）</td><td>滤得太狠 → 相位滞后大（飞机发飘、响应慢）；滤得太少 → 噪声进 PID 的 D 项（电机抖、发热）</td></tr></tbody></table></div>
+<h3 id="②-为什么量程和分辨率是矛盾的-可自行验算">② 为什么量程和分辨率是矛盾的（🟢 可自行验算）<a class="anchor" href="#②-为什么量程和分辨率是矛盾的-可自行验算">#</a></h3>
+<p><strong>关键前提</strong>：传感器内部是"物理量 → 模拟电压 → <strong>固定位数的 ADC</strong>（Analog-to-Digital Converter，模数转换器）→ 数字量"。位数是固定的（这类 <strong>MEMS</strong>（Micro-Electro-Mechanical System，微机电系统）惯性器件通常是 16 位输出）， 所以<strong>同一个位数的码值空间要摊到整个量程上</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 13　量程与分辨率的"跷跷板"（同一个 16 位 ADC）
+
+   16 位有符号输出： -32768 ................................ +32767
+                     │                                          │
+                     │◄──────────── 码值空间固定 ─────────────►│
+                     │                                          │
+ 【量程 ±8g】        ├──────────────────────────────────────────┤
+   灵敏度 = 32768 / 8 = 4096 LSB/g
+   1 LSB ≈ 0.244 mg            ← 分辨得细，但只能测到 ±8g
+
+ 【量程 ±16g】       ├──────────────────────────────────────────┤
+   灵敏度 = 32768 / 16 = 2048 LSB/g
+   1 LSB ≈ 0.488 mg            ← 能测到 ±16g，但分辨粗了一倍
+
+ 【量程 ±4g】        ├──────────────────────────────────────────┤
+   灵敏度 = 32768 / 4 = 8192 LSB/g
+   1 LSB ≈ 0.122 mg            ← 更细，但 4g 很容易削顶
+                               （四轴机动时加速度冲到 3~4g 很常见 🟡通说）</pre></div>
+<p>🟢 <strong>确证（本工程的两个数正好互为印证）</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* imu/accgyro.c:35-36 */
+int16_t acc_1G = 4096;                                  /* 1g 对应的原始值 */
+float gyroScale = 1.0f / 16.4f * (M_PI / 180.0f);        /* 原始值 → 弧度/秒 的比例 */</pre></div>
+<ul><li><code>acc_1G = 4096</code> → 32768 / 8 = 4096 → <strong>正好对应 ±8g 档</strong>（配置处 <code>accgyro.c:64</code>）🟢</li><li><code>1/16.4</code> → 32768 / 2000 = 16.384 → <strong>正好对应 ±2000dps 档</strong>（配置处 <code>accgyro.c:65</code>）🟢</li></ul>
+<p><strong>这两个常量不是"魔法数字"，是"量程选完以后算出来的"</strong> —— 这也是读传感器代码的通用方法： 看到 <code>LSB/g</code> 或 <code>1/16.4</code> 这类常量，先反推它的量程档，再回寄存器配置处核对。</p>
+<p>🟢 <strong>一个容易忽略的点：分辨率 ≠ 有效分辨率</strong>。<code>4096 LSB/g</code> 只说明"刻度多细"， 但传感器<strong>本底噪声</strong>可能有好几个 LSB 大。所以真正决定"能分辨多小变化"的是 <strong>噪声密度</strong>（单位通常是 <code>μg/√Hz</code> 这类），而不是 LSB。 🟡 本工程对应的处理是：用滤波把带宽压下来，噪声随之下降（滤波的收益是 √带宽 关系）—— 这条是信号处理的通说，不是本机实测。</p>
+<h3 id="③-我该怎么理解零偏-把-漂移-算成一个数">③ 我该怎么理解零偏：把"漂移"算成一个数<a class="anchor" href="#③-我该怎么理解零偏-把-漂移-算成一个数">#</a></h3>
+<p>🟢 <strong>确证（算术部分）</strong>：本工程陀螺的换算比例是 <strong>16.4 LSB 对应 1°/s</strong>（<code>accgyro.c:36</code>）。 于是：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 14（小卡）　陀螺零偏 → 角度漂移的定量换算（算术，不是实测）
+
+  残留零偏 16.4 LSB   →  1 °/s   →  60 秒后角度漂移 60°
+  残留零偏  8.2 LSB   →  0.5 °/s →  60 秒后漂移 30°
+  残留零偏 50   LSB   →  3.05 °/s →  60 秒后漂移 183°
+
+  🟢 拿本工程自己的阈值做参照：GYRO_CALI_DIFF_LIMIT = 50（accgyro.c:222）
+     —— 这个 50 就是"校准期间允许的静止抖动上限"。
+     换句话说：**如果校准做坏了、残留 50 LSB 的零偏，一分钟就能漂 180°。**
+
+  🟡 假设说明：上面假设"零偏在校准后是恒定的"。真实器件的零偏还会随温度变化，
+     所以工程上要么做温度补偿，要么靠姿态解算里的积分项慢慢吃掉残余（见 8.3）。</pre></div>
+<p><strong>这张卡片的用途</strong>：它解释了为什么手册 8.2 把"零偏"和"校准"放在同一节 —— <strong>零偏的危害不是"读数不准"，而是"被积分以后无限放大"</strong>。 加速度计的零偏只造成一个固定偏差（不累积），陀螺仪的零偏造成<strong>随时间增长的漂移</strong>， 两者的危害量级完全不同。</p>
+<h3 id="④-本工程的校准流程-逐行可核对">④ 本工程的校准流程（🟢 逐行可核对）<a class="anchor" href="#④-本工程的校准流程-逐行可核对">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 15　上电静态校准的实际流程（陀螺仪版，accgyro.c:201-248）
+
+   ① 触发：不是自动的，而是**摇杆手势**
+      imu/decode.c:78-85
+        if((motorArmed==0) &amp;&amp; (motorIdle==0))
+            if((codeGas&lt;=1050) &amp;&amp; (codeYaw&gt;=450) &amp;&amp; (codePitch&lt;=-450) &amp;&amp; (codeRoll&lt;=-450))
+                accgyro.gyroCalibrating = 1;
+                accgyro.accCalibrating  = 1;
+      即：油门最低 + 偏航右满 + 俯仰左下 + 横滚左下（四个通道同时打到底）
+
+      🟢 注意：accgyro_init() 里**没有**默认开启校准（accgyro.c:75-76 都清 0），
+         自动校准的那一段被注释掉了（accgyro.c:77-87）→ 所以只能靠手势或 Flash 里的旧值
+
+   ② 记录初值：gyroInit[axis] = 本次原始值（accgyro.c:212-219）
+
+   ③ 逐样本判断"是否静止"：
+        dif = gyroInit[axis] - gyroRaw[axis];
+        if (|dif| &lt; GYRO_CALI_DIFF_LIMIT(=50))  累加 →  gyroSum
+        else                                    重新开始（accgyro.c:221-231）
+      ★ 含义：校准期间只要有一次抖动超过 50 LSB，整个校准**从头再来**
+
+   ④ 取平均：累加到 512 次（accgyro.c:235）
+        gyroRaw_offset[axis] = gyroSum[axis] / count;      （accgyro.c:237）
+
+   ⑤ 落盘：写进 Flash（accgyro.c:245 flash_write）
+      → 下次上电由 main.c:332-335 读回来填进 accgyro.accRaw_offset/gyroRaw_offset</pre></div>
+<p>🟢 <strong>加速度计校准（<code>accgyro.c:255-304</code>）的两处关键差异</strong>：</p>
+<ol><li>判"是否静止"用的是<strong>陀螺仪</strong>的输出（<code>accgyro.c:270</code> 记 <code>gyroInit[]</code>、</li></ol>
+<p><code>:279</code> 比较 <code>acc-&gt;gyroRaw[]</code>），阈值 <code>ACC_CALI_GYRO_DIFF_LIMIT = 50</code>（<code>accgyro.c:277</code>）。 <strong>这是对的</strong>：判断"动没动"应该看陀螺，而不是看加速度计自己（它本来就有噪声）。</p>
+<ol><li>求完平均后，<strong>Z 轴要减掉 1g</strong>（<code>accgyro.c:292-294</code>：<code>if(axis == 2) accRaw_offset[axis] -= acc_1G;</code>）</li></ol>
+<p>—— 因为水平静止时 Z 轴测到的是"重力 1g"，而我们希望"水平静止 ⇒ 输出 0"。 <strong>这一行就是"加速度计校准"与"陀螺仪校准"的本质区别</strong>：前者要减掉重力， 后者只需要减掉零偏。</p>
+<p>🟢 <strong>两处大小：采样次数是 512，不是注释里写的 256</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/accgyro.c:233-235 —— 注释与代码不一致（本文件只记录，未改动代码） */</span></div><div class="line"><span class="ln">2</span><span class="lc">	// 较准完成，取均值作为offset。同时置位gyroCalInit，留作下次较准使用。</span></div><div class="line"><span class="ln">3</span><span class="lc">	// 完成256次采样后计算平均值</span></div><div class="line"><span class="ln">4</span><span class="lc">  if(++count &gt;= 512) {</span></div></pre></div>
+<p>🟢 同样的现象在加速度计校准里也有一份（<code>accgyro.c:288-289</code>）。</p>
+<p>🟢 <strong>本工程没有温度补偿</strong>：气压计读回来的温度（<code>common.c:532</code> 写 <code>baroTemperature</code>） 只用于原厂库内部的气压补偿，<strong>没有</strong>任何地方用温度去修正 IMU 的零偏 （全工程检索 <code>baroTemperature</code> 的消费点即知）。</p>
+<h3 id="④-实现方法有哪些-取舍对照表-5">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-5">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>怎么做的</th><th>优点</th><th>代价</th><th>本工程</th></tr></thead><tbody><tr><td><strong>① 出厂校准</strong></td><td>芯片厂在出厂时测好零偏写入内部 OTP/寄存器，用户直接读</td><td>用户零成本；一致性由厂家保证</td><td>只能标定"芯片级"的零偏，<strong>装到板子上以后的机械应力、焊接应力、附近磁场造成的偏差它管不了</strong>；🟡 且随时间/温度会变</td><td>🟡 隐含使用（原厂驱动会读校准系数，但 IMU 的零偏补偿是<strong>软件</strong>做的）</td></tr><tr><td><strong>② 上电静态校准（本工程）</strong></td><td>上电（或手势触发）时假定"静止水平"，采 N 次求平均当零偏，写 Flash</td><td>实现简单、效果直接；能吸收"板级"偏差；结果可掉电保存</td><td><strong>前提是"静止且水平"</strong> —— 手持、风里、斜面上校准就是错的；校准期间必须有人保证不动；写 Flash 有寿命与掉电风险</td><td><strong>✅ <code>accgyro.c:201-304</code> + <code>main.c:332-335</code>（从 Flash 恢复）</strong></td></tr><tr><td><strong>③ 运行时在线估计</strong></td><td>把零偏当作状态量，用卡尔曼滤波在飞行中持续估计（陀螺零偏 / 加速度零偏各有可观性条件）</td><td>不依赖"上电时静止"；能跟踪温漂</td><td>算法复杂（要建状态方程、调 Q/R）；可观性差时（长时间匀速）估不准甚至发散</td><td>🟡 <strong>部分替代</strong>：Mahony 的<strong>积分项</strong>本质上就是一个"陀螺零偏估计器"（见 8.3），但它只估 3 个陀螺零偏，不做完整卡尔曼</td></tr><tr><td><strong>④ 温度补偿</strong></td><td>建立"零偏-温度"曲线（查表或多项式），实时按温度修正</td><td>能治住最主要的时变因素（MEMS 零偏随温度漂移）</td><td>需要逐个器件标定（产线工序）；需要可靠的片上温度</td><td>❌ 本工程未做</td></tr></tbody></table></div>
+<p><strong>本工程的取值（🟢）</strong>：<code>GYRO_CALI_DIFF_LIMIT = 50</code>（<code>accgyro.c:222</code>）、 <code>ACC_CALI_GYRO_DIFF_LIMIT = 50</code>（<code>accgyro.c:277</code>）、采集 512 次（<code>accgyro.c:235/289</code>）、 加速度 Z 轴减 <code>acc_1G</code>（<code>accgyro.c:292-294</code>）。</p>
+<blockquote class=""><p><strong>⚠ 手册对照</strong>：手册 8.2 节引的代码片段是
+<code>#define GYRO_CALI_DIFF_LIMIT  40   /* 静止判定阈值：实测静止时陀螺仪抖动 &lt; 20，取 2 倍余量 */</code>
+——<strong>当前代码里是 <code>50</code>，而且这一行没有任何注释</strong>（<code>accgyro.c:222</code>）。
+详见附录 D 的问题清单（我不改手册，只指出）。</p></blockquote>
+<h3 id="8-2-小结">8.2 小结<a class="anchor" href="#8-2-小结">#</a></h3>
+<ol><li><strong>量程</strong>决定"不削顶"，<strong>分辨率</strong>决定"能否分辨小变化"，这两者在同一 ADC 位数下<strong>互相矛盾</strong></li></ol>
+<p>（本工程两个常量 <code>4096</code>、<code>1/16.4</code> 就是 8g / 2000dps 两档量程算出来的）；</p>
+<ol><li><strong>零偏</strong>的危害不对称：陀螺零偏被积分 → 角度<strong>持续漂移</strong>；加速度零偏只造成固定偏差；</li><li><strong>校准</strong>的前提是"<strong>静止且水平</strong>"，本工程用"陀螺输出抖动 &lt; 50 LSB"当静止判据，</li></ol>
+<p>采 512 次平均，结果写 Flash 供下次上电恢复（<code>accgyro.c:201-304</code>、<code>main.c:332-335</code>）；</p>
+<ol><li>本工程<strong>没有</strong>温度补偿；在线零偏估计只有 Mahony 的积分项（8.3）。</li></ol>
+<hr>
+<h2 id="8-3-姿态解算-Attitude-Estimation">8.3 姿态解算（Attitude Estimation）<a class="anchor" href="#8-3-姿态解算-Attitude-Estimation">#</a></h2>
+<blockquote class=""><p><strong>这一节回答什么问题</strong>：为什么不能"直接读角度"？如果不能，那要用什么表示姿态、
+用什么算法把它算出来？</p></blockquote>
+<h3 id="①-它是怎么出现的-5">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-5">#</a></h3>
+<p>🟢 <strong>确证（从代码的换算比例就能看出来）</strong>：本工程的陀螺仪原始值要先乘一个比例才变成角速度：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* imu/imu.c:439 —— 陀螺仪数据乘 gyroScale 后送进 Mahony */
+gyroData[0] * gyroScale, gyroData[1] * gyroScale, gyroData[2] * gyroScale,
+/* imu/accgyro.c:36 —— 而 gyroScale 里面带着 (M_PI / 180.0f) 的角度→弧度换算 */
+float gyroScale = 1.0f / 16.4f * (M_PI / 180.0f);   /* → 弧度/秒 */</pre></div>
+<p><strong>MEMS（Micro-Electro-Mechanical System，微机电系统）陀螺仪输出的是"角速度"（deg/s）， 不是"角度"（deg）。</strong> 想要角度，只有一条路：<strong>对角速度积分</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">   角度(t) = 角度(0) + ∫ 角速度 dt          ← 连续形式（物理事实）
+   角度[n] = 角度[n-1] + 角速度[n] × dt     ← 代码里的离散形式（imu.c:323-334）</pre></div>
+<p>🟢 <strong>而积分必然漂移</strong>：只要角速度里含有一个极小的恒定误差 <code>b</code>（零偏）， 积分出来就是 <code>b × t</code>，<strong>随时间线性增长</strong>。8.2 的定量卡片已经算过这个量级： 残留 50 LSB ≈ 3°/s → 一分钟 180°。 <strong>这就是"不能直接读角度、而且不能只靠陀螺仪积分"的全部理由。</strong></p>
+<h3 id="②-它要解决什么问题-没有它会怎样-5">② 它要解决什么问题（没有它会怎样）<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-5">#</a></h3>
+<p>姿态解算要同时解决两个子问题，缺一个都不行：</p>
+<div class="tablewrap"><table><thead><tr><th>子问题</th><th>不用它（只积分陀螺）会怎样</th><th>不用它（只用加速度计）会怎样</th></tr></thead><tbody><tr><td><strong>① 用最快的信号跟踪姿态变化</strong></td><td>—</td><td>加速度计有噪声且带宽低，跟不上快速机动；而且<strong>偏航完全测不到</strong></td></tr><tr><td><strong>② 用一个"不会漂"的参照纠正漂移</strong></td><td>角度几分钟就漂几十度，飞机越飞越歪</td><td>—</td></tr></tbody></table></div>
+<p>→ 于是有<strong>互补滤波</strong>这一类思路：<strong>让陀螺仪负责"快"，让加速度计负责"不漂"</strong>。 🟢 本工程用的 <strong>Mahony</strong> 就是互补滤波的一种具体实现形态（名字可以照实写； 本文件不写"谁在哪年提出"，因为那类信息本机无法核实）。</p>
+<h3 id="③-我该怎么理解它-5">③ 我该怎么理解它<a class="anchor" href="#③-我该怎么理解它-5">#</a></h3>
+<h4 id="8-3-1-三种姿态表示-各自的-病-结构性事实-工程评价">8.3.1 三种姿态表示，各自的"病"（🟢 结构性事实 + 🟡 工程评价）<a class="anchor" href="#8-3-1-三种姿态表示-各自的-病-结构性事实-工程评价">#</a></h4>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 16　三种姿态表示对比
+
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ ① 欧拉角（Euler Angles）：滚转 roll / 俯仰 pitch / 偏航 yaw               │
+ │     [ 30° , -15° , 90° ]     三个数，人能直接读懂                          │
+ │                                                                           │
+ │   ✘ 病：万向节死锁（Gimbal Lock）                                          │
+ │        当俯仰接近 ±90° 时，"滚转"和"偏航"的两个旋转轴重合，                │
+ │        三个角不再互相独立 → 数学上退化（某个角的解不唯一/奇异）             │
+ │                                                                           │
+ │   ✔ 本工程的用法：**只当输出**，不当内部状态                                │
+ │        imu.c:375-377 由 rMat 算出 angle[]，并在 imu.c:382-385             │
+ │        对 |roll| ≥ 90° 的情况做了特殊处理；pid.c:247 直接把 angle[2]=0     │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ ② 旋转矩阵（Rotation Matrix / DCM, Direction Cosine Matrix）：3×3 共 9 个数│
+ │                                                                           │
+ │      [ r00 r01 r02 ]                                                      │
+ │      [ r10 r11 r12 ]      每一列是"机体轴在参考系里的方向"                  │
+ │      [ r20 r21 r22 ]                                                      │
+ │                                                                           │
+ │   ✔ 优点：对向量做坐标变换只要一次矩阵乘法（本工程 imu.c:109-122 就是）      │
+ │   ✘ 病：① 9 个数里有冗余（实际只有 3 个自由度）→ 存得多、算得多            │
+ │          ② 数值误差累积会让它**不再正交**（行列式偏离 1）→ 必须不停"正交化" │
+ │             否则长度和夹角会慢慢变形，姿态跟着歪                          │
+ │                                                                           │
+ │   ✔ 本工程的用法：**当中间量**（imu.c:348 由四元数算出 rMat 每帧重建，      │
+ │      所以不需要单独做正交化 —— 这是一个省事的做法）                         │
+ └───────────────────────────────────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────────┐
+ │ ③ 四元数（Quaternion）：4 个数 (w, x, y, z)                                │
+ │                                                                           │
+ │      q0=1, q1=0, q2=0, q3=0  表示"没有旋转"（本工程 imu.c:5 的初值）        │
+ │                                                                           │
+ │   ✔ 优点：无奇异（没有万向节死锁）；4 个数比 9 个少；                        │
+ │           更新只用乘加，**不需要三角函数**（对 M0+ 这种无 FPU 的核很关键）   │
+ │   ✘ 病：① 不直观（q0..q3 看不出飞机歪了多少）→ 必须转成欧拉角给人看         │
+ │          ② 单位约束（四个数的平方和必须 = 1）→ 每步积分后都要**归一化**      │
+ │             本工程用 invSqrt 魔数归一化（imu.c:339-343 + mlib.c:188-197）   │
+ │                                                                           │
+ │   ✔ 本工程的用法：**当内部状态**（q0..q3 是全局变量，imu.c:5）               │
+ └───────────────────────────────────────────────────────────────────────────┘</pre></div>
+<p>🟡 <strong>工程评价（本节唯一带主观的部分）</strong>：三者的取舍在嵌入式里的典型答案是 "<strong>四元数当状态 + 旋转矩阵当工具 + 欧拉角当输出</strong>" —— 本工程正是这个组合 （<code>imu.c:5</code> 状态、<code>imu.c:348</code> 重建矩阵、<code>imu.c:375-377</code> 输出欧拉角）。</p>
+<h4 id="8-3-2-互补滤波-Mahony-的方框图-结构对照代码">8.3.2 互补滤波 / Mahony 的方框图（🟢 结构对照代码）<a class="anchor" href="#8-3-2-互补滤波-Mahony-的方框图-结构对照代码">#</a></h4>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 17　Mahony 互补滤波方框图（每个框后面标了本工程的行号）
+
+   ┌──────────────┐
+   │ 陀螺仪 (3 轴) │ gyroData[]  ──► ×gyroScale ──► 弧度/秒
+   └──────┬───────┘                      imu.c:439
+          │                                   │
+          │        ┌──────────────────────────┴─────────────────────────┐
+          │        │                                                    │
+          │        ▼                                                    │
+          │   ┌─────────┐   比例增益 Kp = 0.25 (imu.c:457)              │
+          │   │  +      │◄──────────────── ex,ey,ez ×Kp ────────────┐   │
+          │   │ 修正    │                                            │   │
+          │   │ 后的    │   积分增益 Ki = 0.0025 (imu.c:458)          │   │
+          │   │ 角速度  │◄──── integralFB ×Ki（慢，负责吃掉零偏）────┤   │
+          │   └────┬────┘                                            │   │
+          │        │  imu.c:317-319                                 │   │
+          │        ▼                                                 │   │
+          │   ┌────────────────────────┐                             │   │
+          │   │ 四元数积分             │  imu.c:323-334              │   │
+          │   │ q += 0.5·q⊗ω·dt        │                             │   │
+          │   └────────┬───────────────┘                             │   │
+          │            ▼                                             │   │
+          │   ┌────────────────────────┐                             │   │
+          │   │ 归一化（invSqrt 魔数）  │  imu.c:339-343              │   │
+          │   └────────┬───────────────┘                             │   │
+          │            ▼                                             │   │
+          │   ┌────────────────────────┐                             │   │
+          │   │ 重建旋转矩阵 rMat      │  imu.c:348                  │   │
+          │   └────────┬───────────────┘                             │   │
+          │            │                                             │   │
+          │            ▼                                             │   │
+          │   ┌────────────────────────┐   用 rMat 的第 3 行        │   │
+          └──►│ 估计的"重力方向"        │   （即机体轴 Z 在参考系   │   │
+              └────────┬───────────────┘    里的分量）              │   │
+                       │                                            │   │
+                       ▼                                            │   │
+                  ┌──────────────────┐   叉积 = 误差角速度的"方向"   │   │
+   加速度计 ─────►│  叉积 (×)        │   imu.c:288-290             │   │
+   accSmooth[]    │  测量重力 × 估计  │                             │   │
+   （先归一化）    └────────┬─────────┘                             │   │
+   imu.c:277-284           │  ex,ey,ez                             │   │
+                           └───────────────────────────────────────┘
+                                     （负反馈回路：把估计的重力方向
+                                       往测量到的重力方向"掰"）
+
+  ★ 三条保护（都是本工程的实测细节）：
+    · 加速度计不可信时不修正：|a| 不在 0.9~1.1g → useAcc=FALSE（imu.c:354-368 → :431-433）
+    · 转得太快时停止积分修正：spin_rate ≥ 20°/s → 不累加 integralFB（imu.h:21 → imu.c:298）
+    · 上电 2 秒内 Kp 放大 10 倍：powerupTimer &lt; 100（20ms 计数 → 2s）
+      → imu.c:239-256，节拍来自 bsp_timer.c:185-190</pre></div>
+<p><strong>这个回路要看出的一点</strong>：Mahony 与"互补滤波"是<strong>同一件事的两种写法</strong>。 互补滤波的经典形式是"低频用加速度计、高频用陀螺仪"两个滤波器相加； Mahony 把这件事写成"<strong>用误差去修正陀螺仪的输入</strong>"， 好处是<strong>修正作用自动作用在四元数积分上</strong>，不需要额外设计两个滤波器。 🟡（这条等价性说明属通说。）</p>
+<p>🟢 <strong>积分项就是"陀螺零偏估计器"</strong>：<code>integralFB</code> 累加的是 <code>Ki × 误差 × dt</code>（<code>imu.c:300-302</code>）， 而误差在姿态稳定后<strong>主要来自陀螺零偏</strong>。所以这个积分项会慢慢收敛到"能抵消零偏的量" —— 这正是 8.2 表里"运行时在线估计"的那一格在本工程的<strong>部分实现</strong>。 它只能估 3 个陀螺零偏，不能估加速度计零偏。</p>
+<h4 id="8-3-3-本工程的其余实测细节-逐条给行号">8.3.3 本工程的其余实测细节（逐条给行号）<a class="anchor" href="#8-3-3-本工程的其余实测细节-逐条给行号">#</a></h4>
+<div class="tablewrap"><table><thead><tr><th>事实</th><th>位置</th><th>说明</th></tr></thead><tbody><tr><td>算法函数名就是 <code>imuMahonyAHRSupdate</code></td><td><code>imu/imu.c:261-262</code></td><td>AHRS = Attitude and Heading Reference System（姿态航向参考系统）</td></tr><tr><td>Kp = <strong>0.25</strong>、Ki = <strong>0.0025</strong></td><td><code>imu/imu.c:457-458</code></td><td>写法是 <code>2500.0f/10000.0f</code>、<code>25.0f/10000.0f</code>，便于直接改百分数</td></tr><tr><td>上电 2 秒内 Kp ×10</td><td><code>imu/imu.c:239-256</code> + <code>bsp_timer.c:185-190</code></td><td><code>powerupTimer</code> 由 20ms 分频累加，<code>&gt;=100</code> 即 2 秒</td></tr><tr><td>加速度计可信判据</td><td><code>imu/imu.c:354-368</code>、<code>:431-433</code></td><td>模长 0.9g~1.1g</td></tr><tr><td>快转时停积分</td><td><code>imu/imu.h:21</code>（<code>SPIN_RATE_LIMIT 20</code>）、<code>imu/imu.c:273/298</code></td><td>单位 °/s；注释解释是防"DCM PI 控制器发晕产生假漂移"</td></tr><tr><td>四元数归一化用魔数快速倒数平方根</td><td><code>imu/mlib.c:188-197</code>、调用点 <code>imu.c:339</code></td><td>常数 <code>0x5f3759df</code> + 一次牛顿迭代；<strong>本文件不给这个技巧配发明人/年份</strong></td></tr><tr><td>加速度计额外做 8 点滑动平均</td><td><code>imu/imu.c:426</code></td><td><code>accSmooth = (accSmooth*7 + accData)/8</code>（指数滑动平均，等效 8 点）</td></tr><tr><td>dt 用 <code>micros16()</code> 实测，不用固定值</td><td><code>imu/imu.c:403-405</code></td><td>TIM16 自由计数器，16 位 → 约 65.5ms 回绕，用 <code>uint16_t</code> 相减处理回绕（<code>fc.c:60-64</code> 注释讲了这个技巧）</td></tr><tr><td>dt &gt; 0.2s 时直接放弃本次更新</td><td><code>imu/imu.c:419-422</code></td><td>防止一次长时间停顿后用一个巨大的 dt 积分（那会让姿态瞬间跳飞）</td></tr><tr><td>欧拉角的单位是"度×100"</td><td><code>imu/imu.h:48</code>、<code>imu/imu.c:375-377</code></td><td>用整数存角度，避免 float 传递；<code>angle[ROLL]</code> 满量程 ±18000</td></tr><tr><td>姿态解算的调用门限 1.25ms</td><td><code>imu/fc.c:82-89</code></td><td>每次主循环调用 <code>flight_ctrl()</code>，但内部只在 <code>deltaT &gt;= 0.00125f</code> 时才真跑（🟡 实际间隔受主循环耗时影响，见 7.2(f)）</td></tr></tbody></table></div>
+<p>🟡 <strong>一处值得你自己核对的单位问题（我的观察，未在硬件上验证）</strong>：本工程的串级 PID <strong>外环输出与内环反馈的量纲并不一致</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* imu/pid.c:259-261 —— 外环：角度误差（单位"度×100"）→ 目标"角速度" */
+target_angle = constrain(20*rcCommand[axis], -30000, +30000) + rcCommandTrim[axis] - angle[axis];
+target_rate  = target_angle * pidconf.PAngleToRate[axis];      /* PAngleToRate = 1.0 */
+
+/* imu/pid.c:304-306 —— 内环：反馈直接用陀螺仪的原始 LSB（≈16.4 LSB 每 °/s） */
+current_rate = accgyro.gyroData[axis];
+rate_error   = target_rate - current_rate;</pre></div>
+<ul><li><code>target_rate</code> 的量纲实际上是"<strong>度×100</strong>"（1 度误差 × 1.0 → 100 个单位）；</li><li><code>current_rate</code> 的量纲是"<strong>LSB ≈ 16.4 × °/s</strong>"；</li><li>两者相减得到一个"量纲混合"的误差 → 内环增益 <code>PRate = 0.10</code> 之类的数值</li></ul>
+<p>（<code>pid.c:241</code>）实际上同时承担了"单位换算"和"增益"两个职责。</p>
+<p>按代码数值粗算：满舵（<code>rcCommand=500</code>）→ <code>target_angle=10000</code> → <code>target_rate≈10000</code>； 而真实转 300°/s 时 <code>current_rate ≈ 4920</code>。 所以这个环在数值上"能对上"，飞起来也能用（否则原作者不会这样写）， 但它<strong>不是教科书意义上的标准串级</strong>：单位没统一，外环的"期望角速度"尺度是隐含的。 如果你要改参数，请把这一条先想清楚 —— <strong>改 <code>PAngleToRate</code> 时不能按"角度→角速度"的物理意义去算</strong>。</p>
+<h3 id="④-实现方法有哪些-取舍对照表-6">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-6">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>算法</th><th>核心思路</th><th>计算量（相对）</th><th>精度/特性</th><th>调参难度</th><th>本工程</th></tr></thead><tbody><tr><td><strong>① 互补滤波（经典形式）</strong></td><td>陀螺积分过高通、加速度计算角度过低通，两者相加</td><td>最低（几个乘加）</td><td>够用；但两个滤波器的截止频率要配好</td><td>低（就一两个系数）</td><td>🟡 本工程的 Mahony 与它等价（见 8.3.2 的说明）</td></tr><tr><td><strong>② Mahony</strong></td><td>用"测量的重力方向 × 估计的重力方向"的叉积当误差，反馈修正陀螺输入（P + I）</td><td>低（叉积 + 四元数积分 + 一次 invSqrt；<strong>无三角函数</strong>）</td><td>静态精度好；I 项能吃掉陀螺零偏；对振动敏感（靠前置滤波解决）</td><td>中（Kp/Ki 两个参数，本工程另有"上电快收敛"逻辑）</td><td><strong>✅ <code>imu.c:261</code>，Kp=0.25 / Ki=0.0025</strong></td></tr><tr><td><strong>③ Madgwick</strong></td><td>用梯度下降（逐步逼近）最小化"估计重力 vs 测量重力"的误差</td><td>中（比 Mahony 多一些乘加，仍无三角函数）</td><td>收敛快、动态响应好；🟡 参数 β 与采样率相关，改采样率要重调</td><td>中</td><td>❌（算法名可照实写；本文件不写来源年份）</td></tr><tr><td><strong>④ 扩展卡尔曼滤波（EKF, Extended Kalman Filter）</strong></td><td>把姿态/零偏当状态量，用协方差传播 + 观测更新</td><td>高（矩阵运算；本工程 Flash 已 95%，<code>bsp_timer.c:110-111</code> 提到空间紧张）</td><td>理论最优（在模型正确的前提下）；能同时估零偏；<strong>需要建状态方程与噪声模型</strong></td><td>高（Q/R 矩阵难调，调错会发散）</td><td>❌</td></tr><tr><td><strong>⑤ 直接余弦矩阵法（DCM）</strong></td><td>直接对 3×3 矩阵做积分 + 正交化（Renormalization）</td><td>中高（要反复做正交化，含开方/除法）</td><td>无奇异；但对数值精度要求高</td><td>中高</td><td>❌（本工程虽然也维护 <code>rMat</code>，但它是<strong>由四元数每帧重建</strong>的，<code>imu.c:348</code>，不做矩阵积分）</td></tr></tbody></table></div>
+<blockquote class=""><p><strong>⚠ 一条写作纪律</strong>：上表<strong>故意不含</strong>"谁在哪一年提出该算法""哪篇论文"这类信息。
+算法名字可以照实写（它们是工程界通用叫法），但<strong>发明者与年份本机无法核实</strong>，
+所以不写。需要这类信息请查原始文献。</p></blockquote>
+<h3 id="8-3-小结">8.3 小结<a class="anchor" href="#8-3-小结">#</a></h3>
+<ol><li><strong>不能直接读角度</strong>：MEMS 陀螺输出的是<strong>角速度</strong>，要积分才有角度，而积分必然漂</li></ol>
+<p>（🟢 本工程换算比例 <code>1/16.4 × π/180</code>，<code>accgyro.c:36</code>）；</p>
+<ol><li>三种姿态表示各有各的病：<strong>欧拉角有万向节死锁</strong>、<strong>矩阵有冗余与正交化负担</strong>、</li></ol>
+<p><strong>四元数不直观且必须归一化</strong>；工程上的常规组合是"四元数当状态、矩阵当工具、欧拉角当输出"；</p>
+<ol><li>本工程用 <strong>Mahony</strong>（<code>imu.c:261</code>，Kp=0.25 / Ki=0.0025），</li></ol>
+<p>靠<strong>加速度计提供的重力方向</strong>纠正陀螺漂移，并有<strong>三重保护</strong> （加速度计健康判据、快转停积分、上电 2 秒快收敛）；</p>
+<ol><li>可选算法有互补滤波 / Mahony / Madgwick / EKF / DCM，</li></ol>
+<p>取舍在"计算量 vs 精度 vs 调参难度"三维上（本工程选最省算力的那一档）。</p>
+<hr>
+<h2 id="8-4-滤波-Filter">8.4 滤波（Filter）<a class="anchor" href="#8-4-滤波-Filter">#</a></h2>
+<blockquote class=""><p><strong>这一节回答什么问题</strong>：为什么必须滤？"滤多狠"这个参数怎么定？
+以及<strong>本工程到底用了哪几个滤波器、什么参数、滤波器放在哪一级</strong>？</p></blockquote>
+<h3 id="①-它是怎么出现的-6">① 它是怎么出现的<a class="anchor" href="#①-它是怎么出现的-6">#</a></h3>
+<p>🟡 <strong>通说（本节最核心的一条经验结论）</strong>：<strong>机架振动频率远高于姿态解算带宽， 不滤掉会被积分成假角度。</strong> 展开成推理链条：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">   电机/桨叶转动 → 机架结构振动（高频，几十~几百 Hz 量级 🟠此处不给具体数字）
+        ↓ 通过减震/硬连接传到 IMU
+   陀螺仪读到的是"真实角速度 + 振动引起的角速度抖动"
+        ↓ 姿态解算要做积分：角度 = ∫ω dt
+   振动是"高频振荡"，积分的**均值**接近 0 → 所以它对角度的长期影响有限
+        ↓ 但它是**高频大幅值**信号：
+   ① 进 PID 的 D 项（微分）→ 被放大成电机的高频抖动 → 电机发热、机身嗡响（🟡）
+   ② 与采样混叠（aliasing）后可能落到低频 → 变成"看起来像真实运动"的假信号（🟡）
+   ③ 大幅值振动可能触发姿态解算里的各种门限（如本工程的 0.9g~1.1g 判据）→ 让算法
+      "以为"传感器坏了/在加速
+        ↓
+   ⇒ 必须在**积分和微分之前**把振动带滤掉</pre></div>
+<p>🟢 <strong>确证（工程自己的说法）</strong>：<code>imu/filter.c:10-14</code> 的注释写了同一件事：</p>
+<blockquote class=""><p>"陀螺仪/加速度计本身有噪声，电机振动也会串进来。PID 的 D 项是'误差的变化率'，
+对噪声极其敏感：一点点噪声经过微分就被放大成电机的高频抖动，表现为飞机'嗡嗡'响、
+电机发热、甚至姿态发散。所以滤波是飞控能否稳定飞行的前提。"</p></blockquote>
+<p>🟢 <strong>确证（D 项确实会放大噪声，可从代码验证）</strong>：<code>imu/pid.c:331-338</code>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">delta = rate_error - last_rate[axis];       /* 相邻两次的差 */
+last_rate[axis] = rate_error;
+delta /= deltaT;                            /* 再除以 dt → 噪声被 dt 放大 */
+deltaSum = delta1[axis] + delta2[axis] + delta;   /* 3 点滑动和（做一次简易平均） */
+d = deltaSum * pidconf.DRate[axis];</pre></div>
+<p><strong>看那个 <code>/= deltaT</code></strong>：采样周期越小（1.25ms 量级），噪声被放大的倍率越大 （🧮 这是数学必然：差分 = 高频增益 ∝ 1/dt）。</p>
+<h3 id="②-不滤会怎样-滤过头会怎样-一对反向的代价">② 不滤会怎样 / 滤过头会怎样（一对反向的代价）<a class="anchor" href="#②-不滤会怎样-滤过头会怎样-一对反向的代价">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th></th><th>滤得不够</th><th>滤得过头</th></tr></thead><tbody><tr><td>表现</td><td>电机高频抖动、发热、机身嗡响；D 项输出乱跳；🟡 严重时姿态发散</td><td><strong>相位滞后</strong> → 飞机"发飘"、响应迟钝；🟡 严重时控制环路相位裕度不足，出现低频振荡</td></tr><tr><td>原因</td><td>振动带落在通带里</td><td>截止频率低于了控制带宽</td></tr><tr><td>本工程的对应参数</td><td>—</td><td>陀螺 PT1 240Hz（<code>accgyro.c:72</code>）、加速度 30Hz（<code>accgyro.c:71</code>）</td></tr></tbody></table></div>
+<h3 id="③-我该怎么理解-截止频率-定义-选取经验">③ 我该怎么理解"截止频率"（🟢 定义 + 🟡 选取经验）<a class="anchor" href="#③-我该怎么理解-截止频率-定义-选取经验">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 18　滤波器频响示意（通带 / 截止 / 阻带）
+
+   增益
+   1.0 ┤━━━━━━━━━━━━━━━━━━┓
+       │   通带（保留）    ┃
+   0.9 ┤                  ┃
+       │                  ┃
+   0.7 ┤ ·················╋············· ← 截止频率 f_c：增益降到 0.707（-3dB）
+       │                  ┃ ╲
+   0.5 ┤                  ┃  ╲   一阶（PT1）：-20dB/十倍频
+       │                  ┃   ╲___
+   0.1 ┤                  ┃       ╲───────___
+       │                  ┃  二阶（biquad）：-40dB/十倍频
+  0.01 ┤                  ┃            ╲──────────────
+       └──────────────────┴─────┴──────┴──────────────► 频率（对数轴）
+                          f_c   10·f_c  100·f_c
+                          └──── 过渡带 ────┘└── 阻带（衰减） ──┘
+
+  ★ 两个必须记住的取舍（🟡 通说）：
+    ① 截止频率要 **低于振动频率**（否则振动照样进积分/微分）
+    ② 截止频率要 **高于控制带宽**（否则连真实运动都被滤掉 → 相位滞后 → 发飘）
+        · "控制带宽"指的是姿态环真正需要响应的频率（手指打舵的频率量级，几 Hz）
+        · 这两条之间通常有**很宽**的余量，所以截止频率不是"卡在中间"，
+          而是"尽量高一点、只要能把振动压下去"
+    ③ 阶数越高滚降越陡（一阶 -20dB/十倍频、二阶 -40dB/十倍频），
+       但**相位滞后也越多** —— 这就是本工程"陀螺用一阶、加速度用二阶"的原因之一</pre></div>
+<p>🟢 <strong>本工程的注释也给了同方向的取值提示</strong>：<code>imu/filter.c:79</code> 写着 "经验：陀螺仪常用 80~150Hz，具体看机架振动情况" —— 而本工程实际用的是 <strong>240Hz</strong>（<code>accgyro.c:72</code>），比这条注释建议的更高。 🟡 我不去猜"哪个是对的"：<code>filter.c</code> 的注释是<strong>通用建议</strong>， <code>accgyro.c:72</code> 是<strong>本工程的取值</strong>，两者不一致本身就是一个"值得你自己想清楚"的点 （240Hz 更少滞后，但对振动的抑制更弱）。</p>
+<h3 id="④-本工程到底用了什么-本节最重要的部分-全部从代码读出">④ 本工程到底用了什么（🟢 <strong>本节最重要的部分，全部从代码读出</strong>）<a class="anchor" href="#④-本工程到底用了什么-本节最重要的部分-全部从代码读出">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 19　滤波器在本工程链路里的位置（只有这三处，没有第四处）
+
+  陀螺仪原始值 ──► 去零偏 ──► ┌──────────────────────┐
+                              │ PT1 一阶低通 240Hz    │ accgyro.c:72 初始化
+                              │ dT = 1.25e-3 (1.25ms) │ accgyro.c:127 应用
+                              └──────────┬───────────┘
+                                         ▼  gyroData[]（仍是 LSB 单位）
+                            ┌────────────────────────────┐
+                            │ 两处消费者：                │
+                            │  · Mahony（×gyroScale→弧度）│ imu.c:439
+                            │  · PID 角速度环（直接用 LSB）│ pid.c:304
+                            └────────────────────────────┘
+
+  加速度计原始值 ─► 去零偏 ──► ┌──────────────────────┐
+                              │ biquad 二阶低通 30Hz  │ accgyro.c:71 初始化
+                              │ sampleDeltaUs = 1250  │ accgyro.c:126 应用
+                              │ Q = 1/√2（巴特沃斯）   │ filter.c:46
+                              └──────────┬───────────┘
+                                         ▼  accData[]
+                              ┌────────────────────────────┐
+                              │ 又做一次 8 点滑动平均        │ imu.c:426
+                              └──────────┬─────────────────┘
+                                         ▼  accSmooth[] → Mahony / 健康判据 / 落地判定
+
+  气压计原始值 ─► 原厂补偿 ─► ┌──────────────────────┐
+                              │ 中值滤波 5 点         │ altitude.c:19/88-90
+                              │ （mlib.c:134 快速中值）│
+                              ├──────────────────────┤
+                              │ 滑动平均 6 点         │ altitude.c:123-139
+                              │ （窗口宏 = 7，除数 6） │
+                              ├──────────────────────┤
+                              │ 高度低通 α=0.1        │ altitude.c:169
+                              │ 垂直速度低通 3/4      │ altitude.c:174
+                              │ 速度死区 100 mm/s     │ altitude.c:180
+                              └──────────┬───────────┘
+                                         ▼  BaroAlt / baroVel → 互补滤波（8.5）</pre></div>
+<h4 id="a-陀螺仪-PT1-一阶低通-240Hz-dT-1-25ms">（a）陀螺仪：PT1 一阶低通，240Hz，dT = 1.25ms<a class="anchor" href="#a-陀螺仪-PT1-一阶低通-240Hz-dT-1-25ms">#</a></h4>
+<p>🟢 <strong>确证</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/accgyro.c:72 —— 初始化（三轴各一个，accgyro.c:30 定义数组） */</span></div><div class="line"><span class="ln">2</span><span class="lc">pt1FilterInit(&amp;gyroFilter[axis], 240, 1.25e-3);   /* 截止频率 240Hz，dT = 1.25ms */</span></div><div class="line"><span class="ln">3</span><span class="lc">/* imu/accgyro.c:127 —— 应用 */</span></div><div class="line"><span class="ln">4</span><span class="lc">accgyro.gyroData[axis] = pt1FilterApply(&amp;gyroFilter[axis], accgyro.gyroValue[axis]);</span></div></pre></div>
+<p>🟢 <strong>递推式与 RC 的关系</strong>（<code>imu/filter.c:83-99</code>）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">filter-&gt;RC = 1.0f / ( 2.0f * M_PI_FLOAT * f_cut );                    /* RC = 1/(2π·f_cut) */</span></div><div class="line"><span class="ln">2</span><span class="lc">filter-&gt;state += filter-&gt;dT / (filter-&gt;RC + filter-&gt;dT) * (input - filter-&gt;state);</span></div></pre></div>
+<p><strong>怎么读这个式子</strong>：每次把输出往输入方向"挪一小步"， 挪的比例 <code>dT/(RC+dT)</code> 越小 → 越平滑但跟随越慢。 <code>RC = 1/(2π×240) ≈ 0.663ms</code>，而 <code>dT = 1.25ms</code>，所以 <code>dT/(RC+dT) ≈ 0.65</code> —— 每步挪 65%，<strong>这已经是很"轻"的滤波</strong>（240Hz 截止对 800Hz 采样率来说偏高， 属于"只压高频、尽量不引入滞后"的取向）。</p>
+<h4 id="b-加速度计-biquad-二阶低通-30Hz-采样周期写-1250µs">（b）加速度计：biquad 二阶低通，30Hz，采样周期写 1250µs<a class="anchor" href="#b-加速度计-biquad-二阶低通-30Hz-采样周期写-1250µs">#</a></h4>
+<p>🟢 <strong>确证</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/accgyro.c:71 */</span></div><div class="line"><span class="ln">2</span><span class="lc">biquadFilterInitLPF(&amp;accFilter[axis], 30, 1250);   /* 截止 30Hz，sampleDeltaUs = 1250µs */</span></div><div class="line"><span class="ln">3</span><span class="lc">/* imu/accgyro.c:126 */</span></div><div class="line"><span class="ln">4</span><span class="lc">accgyro.accData[axis] = biquadFilterApply(&amp;accFilter[axis], accgyro.accValue[axis]);</span></div></pre></div>
+<p>🟢 <strong>为什么加速度计用二阶、陀螺用一阶</strong>（<code>imu/filter.c:16-21</code> 的原文理由）： 二阶（biquad，双二阶）滚降 <strong>-40dB/十倍频</strong>，比一阶陡一倍， 能把"振动带"压得更干净；代价是计算量更大、相位滞后更多。 加速度计的信号带宽需求低（它只用来判断重力方向），<strong>多滞后一点无所谓</strong>， 所以用二阶；陀螺仪直接进 PID 的内环，<strong>滞后要尽量小</strong>，所以用一阶。</p>
+<p>🟢 <strong>实现细节（filter.c:118-231）</strong>：用<strong>直接 II 型</strong>结构，只存两个状态量 <code>d1</code>、<code>d2</code> （相当于省掉四个历史值）—— 在 8KB SRAM 的芯片上这个优化有意义（<code>filter.c:126-129</code> 注释）； 系数在初始化时算一次（含 <code>sinf/cosf</code>，<code>filter.c:141-142</code>），运行时只有乘加。</p>
+<h4 id="c-气压计-中值-滑动平均-低通-死区-四件套">（c）气压计：中值 + 滑动平均 + 低通 + 死区（四件套）<a class="anchor" href="#c-气压计-中值-滑动平均-低通-死区-四件套">#</a></h4>
+<p>🟢 <strong>确证</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>环节</th><th>参数</th><th>位置</th></tr></thead><tbody><tr><td><strong>中值滤波</strong></td><td>5 点（<code>PRESSURE_SAMPLES_MEDIAN = 5</code>）</td><td>宏：<code>altitude.c:19</code>；调用：<code>altitude.c:88-90</code>；实现：<code>mlib.c:134-143</code>（7 次比较）</td></tr><tr><td><strong>滑动平均</strong></td><td>窗口宏 <code>BARO_TAB_SIZE_MAX = 7</code>，实际除数 6</td><td>宏：<code>altitude.c:18</code>；求和与平均：<code>altitude.c:123-139</code></td></tr><tr><td><strong>高度低通</strong></td><td><code>BaroAlt = BaroAlt*0.1 + BaroAlt_tmp*0.9</code></td><td><code>altitude.c:169</code></td></tr><tr><td><strong>垂直速度低通</strong></td><td><code>baroVel = baroVel*3/4 + (BaroAlt-lastBaroAlt)*8</code></td><td><code>altitude.c:174</code></td></tr><tr><td><strong>速度限幅 + 死区</strong></td><td>±2000 mm/s；死区 100 mm/s</td><td><code>altitude.c:176</code>、<code>:180</code></td></tr></tbody></table></div>
+<p>🟢 <strong>顺带核出一个"宏与代码自洽"的细节</strong>：注释说"窗口大小 7"，但平均时除以 6 （<code>altitude.c:137</code> <code>baroPressureSum / (BARO_TAB_SIZE_MAX - 1)</code>）。 我按环形缓冲区的加减顺序验算了一遍：稳态下求和里<strong>确实只有 6 个样本</strong> （写第 <code>i</code> 个时同时减掉第 <code>i+1</code> 个，即最老的那个）→ <strong>除数 6 是对的</strong>， 不是笔误。这类"宏名字大 1、除数小 1"的地方，读代码时容易误判成 bug。</p>
+<p>🟡 <strong>中值滤波的代价（通说）</strong>：N 点中值的输出相对于输入有一个 <code>(N-1)/2</code> 个样本的延迟 （5 点 → 约 2 个样本）。按本工程气压计约 30ms 一个样本（<code>common.c:537-539</code> 注释推算 "≈25+5 ms，约 30~40Hz"）算，中值 5 点带来 ~60ms 延迟， 再加上 6 点滑动平均（~180ms 跨度）—— <strong>气压通道的总滞后是百毫秒量级</strong>。 这正是"定高要用加速度计补高频"的原因（8.5）。</p>
+<h4 id="d-还有一个-藏在-PID-里-的滤波">（d）还有一个"藏在 PID 里"的滤波（🟢）<a class="anchor" href="#d-还有一个-藏在-PID-里-的滤波">#</a></h4>
+<p>🟢 <strong>确证</strong>：<code>imu/pid.c:335-338</code> 对 D 项做了一次<strong>3 点滑动和平均</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">deltaSum = delta1[axis] + delta2[axis] + delta;   /* 连续三次微分值相加 */</span></div><div class="line"><span class="ln">2</span><span class="lc">delta2[axis] = delta1[axis];</span></div><div class="line"><span class="ln">3</span><span class="lc">delta1[axis] = delta;                             /* 用移位代替数组，省 RAM */</span></div><div class="line"><span class="ln">4</span><span class="lc">d = deltaSum * pidconf.DRate[axis];</span></div></pre></div>
+<p>🟡 严格说这是"<strong>3 点滑动和</strong>（sum）"而不是"平均"（差一个 1/3 的系数）， 但这个 1/3 被吸收进了 <code>DRate</code> 参数里（<code>pid.c:243</code> 的 <code>DRate = 0.0012</code>）—— <strong>效果等价于"三点平均 + 增益"</strong>。这类"常数吸收进增益"的写法在嵌入式里很常见， 读的时候要意识到"参数里可能藏着归一化系数"。</p>
+<h4 id="e-陷波器-代码里有-本工程没有用-本机实测">（e）<strong>陷波器：代码里有，本工程没有用</strong>（🟢 本机实测）<a class="anchor" href="#e-陷波器-代码里有-本工程没有用-本机实测">#</a></h4>
+<p>🟢 <strong>确证</strong>：<code>imu/filter.c:160-169</code> <strong>实现</strong>了陷波（<code>FILTER_NOTCH</code>）的系数公式：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">case FILTER_NOTCH:    /* 陷波：只掐掉 filterFreq 附近很窄的一段 */</span></div><div class="line"><span class="ln">2</span><span class="lc">    b0 =  1;  b1 = -2 * cs;  b2 =  1;</span></div><div class="line"><span class="ln">3</span><span class="lc">    a0 =  1 + alpha;  a1 = -2 * cs;  a2 =  1 - alpha;</span></div><div class="line"><span class="ln">4</span><span class="lc">    break;</span></div></pre></div>
+<p>但<strong>全工程只有一个 biquad 初始化调用点</strong>：<code>biquadFilterInitLPF()</code>（<code>accgyro.c:71</code>）， 而它固定传 <code>FILTER_LPF</code>（<code>filter.c:193-196</code>）。 → <strong>结论：陷波器是实现完整但未被调用的功能</strong>（属于"预留能力/移植自其他工程"）。</p>
+<blockquote class=""><p><strong>⚠ 手册对照</strong>：手册 8.4 的表格里，"陷波（Notch）"一行的"你工程里的地方"写的是
+<code>FILTER_NOTCH</code> 类型。这句话<strong>字面上没错</strong>（类型确实存在），
+但容易让读者以为"工程里正在用陷波"。
+建议（<strong>我不改手册</strong>）在附录 D 里记为"表述可更精确"一类。</p></blockquote>
+<h4 id="f-一个真实的-参数与假设不一致-推理-但依据是代码事实">（f）一个真实的"参数与假设不一致"（🟡 推理，但依据是代码事实）<a class="anchor" href="#f-一个真实的-参数与假设不一致-推理-但依据是代码事实">#</a></h4>
+<p>🟢 <strong>代码事实</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>事实</th><th>位置</th></tr></thead><tbody><tr><td>IMU 的 <strong>ODR（Output Data Rate，输出数据率）配成 200Hz</strong></td><td><code>accgyro.c:64-66</code>（宏取值 <code>Icm426xxDefs.h:750/801</code>，注释 "200 Hz (5 ms)"）</td></tr><tr><td>但滤波器的<strong>采样周期按 1250µs（=800Hz）</strong> 初始化</td><td><code>accgyro.c:71-72</code>（<code>1250</code> 与 <code>1.25e-3</code>）</td></tr><tr><td>而姿态/PID 的执行门限是 <strong>1.25ms</strong></td><td><code>fc.c:82</code> <code>if(deltaT &gt;= 0.00125f)</code></td></tr><tr><td>而主循环一圈的耗时注释值是 <strong>4.6~7.3ms</strong></td><td><code>main.c:399-402</code>（altitude_ctrl 2.1~3.873ms + flight_ctrl 2.493~3.446ms）</td></tr></tbody></table></div>
+<p>🟡 <strong>推论（我推的，未在硬件上测）</strong>： 滤波器系数是按 800Hz 采样率算出来的，但<strong>真实的新数据只有 200Hz</strong>（每 5ms 一个）， 而 <code>accgyro_update()</code> 被调用得更快（每 1.25ms 一次门限，实际受主循环限制可能是 5~7ms 一次）。 两种情况都会让"滤波器每一步的输入"与"系数假设"不匹配：</p>
+<ul><li>若调用比 ODR 快 → <strong>同一份采样被反复滤波多次</strong> → 等效截止频率<strong>低于</strong>标称值（更钝）；</li><li>若调用比 ODR 慢（主循环被拖慢时） → 部分采样被跳过 → 等效截止频率<strong>高于</strong>标称值（更少滤波）。</li></ul>
+<p><strong>这一段的意义不在于"算出一个正确的截止频率"</strong>（那需要示波器/日志实测）， 而在于记住一条工程习惯：<strong>滤波器的系数是"采样率"的函数</strong>。 改 ODR、改主循环周期、改调用频率时，<strong>滤波器参数必须跟着复核</strong> —— 否则你会看到一个"参数写着 240Hz、实际行为是别的值"的系统， 而且<strong>任何调试都会变得没有依据</strong>。</p>
+<h3 id="④-实现方法有哪些-取舍对照表-7">④ 实现方法有哪些（取舍对照表）<a class="anchor" href="#④-实现方法有哪些-取舍对照表-7">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>滤波器</th><th>原理一句话</th><th>计算量</th><th>相位滞后</th><th>最擅长</th><th>最不擅长</th><th>本工程</th></tr></thead><tbody><tr><td><strong>一阶 IIR（PT1）</strong></td><td>输出每步往输入挪一小步（等价于 RC 低通）</td><td><strong>最低</strong>（1 乘 2 加）</td><td>小</td><td>高频噪声、要求低滞后</td><td>需要陡滚降的场合（-20dB/十倍频太缓）</td><td><strong>✅ 陀螺 240Hz</strong>（<code>accgyro.c:72</code>）</td></tr><tr><td><strong>二阶巴特沃斯（biquad LPF）</strong></td><td>二阶 IIR，通带最平坦、无纹波</td><td>中（5 乘 4 加）</td><td>中</td><td>需要陡滚降、又不允许纹波</td><td>相位敏感的环路</td><td><strong>✅ 加速度 30Hz</strong>（<code>accgyro.c:71</code>，Q=1/√2）</td></tr><tr><td><strong>FIR 滑动平均</strong></td><td>取最近 N 个样本的平均</td><td>低（可用滑动和优化到 1 加 1 减）</td><td><strong>N 个样本的一半</strong>（与 N 成正比）</td><td>简单、线性相位</td><td>延迟要求高的场合</td><td>🟡 <strong>部分</strong>：<code>imu.c:426</code> 的 8 点指数滑动；<code>altitude.c:123-139</code> 的 6 点滑动和</td></tr><tr><td><strong>中值滤波</strong></td><td>取 N 个样本的中间值</td><td>低（5 点 7 次比较、7 点 13 次比较；<code>mlib.c:134/146</code>）</td><td>(N-1)/2 个样本</td><td><strong>剔除突发野值</strong>（尖峰、毛刺），线性滤波做不到</td><td>高斯噪声（效率不如平均）</td><td><strong>✅ 气压 5 点</strong>（<code>altitude.c:19/88-90</code>）</td></tr><tr><td><strong>陷波（Notch）</strong></td><td>只在某个窄频段挖一个"坑"</td><td>中（与 biquad 同级）</td><td>窄带外很小</td><td>掐掉已知的<strong>单频</strong>振动（如电机转速基频及其倍频）</td><td>频率会漂移的振动（转速变化时坑要跟着动，需要"动态陷波"）</td><td>❌ 代码有（<code>filter.c:160-169</code>）、<strong>未调用</strong></td></tr><tr><td><strong>卡尔曼滤波</strong></td><td>用模型预测 + 观测更新，按不确定性加权</td><td>高（矩阵运算）</td><td>取决于模型，"最优"</td><td>多传感器融合、能同时估零偏；🟡 在模型正确时理论最优</td><td>计算资源紧张、模型难建的场合</td><td>❌（本工程用互补滤波代替，见 8.5）</td></tr></tbody></table></div>
+<p><strong>本工程的取舍一句话</strong>：<strong>"按信号特性分别下药"</strong> —— 陀螺要低滞后 → 一阶；加速度要压振动 → 二阶；气压要抗野值 → 中值 + 平均 + 低通。 <strong>没有一处用卡尔曼</strong>，因为这套方案在 M0+、8KB SRAM、Flash 已用 95% 的约束下更划算。</p>
+<h3 id="8-4-小结">8.4 小结<a class="anchor" href="#8-4-小结">#</a></h3>
+<ol><li>必须滤波的核心理由（🟡）：<strong>机架振动频率远高于姿态带宽，不滤会被积分/微分放大</strong>；</li><li>低通/高通的直观含义与截止频率的三条选取原则（低于振动、高于控制带宽、阶数换滚降）；</li><li><strong>本工程实测（🟢）</strong>：陀螺 <strong>PT1 240Hz</strong>（<code>accgyro.c:72</code>，应用点 <code>:127</code>）；</li></ol>
+<p>加速度 <strong>biquad LPF 30Hz</strong>（<code>accgyro.c:71</code>，应用点 <code>:126</code>）； 气压 <strong>中值 5 点 + 滑动平均 6 点 + 低通 α=0.1 + 速度低通 3/4 + 死区 100mm/s</strong> （<code>altitude.c:19/88-90/123-139/169/174/180</code>）；PID 的 D 项另有 <strong>3 点滑动和</strong>（<code>pid.c:335-338</code>）；</p>
+<ol><li><strong>陷波器实现了但没有被调用</strong>（<code>filter.c:160-169</code>，唯一的初始化调用点是 LPF 版本）；</li><li>一个必须记住的隐患：<strong>滤波器系数是按 800Hz 采样率算的，而 ODR 配的是 200Hz</strong></li></ol>
+<p>（<code>accgyro.c:64-66</code> vs <code>:71-72</code>）—— 改采样率时滤波器参数必须复核。</p>
+<hr>
+<h2 id="8-5-气压计与定高">8.5 气压计与定高<a class="anchor" href="#8-5-气压计与定高">#</a></h2>
+<blockquote class=""><p><strong>这一节回答什么问题</strong>：气压为什么能当高度用？它的问题是什么？
+为什么必须和加速度计融合？<strong>本工程到底是怎么算出高度、怎么控制高度的？</strong></p></blockquote>
+<h3 id="①-它是怎么出现的-物理链条">① 它是怎么出现的（物理链条，🟢）<a class="anchor" href="#①-它是怎么出现的-物理链条">#</a></h3>
+<p>🟢 <strong>物理事实链条（每一环都可独立验证）</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">   ① 大气压随高度上升而下降（因为越高，头顶的空气柱越短）
+        ↓
+   ② 低空近似：每升高约 8.5 m，气压下降约 1 hPa
+      （精确值随高度与气温变化；本工程用的公式在**海平面附近**给出 8.33 m/hPa，见下）
+        ↓
+   ③ 所以反过来：测出气压 → 就能推出高度
+        ↓
+   ④ 但"气压 → 高度"不是线性的（越往高处，同样的高度差对应越小的气压差），
+      所以要用**国际标准大气（ISA, International Standard Atmosphere）**的公式，而不是简单乘法</pre></div>
+<p>🟢 <strong>本工程的公式与"8.33 m/hPa"的来历（可自行验算）</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/altitude.c:150 与 :164 —— 同一套公式，一处算地面基准、一处算当前高度 */</span></div><div class="line"><span class="ln">2</span><span class="lc">baroGroundAltitude = (1.0f - baro_pow_0p295((baroGroundPressure / 10.0f) / 101325.0f)) * 44330000.0f; //in mm</span></div><div class="line"><span class="ln">3</span><span class="lc">BaroAlt_tmp        = (1.0f - baro_pow_0p295(((float)baroPressureAvg)    / 101325.0f)) * 44330000.0f; //in mm</span></div></pre></div>
+<p>验算：</p>
+<div class="tablewrap"><table><thead><tr><th>项</th><th>数值</th><th>说明</th></tr></thead><tbody><tr><td>海平面标准气压 <code>P0</code></td><td><strong>101325 Pa</strong></td><td>代码里直接写死，与 ISA 一致</td></tr><tr><td>系数</td><td><strong>44330000 mm = 44330 m</strong></td><td>与手册 8.5 里那个更常见的写法 <code>44330000 × (...)</code>（单位 mm）一致</td></tr><tr><td>指数（代码里叫 <code>baro_pow_0p295</code>）</td><td><strong>0.190295</strong></td><td>而 <code>1/5.2559 ≈ 0.19026</code> —— 即 ISA 对流层公式里的 <code>R·L/(g·M)</code> 的倒数；代码取 0.190295</td></tr><tr><td>低空灵敏度（对公式求导）</td><td><code>44330 m × 0.190295 / 101325 Pa ≈ 0.0833 m/Pa</code></td><td>换成 hPa：<strong>≈ 8.33 m/hPa</strong>（与手册说的"约每 8.5m 降 1hPa"同量级，差异来自取整）</td></tr></tbody></table></div>
+<p>🟢 <strong>确证（工程为了省 Flash 做了替换）</strong>：<code>imu/altitude.c:1-7</code> 的注释说明， <code>powf</code> 一旦被链接就会把 libm 里 4KB 以上的代码拉进固件，而 Flash 只有 64KB （"实测正好差 200 字节装不下"），所以用了一个<strong>自研的窄区间幂函数</strong> <code>baro_pow_0p295()</code> 代替。🟢 这一条同时解释了 <code>main.c</code> 里那句 "本工程 Flash 已用到 95%"（<code>bsp_timer.c:110-111</code>）的处境。</p>
+<h3 id="②-它要解决什么问题-没有它会怎样-它自己的问题">② 它要解决什么问题（没有它会怎样）/ 它自己的问题<a class="anchor" href="#②-它要解决什么问题-没有它会怎样-它自己的问题">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>气压计的固有难题</th><th>具体表现</th><th>本工程的应对（🟢）</th></tr></thead><tbody><tr><td><strong>噪声大</strong></td><td>单次读数抖动会让高度跳几十厘米</td><td>中值 5 点（<code>altitude.c:88-90</code>）+ 滑动平均 6 点（<code>:123-139</code>）+ 高度低通 α=0.1（<code>:169</code>）</td></tr><tr><td><strong>受气流影响</strong></td><td>🟡 螺旋桨下洗气流、开关舱盖、手挡住进气孔都会让气压<strong>突变</strong></td><td>中值滤波专门去这种"突发野值"（<code>mlib.c:103-108</code> 注释就写了这点）；原厂驱动侧还有 IIR 系数 3（<code>common.c:402</code>）压螺旋桨气流抖动（<code>common.c:367</code> 注释明确写了这个用途）</td></tr><tr><td><strong>天气变化导致基准漂移</strong></td><td>🟡 天气系统过境时海平面气压一天内可变化几个 hPa → 对应几十米的高度误差；<strong>绝对高度不可靠</strong></td><td><strong>只算相对高度</strong>：起飞前用地面积累的 <code>baroGroundPressure</code> 当基准（<code>altitude.c:144-157</code>），之后 <code>BaroAlt_tmp -= baroGroundAltitude</code>（<code>:167</code>）</td></tr><tr><td><strong>对姿态敏感</strong></td><td>机身倾斜时，桨盘气流与机身遮挡都会改变局部气压</td><td>高度环只在 <code>tiltAngle &lt; 8000</code>（即 80°）时才计算（<code>altitude.c:295</code>），注释写明理由"确保推力方向基本向下"</td></tr><tr><td><strong>安装/朝向敏感</strong></td><td>进气孔朝向、泡棉、风道都会影响读数</td><td>🟢 硬件层：BMP390 与 IMU 共用一个 SPI（<code>common.c:142-143</code>），片选 PB7（<code>main.c:262</code> 注释）</td></tr></tbody></table></div>
+<p>🟢 <strong>确证（"起飞点当基准"的实现）</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/altitude.c:144-157 —— 只在"校准阶段或未解锁"时更新地面基准 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if ((calibratingB&gt;0) || (!fc.flags.motorArmed &amp;&amp; !fc.flags.motorIdle)) {</span></div><div class="line"><span class="ln">3</span><span class="lc">    if(calibratingB == BCALIBRATING_BARO_CYCLES) baroGroundPressure = baroPressureAvg * 10;</span></div><div class="line"><span class="ln">4</span><span class="lc">    baroGroundPressure -= baroGroundPressure / 10;    /* 递归平均（10 倍时间常数） */</span></div><div class="line"><span class="ln">5</span><span class="lc">    baroGroundPressure += baroPressureAvg;            /* 新样本权重 1/10 */</span></div><div class="line"><span class="ln">6</span><span class="lc">    baroGroundAltitude = (1.0f - baro_pow_0p295((baroGroundPressure / 10.0f) / 101325.0f)) * 44330000.0f;</span></div><div class="line"><span class="ln">7</span><span class="lc">    vel = 0;  accAlt = 0;                             /* 顺带把速度和加速度积分清零 */</span></div><div class="line"><span class="ln">8</span><span class="lc">    if(calibratingB &gt; 0) calibratingB--;              /* BCALIBRATING_BARO_CYCLES = 50（altitude.c:15） */</span></div><div class="line"><span class="ln">9</span><span class="lc">}</span></div></pre></div>
+<ul><li><code>*10</code> / <code>/10</code> 是<strong>定点技巧</strong>：用整数放大 10 倍来保留一位小数（<code>baroGroundPressure</code> 的</li></ul>
+<p>有效精度因此提高一档）；</p>
+<ul><li>只在"未解锁"或"校准期"更新，<strong>起飞后基准冻结</strong> —— 这是"相对高度"的关键。</li></ul>
+<h3 id="③-为什么要和加速度计融合-结构-图">③ 为什么要和加速度计融合（🟢 结构 + 图）<a class="anchor" href="#③-为什么要和加速度计融合-结构-图">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 20　气压高度换算与噪声（为什么气压单独用不行）
+
+  气压读数 P（Pa）                                       噪声来源：
+     │                                                   · 传感器本底噪声
+     │  ① 中值 5 点（去野值）                              · 气流/遮挡（突变）
+     ├─────────────►                                      · 天气（慢漂移）
+     │  ② 滑动平均 6 点（平滑）
+     ├─────────────►
+     │  ③ ISA 公式（非线性）
+     ├─────────────►  相对高度（mm）
+     │  ④ 低通 α=0.1
+     ▼
+   BaroAlt ────────────────────────────────────────────────────────────────►
+     │   ▲ 慢（百毫秒级滞后）  ▲ 但**不会随时间漂**
+     │   │
+     │   │        真实高度
+     │   │   ╱──────────────────────────────   ← BaroAlt 大体跟着走，但"糊"
+     │   │  ╱      ╱╲    ╱╲
+     │   │ ╱      ╱  ╲  ╱  ╲                    ← 噪声与滞后造成的偏差
+     │   └────────────────────────────────────► 时间
+
+  加速度计积分出的高度 accAlt ─────────────────────────────────────────────►
+          ▲ 快（每 1.25ms 就能更新）        ▲ 但**会随时间漂**（二次积分！）
+          │   ╱╲╱╲╱╲
+          │  ╱                        ← 短期能跟上真实运动
+          │ ╱
+          │╱ .........................................→ 长期慢慢飘走（零偏 × t²/2）
+          └────────────────────────────────────► 时间
+
+  ★ 结论：又是"互补"！气压计 = 长期准、短期噪声大（与加速度计在姿态里的角色完全一样）</pre></div>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 21　气压 + 加速度互补融合框图（本工程 altitude.c:225-268 的实际结构）
+
+   ┌─────────────┐   ┌─────────────────────────────────────────────┐
+   │ 加速度计     │──►│ 机体 → 地球坐标变换（imu.c:207-216）        │
+   │ accData[]   │   │ 去重力（减 acc_1G，imu.c:221）              │
+   └─────────────┘   │ 死区（applyDeadband，imu.c:227-229）        │
+                     │ 累加到 accSumZ[]（每 1.25ms 一次）           │
+                     └──────────────────┬──────────────────────────┘
+                                        │  accSumZ / accSumZCount
+                                        ▼
+                     ┌─────────────────────────────────────────────┐
+                     │ 积分成速度、再积分成位移（altitude.c:225-247）│
+                     │   s = s0 + v0·Δt + ½·a·Δt²                   │
+                     │ 缩放：accVelScale = 9.80665*1000/4096        │
+                     │      （m/s² → mm/s²，用 acc_1G 换算）        │
+                     └──────────────────┬──────────────────────────┘
+                                        │  accAlt（mm）、vel（mm/s）
+                                        ▼
+   ┌─────────────┐   ┌─────────────────────────────────────────────┐
+   │ 气压计       │──►│ BaroAlt（相对高度，mm）、baroVel（mm/s）      │
+   └─────────────┘   └──────────────────┬──────────────────────────┘
+                                        │
+                                        ▼
+              ┌───────────────────────────────────────────────────────┐
+              │ 互补滤波（两条，各自一个权重）                          │
+              │  altitude.c:259  accAlt = accAlt*0.985 + BaroAlt*0.015 │
+              │  altitude.c:268  vel    = vel*0.995    + baroVel*0.005 │
+              │                                                       │
+              │  ⇒ 高频（快变化）主要由加速度积分贡献（0.985/0.995）    │
+              │  ⇒ 低频（慢变化）由气压计"拉回"（0.015/0.005）          │
+              │  ⇒ EstAlt = accAlt（altitude.c:260）                   │
+              └──────────────────┬────────────────────────────────────┘
+                                 ▼
+                       EstAlt（mm）→ 高度环（图 22）</pre></div>
+<p>🟢 <strong>确证（权重与"时间常数"）</strong>： <code>accAlt = accAlt*0.985 + BaroAlt*0.015</code> 是一个一阶低通形式的互补滤波， 它的"纠正时间常数" ≈ 1/0.015 ≈ <strong>67 个更新周期</strong>。 而 <code>getEstimatedAltitude()</code> 由 20ms 节拍驱动（<code>altitude.c:416</code>）→ 约 <strong>1.3 秒</strong>。 含义：<strong>气压计用大约 1 秒多的时间尺度去"纠正"加速度积分的漂移</strong>， 而这个时间尺度远慢于真实的高度变化（所以不会把真实运动当漂移滤掉）—— 这一条是互补滤波参数选取的通用思路（🟡 通说），不是本机实测。</p>
+<p>🟢 <strong>确证（速度环的互补权重更"信任加速度"）</strong>：<code>vel = vel*0.995 + baroVel*0.005</code> → 时间常数 1/0.005 = <strong>200 个周期 ≈ 4 秒</strong>。速度比高度更"信加速度"， 因为气压算出来的速度（<code>baroVel</code>，<code>altitude.c:174</code> 由高度差分放大 8 倍） 噪声更大。</p>
+<h3 id="④-本工程的定高-BMP390-串级高度环-全部实测">④ 本工程的定高：BMP390 + 串级高度环（🟢 全部实测）<a class="anchor" href="#④-本工程的定高-BMP390-串级高度环-全部实测">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">图 22　定高的串级结构（外环位置 → 内环速度 → 油门修正），以及它怎么进混控
+
+   目标高度 AltHold ──┐
+   （解锁瞬间 = 当前高度，altitude.c:276）
+                      ▼
+        ┌───────────────────────────────┐
+        │ 位置环（P）                    │   altitude.c:312-314
+        │ error = AltHold - EstAlt       │   限幅 ±5000（±5m）
+        │ setVel = Pf_Pos × error        │   Pf_Pos = 1.1（altitude.c:303）
+        └──────────────┬────────────────┘
+                       ▼  setVel（目标垂直速度，mm/s）
+        ┌───────────────────────────────┐
+        │ 速度环（P + I + D）            │   altitude.c:367-383
+        │ error = setVel - vel           │   Pf_Vel=1.25 / If_Vel=0 / Df_Vel=3.0
+        │ BaroPID = P + I + D（各自限幅） │   P:±500  I:±400  D:±400
+        └──────────────┬────────────────┘
+                       ▼  BaroPID
+        ┌───────────────────────────────────────────────┐
+        │ 混控（imu/pid.c:118-127 PIDMIX）               │
+        │  altitude_mode == 0（手动）：                  │
+        │     base = constrain(1500 + BaroPID, 1000, 2000)│
+        │  altitude_mode != 0（定高）：                  │
+        │     base = constrain(rcCommand[THROTTLE], ...)  │
+        │  每个电机 = base + 姿态修正(ROLL/PITCH/YAW)     │
+        └───────────────────────────────────────────────┘
+
+  ★ 两个容易忽略的事实：
+    · 定高模式（altitude_mode != 0）时**基线油门直接用遥控器摇杆值**，
+      高度环的输出 BaroPID **不参与**（pid.c:123-125）——
+      也就是说"定高"这条路走的是"速度控制"逻辑（decode.c:56-76 设 setVelocity）
+    · 高度环的门控：tiltAngle ≥ 80° 时不算高度 PID（altitude.c:295），
+      并且在那个分支里会**取消解锁**（altitude.c:394-404）</pre></div>
+<p>🟢 <strong>确证（BMP390 的配置，逐项可核对）</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>项</th><th>值</th><th>位置</th></tr></thead><tbody><tr><td>器件识别</td><td>接受 <code>BMP3_CHIP_ID = 0x50</code> <strong>或</strong> <code>BMP390_CHIP_ID = 0x60</code></td><td><code>user/bmp3.c:776</code>；宏：<code>user/bmp3_defs.h:132-133</code></td></tr><tr><td>工作模式</td><td><strong>FORCED</strong>（单次强制测量，测完自动回待机，由软件反复触发）</td><td><code>common.c:414</code>；状态机 <code>common.c:482-548</code></td></tr><tr><td>气压过采样</td><td><strong>8X</strong></td><td><code>common.c:397</code>（<code>BMP3_OVERSAMPLING_8X</code>）</td></tr><tr><td>温度过采样</td><td><strong>2X</strong></td><td><code>common.c:398</code></td></tr><tr><td>IIR 滤波</td><td>系数 <strong>3</strong></td><td><code>common.c:402</code>（注释说明用于压螺旋桨气流抖动，<code>common.c:367</code>）</td></tr><tr><td>名义 ODR</td><td>12.5Hz（FORCED 模式下不起作用，只要求写合法值）</td><td><code>common.c:401</code> + 注释 <code>:400</code></td></tr><tr><td>测量节奏</td><td>触发后等 25 个 1ms 计数 → 轮询就绪 → 读；读完再等 5 → 下一轮（注释推算 ≈25+5ms）</td><td><code>common.c:496/510/514/540</code></td></tr><tr><td>数据单位</td><td><code>baroPressure</code> 单位 <strong>Pa</strong>、<code>baroTemperature</code> 单位 <strong>°C</strong></td><td><code>common.c:529-532</code></td></tr></tbody></table></div>
+<p>🟢 <strong>确证（高度/速度的单位与限幅，容易读错的地方）</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>量</th><th>单位</th><th>位置</th></tr></thead><tbody><tr><td><code>BaroAlt</code> / <code>EstAlt</code> / <code>AltHold</code> / <code>accAlt</code></td><td><strong>毫米（mm）</strong></td><td><code>altitude.c:22-24/33-34/39</code></td></tr><tr><td><code>baroVel</code> / <code>vel</code> / <code>setVel</code></td><td><strong>毫米/秒（mm/s）</strong></td><td><code>altitude.c:25/32/44</code></td></tr><tr><td>速度限幅宏</td><td>±2000 mm/s</td><td><code>imu/altitude.h:5-6</code></td></tr><tr><td>位置环限幅</td><td>±5000（即 ±5 m 误差封顶）</td><td><code>altitude.c:312</code></td></tr><tr><td>速度环各项限幅</td><td>P ±500、I ±400、D ±400</td><td><code>altitude.c:367/372/379</code></td></tr></tbody></table></div>
+<p>🟢 <strong>确证（一处"多源汇入"的设计）</strong>：<code>BaroPID</code> 不止被高度环写 —— <code>user/flip.c</code> 的空翻状态机在翻滚过程中也会改 <code>BaroPID</code>（<code>main.c:391-393</code> 注释）， 翻完再把 <code>angle[]/accAlt/AltHold/EstAlt</code> 复位。这说明本工程的 <code>BaroPID</code> 是"<strong>高度通道的唯一输出口</strong>"，与第 7.3 节的 <code>bLanding</code> 是同一类设计手法。</p>
+<h3 id="⑤-实现方法有哪些-取舍对照表">⑤ 实现方法有哪些（取舍对照表）<a class="anchor" href="#⑤-实现方法有哪些-取舍对照表">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>方案</th><th>组成</th><th>能得到什么</th><th>代价 / 局限</th><th>本工程</th></tr></thead><tbody><tr><td><strong>① 只用气压</strong></td><td>气压计 + 低通</td><td>实现最简单；高度<strong>不随时间漂</strong>（相对基准）</td><td>噪声大、滞后大；气流/遮挡会造成误动作；无法跟踪快速高度变化</td><td>❌（本工程用了气压，但<strong>不是只用</strong>气压）</td></tr><tr><td><strong>② 气压 + 加速度互补（本工程）</strong></td><td>气压计 + 加速度计 + 两组互补权重</td><td>计算量极小（几次乘加）；既有气压的长期稳定，又有加速度的短期响应</td><td>权重靠调；加速度的二次积分对零偏极敏感（漂移 ∝ t²）；模型简单，抗扰能力一般</td><td><strong>✅ <code>altitude.c:259/268</code></strong></td></tr><tr><td><strong>③ 卡尔曼滤波</strong></td><td>状态 = [高度, 垂直速度, 加速度零偏]，用气压当观测</td><td>理论上最优；能同时<strong>估计加速度零偏</strong>（这是互补滤波做不到的）；可以给出置信度</td><td>计算量大（本工程无 FPU、Flash 已 95%）；Q/R 参数难调；模型错就发散</td><td>❌</td></tr><tr><td><strong>④ 超声波辅助</strong></td><td>向下打超声波测距，近地面精度高</td><td>🟡 近距离（几米内）精度高、不受气压影响；常用来做"低空定高/着陆缓冲"</td><td>🟡 作用距离短、受地面材质与倾角影响、易受桨气流与噪声干扰；多一个传感器与接口</td><td>❌</td></tr><tr><td><strong>⑤ 激光定高（LiDAR/ToF）</strong></td><td>激光飞行时间测距</td><td>🟡 精度高、指向性好、距离比超声波远</td><td>🟡 成本高；对反射率/灰尘/强光敏感；室外远距离受限</td><td>❌</td></tr><tr><td><strong>⑥ GNSS 高度</strong></td><td>卫星定位给出海拔</td><td>绝对高度、可全局使用</td><td>🟡 垂直精度远差于水平精度；更新率低；室内无效</td><td>❌（本工程无 GNSS）</td></tr></tbody></table></div>
+<p><strong>本工程的取舍一句话</strong>：<strong>"气压 + 加速度互补"是"零额外硬件 + 极低算力"下能做到的最好方案； 它的天花板由两件事决定 —— 气压计的噪声（滤波能压，但会引入滞后） 和加速度计的零偏（互补滤波压不住长期漂移，只能靠气压慢慢拉回）。</strong></p>
+<h3 id="8-5-小结">8.5 小结<a class="anchor" href="#8-5-小结">#</a></h3>
+<ol><li><strong>气压能测高度的物理链条</strong>：气压随高度下降（低空约 8.5 m/hPa；本工程公式在海平面给出</li></ol>
+<p><strong>8.33 m/hPa</strong>，可自行求导验算）→ 反过来由气压推高度，但必须用<strong>非线性</strong>的 ISA 公式 （<code>altitude.c:150/164</code>，系数 44330000 mm、指数 0.190295）；</p>
+<ol><li><strong>气压计的问题</strong>：噪声、气流/遮挡、天气导致的基准漂移 —— 本工程的应对是</li></ol>
+<p>"中值 + 平均 + 低通" + "<strong>用起飞点气压当基准、只算相对高度</strong>"（<code>altitude.c:144-167</code>）；</p>
+<ol><li><strong>必须与加速度计融合的理由又是一次"互补"</strong>：气压长期准、短期噪声大；</li></ol>
+<p>加速度短期准、积分会漂 —— 融合就是 <code>altitude.c:259/268</code> 的两行互补滤波；</p>
+<ol><li><strong>本工程的实测参数</strong>：BMP390（<code>common.c:397-414</code>，气压 8X / 温度 2X / IIR 3 / FORCED）、</li></ol>
+<p>高度环 20ms（<code>altitude.c:416</code>）、位置环 P=1.1 + 速度环 P/I/D=1.25/0/3.0 （<code>altitude.c:303-306</code>）、油门基准 1500+BaroPID（<code>pid.c:122</code>）。</p>
+<hr>
+<h1 id="附录-A-本工程实际用了什么-总表-全部可逐行核对">附录 A　"本工程实际用了什么"总表（🟢 全部可逐行核对）<a class="anchor" href="#附录-A-本工程实际用了什么-总表-全部可逐行核对">#</a></h1>
+<blockquote class=""><p>这一节回答一个问题：<strong>把第 7、8 章的"本工程实现"汇总到一张表上，方便随手查。</strong>
+表中每一行都是我<strong>从代码里读出来的</strong>，不是从手册或记忆里抄的。</p></blockquote>
+<h2 id="A-1-第-7-章相关">A.1　第 7 章相关<a class="anchor" href="#A-1-第-7-章相关">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>项目</th><th>本工程的实际实现</th><th>代码位置</th></tr></thead><tbody><tr><td>硬件心跳时基</td><td>TIM17：48MHz <code>/480</code> → 100kHz，数到 100 → <strong>1ms</strong> 中断</td><td><code>drivers/bsp/TIM16.c</code> 的 <code>Timer17_UpdateIT_Init()</code>（由 <code>main.c:235</code> 调用）</td></tr><tr><td>心跳中断服务内容</td><td>5 个全局计数器 + 2 个节拍量 + 1 个 static 分频器，全部只做 <code>++</code></td><td><code>drivers/bsp/bsp_timer.c:168-194</code></td></tr><tr><td>软定时器：收遥控</td><td><code>_cnt10ms</code>（<code>uint8_t</code>），<code>&gt;= 10</code> 清零 → 实际 <strong>≈11ms</strong></td><td>定义 <code>bsp_timer.c:113</code>；自增 <code>:180</code>；消费 <code>main.c:374/387</code></td></tr><tr><td>软定时器：空翻状态机</td><td><code>_cnt4ms</code>（<code>uint8_t</code>），<code>&gt;= 4</code> 清零 → 实际 <strong>≈5ms</strong></td><td><code>bsp_timer.c:114/:181</code>；<code>main.c:390/395</code></td></tr><tr><td>软定时器：喂狗 + 灯语</td><td><code>_cnt100ms</code>（<code>uint8_t</code>），<code>&gt;= 100</code> 清零 → 实际 <strong>≈101ms</strong></td><td><code>bsp_timer.c:115/:182</code>；<code>main.c:411/413</code></td></tr><tr><td>软定时器：电池电压</td><td><code>_cnt1s</code>（<code>uint16_t</code>），<code>&gt;= 1000</code> 清零 → 实际 <strong>≈1.001s</strong></td><td><code>bsp_timer.c:116/:183</code>；<code>main.c:445/447</code></td></tr><tr><td>软定时器：20ms 分频</td><td><code>static uint8_t _cnt20ms</code>，<code>if(++_cnt20ms &gt;= 20)</code></td><td><code>bsp_timer.c:176/185-190</code></td></tr><tr><td><code>volatile</code></td><td><strong>四个计数器都没有加</strong>（注释里主动承认"侥幸正确"）</td><td><code>bsp_timer.c:113-116</code>、声明 <code>main.c:205-208</code>、说明 <code>main.c:199-203</code></td></tr><tr><td>通信心跳（隐式）</td><td>遥控器周期性发 <code>0xAA</code> 数据包，收到即刷新时间戳</td><td>发送节奏见 <code>遥控器/user_driver/tim16.c:48-90</code>；接收 <code>user/deal_pack.c:138-257</code></td></tr><tr><td>心跳时间戳刷新点</td><td><strong>全工程唯一一处</strong>：<code>connection_nowtime = HAL_GetTick();</code></td><td><code>user/deal_pack.c:257</code></td></tr><tr><td>心跳合法性判据</td><td>帧头 <code>0xAA</code> <strong>且</strong> <code>device_ID</code> 匹配（噪声不算心跳）</td><td><code>user/deal_pack.c:154</code></td></tr><tr><td>心跳反向确认（ACK）</td><td>飞控在应答窗口回填 <code>temp_buff[]</code> 当 ACK 载荷</td><td><code>drivers/bsp/bsp_pn298.c:1202-1206</code>；实参 <code>deal_pack.c:148</code></td></tr><tr><td>ACK 载荷里的遥测</td><td>低电标志 <code>temp_buff[1] = 2</code>，遥控器读 <code>ack_buff[0]</code></td><td><code>user/adc.c:245</code>；<code>遥控器/user/user/main.c:243</code></td></tr><tr><td>视觉心跳</td><td>LED 报警优先级链（低电 &gt; 失联 &gt; 校准 &gt; 对码）</td><td><code>user/led.h:84-88</code>；消费 <code>main.c:464/486</code>、<code>adc.c:247</code></td></tr><tr><td>飞控侧失效保护阈值</td><td><strong>5000ms</strong></td><td><code>user/main.c:462</code></td></tr><tr><td>飞控侧失效保护动作</td><td>① 200ms 快闪 ② <code>bLanding=1</code> ③ 射频切回接收模式</td><td><code>main.c:464</code> / <code>:465</code> / <code>:470</code></td></tr><tr><td>"降落"动作的执行者</td><td><code>decode.c</code> 的状态机：<code>setVelocity = -650</code>，落地判定 <code>accData[2] &gt; 6500</code> 后停机</td><td><code>imu/decode.c:123-134</code></td></tr><tr><td>遥控器侧失效保护阈值</td><td><strong>1000ms</strong>（收到 ACK 则清零；<code>MAX_RT</code> 则起计时）</td><td><code>遥控器/user_driver/tim16.c:76-87</code>；起停条件 <code>遥控器/user_driver/pn298/bsp_pn298.c:424-431/451-457</code></td></tr><tr><td>遥控器侧失效保护动作</td><td><code>signal_lost_flag=1</code> + LED2 快闪 + <code>bsp_pn298_re_sign_init()</code> + 串口打印</td><td><code>遥控器/user_driver/tim16.c:79-86</code></td></tr><tr><td>另一个"降落"触发源</td><td>低电连续 6 次 → <code>bLanding=1</code> + 回传标志 2</td><td><code>user/adc.c:234-251</code></td></tr><tr><td>看门狗（与心跳对照）</td><td>IWDG，LSI 32768/32/512 ≈ <strong>0.5s</strong>，只在 <code>_cnt100ms</code> 分支喂</td><td><code>user/WDG.c:63-80</code>；喂狗点 <code>main.c:414</code></td></tr></tbody></table></div>
+<h2 id="A-2-第-8-章相关">A.2　第 8 章相关<a class="anchor" href="#A-2-第-8-章相关">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>项目</th><th>本工程的实际实现</th><th>代码位置</th></tr></thead><tbody><tr><td>IMU 型号</td><td><strong>ICM-42688-P</strong>（编译宏 <code>ICM42688P</code>，WHO_AM_I <code>0x47</code>）</td><td><code>project/mdk_arm/project.uvprojx:341</code>；<code>icm426/Icm426xxDefs.h:46/70-71</code></td></tr><tr><td>IMU 量程</td><td>加速度 <strong>±8g</strong>、陀螺 <strong>±2000dps</strong></td><td><code>imu/accgyro.c:64-65</code></td></tr><tr><td>IMU 数据率</td><td>两者 <strong>200Hz</strong>（宏注释 "200 Hz (5 ms)"）</td><td><code>imu/accgyro.c:65-66</code>；<code>Icm426xxDefs.h:750/801</code></td></tr><tr><td>单位换算常量</td><td><code>acc_1G = 4096</code>（8g 档）、<code>gyroScale = 1/16.4 × π/180</code>（2000dps 档）</td><td><code>imu/accgyro.c:35-36</code></td></tr><tr><td>安装方向校正</td><td><code>apply_sensor_alignment(..., CW90_DEG)</code></td><td><code>imu/accgyro.c:98-99</code></td></tr><tr><td>陀螺滤波</td><td><strong>PT1 一阶低通 240Hz</strong>，dT = 1.25ms</td><td>初始化 <code>accgyro.c:72</code>；应用 <code>accgyro.c:127</code></td></tr><tr><td>加速度滤波</td><td><strong>biquad 二阶低通 30Hz</strong>，sampleDeltaUs = 1250</td><td>初始化 <code>accgyro.c:71</code>；应用 <code>accgyro.c:126</code></td></tr><tr><td>二阶滤波器的 Q</td><td><code>1/√2</code>（巴特沃斯），带宽 1.9 倍频程</td><td><code>imu/filter.c:45-46</code></td></tr><tr><td>陷波器</td><td><strong>代码存在，未被调用</strong>（唯一初始化点是 LPF 版本）</td><td>实现 <code>filter.c:160-169</code>；调用点 <code>accgyro.c:71</code>（LPF）</td></tr><tr><td>陀螺校准</td><td>手势触发 → 静止判据 50 LSB → 512 次平均 → 写 Flash</td><td><code>decode.c:78-85</code> 触发；<code>accgyro.c:201-248</code> 流程；<code>:222/:235/:245</code> 关键行</td></tr><tr><td>加速度校准</td><td>用陀螺判静止（阈值 50）→ 512 次平均 → <strong>Z 轴减 <code>acc_1G</code></strong> → 写 Flash</td><td><code>accgyro.c:255-304</code>；关键行 <code>:277/:289/:292-294/:301</code></td></tr><tr><td>校准数据的恢复</td><td>上电从 Flash 读回填进 <code>accRaw_offset[]/gyroRaw_offset[]</code></td><td><code>main.c:332-335</code>（<code>flash_read</code> 在 <code>:328</code>）</td></tr><tr><td>姿态解算算法</td><td><strong>Mahony AHRS</strong>（互补滤波形态），函数 <code>imuMahonyAHRSupdate()</code></td><td><code>imu/imu.c:261-349</code></td></tr><tr><td>Mahony 增益</td><td><strong>Kp = 0.25</strong>（2500/10000）、<strong>Ki = 0.0025</strong>（25/10000）</td><td><code>imu/imu.c:457-458</code></td></tr><tr><td>上电快收敛</td><td>上电 2 秒内 Kp ×10（<code>powerupTimer &lt; 100</code>，20ms 计数）</td><td><code>imu/imu.c:239-256</code>；节拍 <code>bsp_timer.c:185-190</code></td></tr><tr><td>加速度计健康判据</td><td>模长落在 <strong>0.90g ~ 1.10g</strong> 才用于修正</td><td><code>imu/imu.c:354-368</code>；使用点 <code>:431-433</code></td></tr><tr><td>快转保护</td><td>自转角速度 ≥ <strong>20°/s</strong> 时停止积分修正</td><td><code>imu/imu.h:21</code>；判断 <code>imu.c:273/298</code></td></tr><tr><td>四元数归一化</td><td><code>invSqrt()</code>（魔数 <code>0x5f3759df</code> + 一次牛顿迭代）</td><td><code>imu/mlib.c:188-197</code>；调用 <code>imu.c:339</code></td></tr><tr><td>加速度二次平滑</td><td>8 点指数滑动平均 <code>(x*7 + new)/8</code></td><td><code>imu/imu.c:426</code></td></tr><tr><td>姿态输出</td><td>由 <code>rMat</code> 算欧拉角，单位 <strong>度×100</strong>，全局 <code>angle[]</code></td><td><code>imu/imu.c:375-385</code>；单位声明 <code>imu/imu.h:48</code></td></tr><tr><td>偏航角的处理</td><td>强制 <code>angle[2] = 0</code>（无磁力计，不做航向锁定）</td><td><code>imu/pid.c:245-247</code></td></tr><tr><td>姿态/角速度环</td><td>外环角度 P（<code>PAngleToRate</code>）→ 内环角速度 PID（<code>PRate/IRate/DRate</code>）</td><td><code>imu/pid.c:240-243/259-261/304-338</code></td></tr><tr><td>PID 的 D 项滤波</td><td>3 点滑动和（<code>delta1 + delta2 + delta</code>）</td><td><code>imu/pid.c:335-338</code></td></tr><tr><td>姿态解算节拍</td><td>门限 <code>deltaT &gt;= 0.00125f</code>（1.25ms）</td><td><code>imu/fc.c:82-89</code></td></tr><tr><td>气压计型号</td><td><strong>BMP390</strong>（驱动同时接受 <code>0x50</code>/<code>0x60</code> 两个芯片 ID）</td><td><code>user/bmp3.c:776</code>；宏 <code>user/bmp3_defs.h:132-133</code></td></tr><tr><td>气压计配置</td><td>FORCED 模式、气压 8X、温度 2X、IIR 系数 3</td><td><code>user/common.c:392-416</code></td></tr><tr><td>气压计采集状态机</td><td>触发 → 等 25 计数 → 轮询就绪（1 计数） → 读 → 等 5 计数（周期 ≈25+5ms）</td><td><code>user/common.c:468-552</code>；关键行 <code>:496/:510/:514/:540</code></td></tr><tr><td>气压数据滤波</td><td>中值 5 点 → 滑动平均 6 点 → 高度低通 α=0.1 → 速度低通 3/4 → 死区 100mm/s</td><td><code>altitude.c:19/:88-90/:123-139/:169/:174/:180</code></td></tr><tr><td>地面基准气压</td><td><code>baroGroundPressure</code> 递归平均（10 倍时间常数），只在未解锁/校准期更新</td><td><code>altitude.c:144-157</code>；校准周期宏 <code>:15/:21</code></td></tr><tr><td>高度换算</td><td>ISA 公式，系数 44330000 mm、指数 0.190295（自研 <code>baro_pow_0p295()</code> 替代 <code>powf</code>）</td><td><code>altitude.c:150/:164</code>；替换理由 <code>altitude.c:1-7</code></td></tr><tr><td>高度/速度互补滤波</td><td><code>accAlt = accAlt*0.985 + BaroAlt*0.015</code>；<code>vel = vel*0.995 + baroVel*0.005</code></td><td><code>altitude.c:259/:268</code></td></tr><tr><td>加速度二次积分</td><td><code>s = s0 + v0·Δt + ½a·Δt²</code>，缩放 <code>9.80665*1000/4096</code></td><td><code>altitude.c:205/225-247</code></td></tr><tr><td>高度环周期</td><td><code>altitudeCtrlTimer &gt;= 20</code> → <strong>20ms</strong></td><td><code>altitude.c:416-419</code></td></tr><tr><td>高度环参数</td><td>位置环 P=1.1；速度环 P=1.25 / I=0 / D=3.0；限幅 ±500/±400/±400；±5m 误差封顶</td><td><code>altitude.c:303-306/:312/:367/:372/:379</code></td></tr><tr><td>高度环门控</td><td>倾斜 &lt; 80° 才算高度 PID；否则取消解锁</td><td><code>altitude.c:295</code>；<code>altitude.c:394-404</code></td></tr><tr><td>油门混控</td><td><code>altitude_mode==0</code>：<code>constrain(1500+BaroPID,1000,2000) + 姿态修正</code>；否则用摇杆油门</td><td><code>imu/pid.c:118-127</code></td></tr></tbody></table></div>
+<hr>
+<h1 id="附录-B-证据分级统计">附录 B　证据分级统计<a class="anchor" href="#附录-B-证据分级统计">#</a></h1>
+<blockquote class=""><p>这一节回答一个问题：<strong>这份伴读里有多少条是确证、多少条是通说、多少条是"请自行查证"？</strong></p></blockquote>
+<h2 id="B-1-计数">B.1　计数<a class="anchor" href="#B-1-计数">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>标记</th><th>含义</th><th>本文件出现次数</th></tr></thead><tbody><tr><td>🟢 <strong>确证</strong></td><td>手册页码 / 事实清单 / 本机代码行号 / 可自行验算的算术</td><td><strong>119</strong></td></tr><tr><td>🟡 <strong>通说</strong></td><td>控制工程与嵌入式领域的广泛记载，方向可靠、细节可能出入</td><td><strong>72</strong></td></tr><tr><td>🟠 <strong>说法</strong></td><td>没把握、或本机无法核实</td><td><strong>7</strong></td></tr></tbody></table></div>
+<p>（统计口径：全文正文中出现的标记次数，<strong>包含本表图例这一行</strong>； 统计工具按字符计数，所以你手工数出来的数可能与我这里差 1~2 个， 不影响"🟢 占多数、🟠 极少"这个结构。）</p>
+<p><strong>说明</strong>：🟢 中占绝大多数的是"<strong>本机代码行号</strong>"这一类 —— 也就是说， 本文件的结论<strong>大部分可以自己五分钟内核对完</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">  想核对"心跳时间戳在哪刷新"   →  打开 user/deal_pack.c，跳到第 257 行
+  想核对"失联阈值是多少"       →  打开 user/main.c，跳到第 462 行
+  想核对"陀螺滤波是什么"       →  打开 imu/accgyro.c，跳到第 71-72 行
+  想核对"高度互补权重"         →  打开 imu/altitude.c，跳到第 259/268 行
+  想核对"姿态算法与增益"       →  打开 imu/imu.c，跳到第 261/457-458 行</pre></div>
+<h2 id="B-2-按主题分布-哪一类结论最依赖">B.2　按主题分布（哪一类结论最依赖🟡）<a class="anchor" href="#B-2-按主题分布-哪一类结论最依赖">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>主题</th><th>主要证据类型</th><th>备注</th></tr></thead><tbody><tr><td>心跳的"三要素"、失效保护的动作取舍</td><td>🟡 通说 + 🟢 本工程取值</td><td>"通信层为什么需要周期信号"属通说；具体阈值与动作是 🟢</td></tr><tr><td>软定时器原理与实现对照</td><td>🟢 本机代码 + 🟡 其他方案</td><td>其他方案（时间轮/RTOS）本机不存在，只能标通说</td></tr><tr><td>IMU 出现的动机、GPS/罗盘的局限</td><td>🟡 通说</td><td>本机无 GPS/磁力计代码，无法实测</td></tr><tr><td>量程/分辨率/零偏/校准</td><td>🟢 算术 + 本机代码 + 🟡 经验</td><td><code>4096</code>、<code>1/16.4</code>、<code>50</code>、<code>512</code> 都是 🟢；"噪声密度决定滤波"是 🟡</td></tr><tr><td>姿态解算算法对照</td><td>🟢 本工程实现 + 🟡 其他算法评价</td><td>Mahony 的实现细节 🟢；"Madgwick 收敛更快"属 🟡</td></tr><tr><td>滤波的收益与代价</td><td>🟡 通说 + 🟢 本工程参数</td><td>"振动污染积分"是通说；"240Hz/30Hz"是 🟢</td></tr><tr><td>气压高度换算</td><td>🟢 物理/数学（含求导验算）</td><td>"8.33 m/hPa"可以由代码里的公式自己算出来</td></tr><tr><td>天气导致的高度基准漂移</td><td>🟡 通说</td><td>无本机数据，只能给量级</td></tr></tbody></table></div>
+<hr>
+<h1 id="附录-C-故意省略了什么-诚实清单">附录 C　故意省略了什么（诚实清单）<a class="anchor" href="#附录-C-故意省略了什么-诚实清单">#</a></h1>
+<blockquote class=""><p>这一节回答一个问题：<strong>这份伴读有哪些"本来可以写、但我没有写"的内容？为什么？</strong></p></blockquote>
+<div class="tablewrap"><table><thead><tr><th>省略的内容</th><th>为什么省略</th></tr></thead><tbody><tr><td><strong>算法、协议、芯片的发明者与年份</strong>（"某某在某年提出……"）</td><td>本机无法核实。算法名（Mahony / Madgwick / EKF / DCM / 巴特沃斯）保留，因为它们是工程界的通用叫法；但"谁在哪年提出"一律不写（若确需，请查原始文献）</td></tr><tr><td><strong>ICM-42688-P 与 BMP390 的数据手册参数</strong>（噪声密度、零偏稳定性、绝对精度、长期漂移的具体数字）</td><td>两份手册<strong>不在本机</strong>（工程目录里只有 PY32F030、PN298、PAN742x 三份）；<code>_术语事实清单.md</code> 也没有收录这两颗芯片。因此本文件只写"代码里能读到的配置值"，并给出行号；规格类数字一律不编、不配页码</td></tr><tr><td><strong>具体的事故案例与影响数字</strong></td><td>无法核实，且对本文件的"建立直觉"目的没有增量</td></tr><tr><td><strong>机架振动的具体频率范围</strong>（"通常 100~500Hz"这类）</td><td>🟠 量级会随机架、电机、桨、减震方式大幅变化；本机没有振动频谱数据。本文件只写"振动频率远高于姿态带宽"这一条方向性结论（🟡）</td></tr><tr><td><strong>GPS 更新率、磁力计精度等外部器件的具体数值</strong></td><td>本工程没有这些器件，写具体数字属于"与本工程无关的规格搬运"，且无法核实</td></tr><tr><td><strong><code>mlib.c:100-101</code> 里那段算法出处的人名与年份</strong></td><td>代码注释里确实带着出处（人名与 1998 年），但<strong>我没有独立核实</strong>它，所以按 🟠 处理、不引用。需要的话请自行查证</td></tr><tr><td><strong>快速倒数平方根（<code>0x5f3759df</code>）的"出身故事"</strong></td><td>流行叙事版本多且互相矛盾；本文件只描述<strong>它在代码里做了什么</strong>（<code>mlib.c:188-197</code>：位级初值 + 一次牛顿迭代）</td></tr><tr><td><strong><code>imu.c</code> 里 <code>calGyroVariance()</code>（<code>imu.c:29-71</code>）的用途</strong></td><td>🟠 该函数在本工程里<strong>没有任何调用者</strong>（我检索过），无法确定作者意图；写猜测不如不写</td></tr><tr><td><strong>本工程"应该改成什么"的建议</strong></td><td>本文件的定位是<strong>伴读</strong>，不是整改方案；所有"疑似问题"都只记录、不修改（任务要求也明确"不要修改任何现有文件"）</td></tr></tbody></table></div>
+<hr>
+<h1 id="附录-D-手册正文疑似事实问题清单-只指出-不修改">附录 D　手册正文疑似事实问题清单（<strong>只指出，不修改</strong>）<a class="anchor" href="#附录-D-手册正文疑似事实问题清单-只指出-不修改">#</a></h1>
+<blockquote class=""><p>这一节回答一个问题：<strong>对照代码核对后，手册正文（第 7、8 章及相关章节）有哪些地方
+与当前工作副本不一致？</strong></p><p><strong>纪律</strong>：本附录<strong>只做记录</strong>。我没有改动 <code>术语解析手册.md</code> 的任何一行，
+也没有改动任何 <code>.c/.h</code> 文件。所有判断都以"当前工作副本的代码"为准。</p></blockquote>
+<h2 id="D-1-与代码不符-建议优先核对">D.1　与代码不符（建议优先核对）<a class="anchor" href="#D-1-与代码不符-建议优先核对">#</a></h2>
+<h3 id="D-1-第-8-2-节-手册第-931-933-行-引用的代码片段与代码不符">D-1（第 8.2 节，手册第 931-933 行）引用的代码片段与代码不符<a class="anchor" href="#D-1-第-8-2-节-手册第-931-933-行-引用的代码片段与代码不符">#</a></h3>
+<p><strong>手册原文</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">#define GYRO_CALI_DIFF_LIMIT  40   /* 静止判定阈值：实测静止时陀螺仪抖动 &lt; 20，取 2 倍余量 */</span></div></pre></div>
+<p><strong>当前代码（<code>imu/accgyro.c:221-222</code>）</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">  // 较准中，如果偏差大于设定值，重新开始。</span></div><div class="line"><span class="ln">2</span><span class="lc">  #define GYRO_CALI_DIFF_LIMIT    50</span></div></pre></div>
+<p><strong>两处差异</strong>：</p>
+<ol><li><strong>数值</strong>：40 → 实际是 <strong>50</strong>；</li><li><strong>注释</strong>：手册引的那句"实测静止时陀螺仪抖动 &lt; 20，取 2 倍余量"<strong>在代码里不存在</strong></li></ol>
+<p>—— 该行没有任何注释，我在 <code>accgyro.c</code> 全文件里也没有找到"抖动 &lt; 20"这类说明。</p>
+<p><strong>影响</strong>：读者会按"40 是静止判据、且有余量推导过程"去理解校准的严格程度。 实际值 50 更宽松（按 16.4 LSB/(°/s) 换算，50 LSB ≈ 3.05°/s）。</p>
+<h3 id="D-2-第-8-2-节-手册第-923-行-分辨率-一行的示例值与本工程量程不符">D-2（第 8.2 节，手册第 923 行）"分辨率"一行的示例值与本工程量程不符<a class="anchor" href="#D-2-第-8-2-节-手册第-923-行-分辨率-一行的示例值与本工程量程不符">#</a></h3>
+<p><strong>手册原文</strong>：</p>
+<blockquote class=""><p>| <strong>分辨率 / LSB</strong> | 每个数字量对应的物理量（如 2048 LSB/g） | 换算原始值 → 物理量 |</p></blockquote>
+<p><strong>当前代码</strong>：本工程加速度计量程是 <strong>±8g</strong>（<code>accgyro.c:64</code>）， 对应常量 <strong><code>acc_1G = 4096</code></strong>（<code>accgyro.c:35</code>），而不是 2048。 <code>2048 LSB/g</code> 对应的是 <strong>±16g</strong> 档（32768/16 = 2048）。</p>
+<p><strong>影响</strong>：该行的第三列标题是"<strong>你工程里的体现</strong>"，读者容易把 2048 当成本工程的换算值。 建议改成 4096 LSB/g（±8g）；另外陀螺侧的对应值是 <strong>16.4 LSB/(°/s)</strong>（<code>accgyro.c:36</code>）。</p>
+<p><strong>附一条术语层面的小意见</strong>（🟡 我的看法，供参考）：把"每个数字量对应的物理量"叫 "分辨率"其实是<strong>灵敏度</strong>（sensitivity）的定义；"分辨率"更常用于指"能分辨的最小变化量"。 两者在传感器手册里常被混用，但在教学文本里分开更清楚。</p>
+<h3 id="D-3-第-8-4-节-手册第-965-行-陷波器一行容易被读成-工程在用它">D-3（第 8.4 节，手册第 965 行）陷波器一行容易被读成"工程在用它"<a class="anchor" href="#D-3-第-8-4-节-手册第-965-行-陷波器一行容易被读成-工程在用它">#</a></h3>
+<p><strong>手册原文</strong>：</p>
+<blockquote class=""><p>| <strong>陷波（Notch）</strong> | 只掐掉某个窄频段（如电机转速对应的振动） | <code>FILTER_NOTCH</code> 类型 |</p></blockquote>
+<p><strong>当前代码</strong>：</p>
+<ul><li><code>FILTER_NOTCH</code> 的系数分支<strong>确实存在</strong>（<code>imu/filter.c:160-169</code>）；</li><li>但<strong>全工程唯一的 biquad 初始化调用点</strong>是 <code>biquadFilterInitLPF()</code>（<code>imu/accgyro.c:71</code>），</li></ul>
+<p>它固定传 <code>FILTER_LPF</code>（<code>filter.c:193-196</code>）；</p>
+<ul><li>也就是说：<strong>陷波器是实现完整、但未被任何代码调用的功能</strong>。</li></ul>
+<p><strong>影响</strong>：这句话字面上没错（类型确实在工程里），但列在"你工程里的地方"一栏， 容易被读成"本工程正在使用陷波滤波"。建议标明"（已实现，未启用）"。</p>
+<h3 id="D-4-第-8-3-节-手册第-951-952-行-欧拉角的来源写成了四元数">D-4（第 8.3 节，手册第 951-952 行）欧拉角的来源写成了四元数<a class="anchor" href="#D-4-第-8-3-节-手册第-951-952-行-欧拉角的来源写成了四元数">#</a></h3>
+<p><strong>手册原文</strong>：</p>
+<blockquote class=""><p><strong>欧拉角</strong>：最终给人看的"俯仰/横滚/偏航"角度，由四元数换算而来
+（<code>imuUpdateEulerAngles()</code> → 全局 <code>angle[]</code>，单位是"度×100"）。</p></blockquote>
+<p><strong>当前代码（<code>imu/imu.c:372-377</code>）</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">void imuUpdateEulerAngles(void)</span></div><div class="line"><span class="ln">2</span><span class="lc">{</span></div><div class="line"><span class="ln">3</span><span class="lc">    angle[ROLL]  = (int32_t)(atan2_approx(rMat[2][1], rMat[2][2]) * (18000.0f / M_PI));</span></div><div class="line"><span class="ln">4</span><span class="lc">    angle[PITCH] = (int32_t)(((0.5f * M_PI) - acos_approx(-rMat[2][0])) * (18000.0f / M_PI));</span></div><div class="line"><span class="ln">5</span><span class="lc">    angle[YAW]   = (int32_t)((-atan2_approx(rMat[1][0], rMat[0][0]) * (18000.0f / M_PI)));</span></div></pre></div>
+<p><code>imuUpdateEulerAngles()</code> 是从<strong>旋转矩阵 <code>rMat</code></strong> 算的，不是直接由四元数算的。 工程里<strong>确实有</strong>一个"四元数 → 欧拉角"的函数 <code>to_euler()</code>（<code>imu.c:161-185</code>）， 但它只被 <code>imuCalculateAcceleration()</code> 内部使用（<code>imu.c:200</code>），<strong>不产生全局 <code>angle[]</code></strong>。</p>
+<p><strong>影响</strong>：结论（角度的最终表示、单位、给人看）都对，只是"由谁换算"指错了函数。 严格说法是："<code>rMat</code>（由四元数每帧重建，<code>imu.c:348</code>）→ <code>imuUpdateEulerAngles()</code> → <code>angle[]</code>"。</p>
+<h3 id="D-5-第-8-5-节-手册第-988-行-串级-高度环-姿态环-的措辞">D-5（第 8.5 节，手册第 988 行）"串级（高度环 + 姿态环）"的措辞<a class="anchor" href="#D-5-第-8-5-节-手册第-988-行-串级-高度环-姿态环-的措辞">#</a></h3>
+<p><strong>手册原文</strong>：</p>
+<blockquote class=""><p><strong>定高的控制结构</strong>：<strong>串级</strong>（高度环 + 姿态环）</p></blockquote>
+<p><strong>当前代码</strong>：本工程有<strong>两个各自独立的串级</strong>，它们在<strong>油门混控</strong>处相加，不是互相嵌套：</p>
+<ol><li>高度通道内部的串级是<strong>位置环 → 速度环</strong>（<code>imu/altitude.c:312-314</code> → <code>:367-383</code>），</li></ol>
+<p>输出 <code>BaroPID</code>；</p>
+<ol><li>姿态通道内部的串级是<strong>角度环 → 角速度环</strong>（<code>imu/pid.c:259-261</code> → <code>:304-338</code>），</li></ol>
+<p>输出 <code>axisPID[]</code>；</p>
+<ol><li>两者在 <code>PIDMIX()</code> 里相加（<code>imu/pid.c:118-127</code>）。</li></ol>
+<p><strong>影响</strong>：把"高度环 + 姿态环"称为串级（cascade）会让读者以为姿态环是高度环的内环。 实际是<strong>两个并列的通道，输出在混控层叠加</strong>（这也正是 <code>PIDMIX</code> 存在的意义）。</p>
+<h2 id="D-2-引用漂移-结论对-位置老了">D.2　引用漂移（结论对、位置老了）<a class="anchor" href="#D-2-引用漂移-结论对-位置老了">#</a></h2>
+<blockquote class=""><p>这一类的成因很可能是：这些文档写完后，源文件被加进了大量中文注释，<strong>行号整体下移</strong>。</p></blockquote>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>出处</th><th>文档里写的</th><th>当前实际</th><th>内容本身</th></tr></thead><tbody><tr><td>D-6</td><td>手册第 1108 行（11.3 节）</td><td>飞控失联阈值在 <code>main.c:446</code></td><td><strong><code>main.c:462</code></strong>（<code>if (HAL_GetTick() - connection_nowtime &gt; 5000)</code>）</td><td>结论（5 秒 / 1 秒两侧判据不同）<strong>正确</strong></td></tr><tr><td>D-7</td><td>手册第 493、512、1091、1119 行；<code>_术语事实清单.md</code> 第 95 行</td><td><code>ch_change_arr[1] = pair_data.rf_ch</code> 在 <code>main.c:249</code></td><td><strong><code>main.c:265</code></strong></td><td>结论（第二个信道确实被 Flash 里的信道覆盖 ⇒ 在跳频）<strong>正确</strong></td></tr></tbody></table></div>
+<p><strong>提醒</strong>：<code>_术语事实清单.md</code> 的 D-7 也在其中 —— 事实底稿本身也带了一处漂移的行号。 本文件对这条的处理是：<strong>引用时一律以检索结果为准</strong>，并在正文 §0.3 里说明了这个现象。</p>
+<h2 id="D-3-不是错误-但可以更精确-低优先级">D.3　不是错误、但可以更精确（低优先级）<a class="anchor" href="#D-3-不是错误-但可以更精确-低优先级">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>位置</th><th>现状</th><th>可以更精确的说法</th></tr></thead><tbody><tr><td>D-8</td><td>手册 8.1（第 906 行）"本工程用 <strong>ICM42688</strong>"</td><td>工程编译宏是 <code>ICM42688P</code>（<code>project.uvprojx:341</code>），WHO_AM_I <code>0x47</code>（<code>Icm426xxDefs.h:46</code>）</td><td>"ICM-42688-P"（带 P 后缀）更贴合工程实际；同族的 ICM-42688-V 的 WHO_AM_I 是 <code>0xDB</code>，两者不是一回事</td></tr><tr><td>D-9</td><td>手册 8.4（第 963 行）"PT1 一阶低通 …… 用于陀螺仪"</td><td>正确，但没有给参数</td><td>补上"<strong>240Hz</strong>（<code>accgyro.c:72</code>）"；加速度侧补"<strong>30Hz 二阶</strong>（<code>accgyro.c:71</code>）" —— 手册 8.2 最后一行说"决定了 PT1/双二阶滤波器的截止频率"，读者会想直接看到这两个数</td></tr><tr><td>D-10</td><td>手册 8.4（第 968-970 行）截止频率的取舍</td><td>正确且完整（"选大了噪声滤不干净，选小了响应变慢"）</td><td>可以补一句"<strong>滤波器系数是按采样率算的</strong>，改 ODR 或改调用周期时参数必须复核"（本工程的 ODR=200Hz 与滤波器按 800Hz 设计之间存在不一致，见 D-11）</td></tr><tr><td>D-11</td><td>手册 8.1/8.4 未提及</td><td>ODR 配 <strong>200Hz</strong>（<code>accgyro.c:65-66</code>），而两个滤波器都按 <strong>1250µs（800Hz）</strong> 设计（<code>accgyro.c:71-72</code>），姿态门限也是 <strong>1.25ms</strong>（<code>fc.c:82</code>）</td><td>建议在 8.4 加一条"注意"：同一份采样会被重复滤波，等效截止频率与标称值不同（本文件 §8.4(f) 有详细说明）</td></tr></tbody></table></div>
+<hr>
+<h1 id="附录-E-代码注释与代码不一致-本文件顺手记录-未改动任何文件">附录 E　代码注释与代码不一致（本文件顺手记录，未改动任何文件）<a class="anchor" href="#附录-E-代码注释与代码不一致-本文件顺手记录-未改动任何文件">#</a></h1>
+<blockquote class=""><p>这一节回答一个问题：<strong>在核对第 7、8 章的过程中，我另外发现了哪些"注释与代码不一致"？</strong>
+手册第 11 章已经收了一批（WDG/TIM16/main.c/bsp_pwm/adc/flip 等），
+下面这些是<strong>我在第 7、8 章相关文件里另外遇到的</strong>，供后续补进第 11 章参考。</p></blockquote>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>位置</th><th>注释写的</th><th>代码实际是</th><th>影响</th></tr></thead><tbody><tr><td>E-1</td><td><code>imu/accgyro.c:234</code> 与 <code>:288</code></td><td>"完成 256 次采样后计算平均值"</td><td><code>if(++count &gt;= 512)</code>（<code>:235</code>、<code>:289</code>）</td><td>校准耗时估错一半</td></tr><tr><td>E-2</td><td><code>user/common.c:397-398</code></td><td>"气压过采样 <strong>16X</strong>"、"温度过采样 <strong>8X</strong>"</td><td><code>BMP3_OVERSAMPLING_8X</code> 与 <code>BMP3_OVERSAMPLING_2X</code></td><td>测量耗时与噪声估计偏乐观</td></tr><tr><td>E-3</td><td><code>user/common.c:491</code></td><td>"16X 气压 + 8X 温度 ≈ 6ms，加上安全余量"</td><td>实际 8X + 2X，等待 25ms</td><td>同上；且 <code>:494-495</code> 的注释自己承认"注释里同时写着 ≈6ms/8ms/25"</td></tr><tr><td>E-4</td><td><code>user/common.c:540</code></td><td>"两次测量间隔 10ms"</td><td><code>baroUpdateCyc = 5</code>（1ms/计数）→ 5ms</td><td>与 <code>:537-538</code> 同一段注释里的"≈25+5 ms"互相矛盾</td></tr><tr><td>E-5</td><td><code>imu/altitude.c:258</code></td><td>"加速度计 …… 权重 <strong>0.965</strong>，气压计 …… 权重 <strong>0.035</strong>"</td><td>代码是 <code>0.985f</code> 与 <code>(1-0.985f)=0.015</code>（<code>:259</code>）</td><td>互补滤波的"信任分配"读错</td></tr><tr><td>E-6</td><td><code>imu/altitude.c:267</code></td><td>"加速度积分速度权重 <strong>0.987</strong>，气压计速度权重 <strong>0.013</strong>"</td><td>代码是 <code>0.995f</code> 与 <code>0.005f</code>（<code>:268</code>）</td><td>同上</td></tr><tr><td>E-7</td><td><code>imu/altitude.c:168</code></td><td>"应用低通滤波器平滑高度数据（<strong>α=0.7</strong>）"</td><td>代码是 <code>BaroAlt*0.1 + new*0.9</code>（<code>:169</code>）</td><td>平滑强度读错</td></tr><tr><td>E-8</td><td><code>imu/imu.c:389</code></td><td>"主姿态解算函数（<strong>每 2ms</strong> 调用）"</td><td>调用门限是 <code>deltaT &gt;= 0.00125f</code>（<code>imu/fc.c:82</code>），即 1.25ms</td><td>执行率估错</td></tr><tr><td>E-9</td><td><code>遥控器/user_driver/tim16.c:15</code> 与 <code>遥控器/.../bsp_pn298.c:403</code></td><td>"计时计数器（单位：<strong>10ms</strong>，累计 100 = 1 秒）"</td><td>TIM16 中断是 <strong>1ms</strong> 一拍（<code>tim16.c:25-26</code>），阈值是 <strong>1000</strong>（<code>tim16.c:79</code>）</td><td>单位注释错 10 倍，但<strong>行为是对的</strong>（1 秒）</td></tr><tr><td>E-10</td><td><code>遥控器/user_driver/tim16.c:51-61</code></td><td>变量名 <code>loop50HzCnt</code>、阈值 <code>&gt;= 20</code></td><td>同一个回调里 <code>loop50HzCnt++</code> <strong>连续出现两次</strong> → 实际约 <strong>10ms</strong> 一次（≈100Hz）</td><td>遥控器实际发包率是名字的 2 倍（本文件 §7.3 用到这个推算）</td></tr><tr><td>E-11</td><td><code>user/main.c:243</code></td><td>"Prescaler=3-1、Period=1000-1 ⇒ <strong>10kHz</strong>"</td><td>48MHz/3/1000 = <strong>16kHz</strong></td><td>手册第 11 章已收录同类条目（<code>bsp_pwm.h</code>），此处行号不同</td></tr></tbody></table></div>
+<p><strong>说明</strong>：E-1 ~ E-11 全部<strong>只记录，未改动</strong>。其中 E-2/E-3/E-5/E-6/E-7 会直接影响 "滤波有多强、互补权重是多少"这类<strong>调参理解</strong>，建议优先核对。</p>
+<hr>
+<h1 id="附录-F-如果只记五句话">附录 F　如果只记五句话<a class="anchor" href="#附录-F-如果只记五句话">#</a></h1>
+<ol><li><strong>心跳</strong>：接收方没有直接手段判断"对方活着"，只能用"<strong>周期性信号 + 超时阈值</strong>"</li></ol>
+<p>把"这一帧没收到"升级成"连续 N 次没收到"；本工程的心跳是<strong>寄生在数据帧上的隐式心跳</strong> （<code>deal_pack.c:257</code>），还靠 <strong>ACK 载荷</strong>做了一次反向确认（<code>bsp_pn298.c:1202-1206</code>）。</p>
+<ol><li><strong>软定时器</strong>：一个 1ms 硬件时基扇出多个软件计数值（<code>bsp_timer.c:113-116</code>、<code>:178-190</code>），</li></ol>
+<p>换来"任意多个周期任务"；代价是<strong>实际周期是 N+1</strong>、<strong>精度受主循环限制</strong>、 <strong>忘记清零就永久失效</strong>，而且这四个计数器<strong>都没加 <code>volatile</code></strong>。</p>
+<ol><li><strong>失效保护</strong>：阈值不是技术常数而是"<strong>动作代价的函数</strong>" —— 飞控侧 <strong>5000ms</strong></li></ol>
+<p>对应不可逆的"自动降落"（<code>main.c:462-465</code>），遥控器侧 <strong>1000ms</strong> 对应可逆的"报警 + 重连"（<code>遥控器 tim16.c:79-86</code>）。</p>
+<ol><li><strong>姿态</strong>：MEMS 陀螺输出的是角速度，积分必然漂；所以用<strong>加速度计的重力方向</strong></li></ol>
+<p>当不漂的参照（Mahony，<code>imu.c:261</code>，Kp=0.25/Ki=0.0025）； 姿态用<strong>四元数当状态、矩阵当工具、欧拉角当输出</strong>；无磁力计 ⇒ 偏航角被强制清 0（<code>pid.c:247</code>）。</p>
+<ol><li><strong>滤波与高度</strong>：一切都围绕"<strong>互补</strong>"两个字 ——</li></ol>
+<p><strong>陀螺短期准/长期漂 ↔ 加速度长期准/短期抖</strong>（滤波：陀螺 PT1 240Hz、加速度 biquad 30Hz）， <strong>气压长期准/短期噪 ↔ 加速度短期准/长期漂</strong>（<code>altitude.c:259/268</code> 两行互补滤波）。 <strong>没有任何一个传感器是好用的 —— 这就是整章的全部内容。</strong></p>
+<hr>
+<blockquote class=""><p><strong>最后再重复一次本文件的定位</strong>：
+这里的所有"为什么"都是为了让你<strong>看懂代码为什么长这样</strong>；
+而<strong>技术结论请以《术语解析手册》正文、<code>_术语事实清单.md</code> 和本机代码为准</strong>。
+凡是你在这份伴读里读到"本工程是……"，都应该回到对应的 <code>文件名:行号</code> 自己看一眼 ——
+那一眼比这份文档的任何一句话都可靠。</p></blockquote>
+</main>
+</div>
+<div class="toolbar">
+  <button id="totop">↑ 回到顶部</button>
+</div>
+<script>
+// 代码复制按钮
+document.querySelectorAll('.codeblock').forEach(function(box){
+  var btn = box.querySelector('.copy');
+  var code = box.querySelector('pre');
+  if(!btn || !code) return;
+  btn.addEventListener('click', function(){
+    // 代码块：逐行取 .lc（去掉行号）；示意图：直接取 pre 的文本
+    var rows = code.querySelectorAll('.lc');
+    var text = rows.length
+      ? Array.prototype.map.call(rows, function(l){ return l.textContent; }).join('\n')
+      : code.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+    }).catch(function(){ btn.textContent = '复制失败'; setTimeout(function(){ btn.textContent='复制'; }, 1200); });
+  });
+});
+// 滚动高亮当前目录项
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 120, best = 0;
+    for(var i=0;i<targets.length;i++){ if(targets[i] && targets[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+    var h = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+// 回到顶部
+document.getElementById('totop').addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+</script>
+</body>
+</html>

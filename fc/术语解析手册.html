@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>飞控术语解析手册</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1f2328; --muted:#656d76; --border:#d0d7de;
+  --sidebar-bg:#f6f8fa; --code-bg:#f6f8fa; --code-border:#d8dee4;
+  --accent:#0969da; --accent-soft:#ddf4ff;
+  --warn-bg:#fff8c5; --warn-border:#d4a72c;
+  --danger-bg:#ffebe9; --danger-border:#cf222e;
+  --ok-bg:#dafbe1; --ok-border:#1a7f37;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --border:#30363d;
+    --sidebar-bg:#161b22; --code-bg:#161b22; --code-border:#30363d;
+    --accent:#58a6ff; --accent-soft:#0c2d6b;
+    --warn-bg:#3a2d00; --warn-border:#9e6a03;
+    --danger-bg:#3d1418; --danger-border:#f85149;
+    --ok-bg:#0f2f1a; --ok-border:#3fb950;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",Roboto,sans-serif;
+  font-size:16px; line-height:1.75;
+}
+/* ---------- 布局 ---------- */
+.wrap{display:flex; align-items:flex-start; max-width:1500px; margin:0 auto}
+nav{
+  position:sticky; top:0; flex:0 0 300px; height:100vh; overflow-y:auto;
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  padding:20px 0 60px;
+}
+nav .navtitle{
+  padding:0 20px 14px; font-weight:600; font-size:15px;
+  border-bottom:1px solid var(--border); margin-bottom:10px;
+}
+nav a{
+  display:block; padding:4px 20px; color:var(--muted);
+  text-decoration:none; font-size:13.5px; border-left:3px solid transparent;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+nav a:hover{color:var(--accent); background:var(--accent-soft)}
+nav a.h1{font-weight:600; color:var(--fg); margin-top:8px}
+nav a.h2{padding-left:32px}
+nav a.h3{padding-left:46px; font-size:12.5px}
+nav a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); font-weight:600}
+main{flex:1 1 auto; min-width:0; padding:32px 44px 120px}
+/* ---------- 页头 ---------- */
+header.page{
+  border-bottom:2px solid var(--border); padding-bottom:20px; margin-bottom:28px;
+}
+header.page h1{margin:0 0 6px; font-size:30px; line-height:1.3; border:0; padding:0}
+header.page .sub{color:var(--muted); font-size:15px}
+header.page .meta{color:var(--muted); font-size:12.5px; margin-top:10px}
+/* ---------- 标题 ---------- */
+h1,h2,h3,h4{line-height:1.35; font-weight:600; scroll-margin-top:16px}
+h1{font-size:26px; margin:44px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--border)}
+h2{font-size:22px; margin:38px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border)}
+h3{font-size:18px; margin:28px 0 10px}
+h4{font-size:16px; margin:22px 0 8px; color:var(--muted)}
+.anchor{color:var(--border); text-decoration:none; margin-left:8px; font-weight:400; opacity:0}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+/* ---------- 正文元素 ---------- */
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{margin:12px 0; padding-left:26px}
+li{margin:5px 0}
+li>ul,li>ol{margin:5px 0}
+hr{border:0; border-top:1px solid var(--border); margin:34px 0}
+strong{font-weight:600}
+/* 行内代码 */
+code{
+  background:var(--code-bg); border:1px solid var(--code-border);
+  border-radius:5px; padding:.15em .4em; font-size:.875em;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  word-break:break-word;
+}
+/* 代码块 */
+.codeblock{
+  position:relative; margin:16px 0; border:1px solid var(--code-border);
+  border-radius:8px; overflow:hidden; background:var(--code-bg); box-shadow:var(--shadow);
+}
+.codeblock .cbhead{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 12px; background:var(--sidebar-bg); border-bottom:1px solid var(--code-border);
+  font-size:12px; color:var(--muted);
+}
+.codeblock .lang{font-weight:600; letter-spacing:.03em; text-transform:uppercase}
+.codeblock .copy{
+  cursor:pointer; border:1px solid var(--code-border); background:transparent;
+  color:var(--muted); border-radius:5px; padding:2px 9px; font-size:11.5px;
+  font-family:inherit;
+}
+.codeblock .copy:hover{color:var(--accent); border-color:var(--accent)}
+.codeblock pre{
+  margin:0; padding:12px 0; overflow-x:auto;
+  font-family:"Cascadia Mono",Consolas,"Courier New",monospace;
+  font-size:13px; line-height:1.65;
+}
+.codeblock .line{display:flex; min-width:max-content}
+.codeblock .ln{
+  flex:0 0 auto; width:3.2em; padding-right:12px; text-align:right;
+  color:var(--border); user-select:none;
+}
+.codeblock .lc{padding-right:20px; white-space:pre}
+/* 示意图：不加行号、不换行（换行会毁掉 ASCII 图的列对齐，所以横向滚动） */
+.codeblock.art{background:var(--bg)}
+.codeblock.art .lang{color:var(--accent)}
+.codeblock .artpre{
+  margin:0; padding:14px 16px; overflow-x:auto; white-space:pre;
+  font-family:"Cascadia Mono",Consolas,"MS Gothic","Courier New",monospace;
+  font-size:13px; line-height:1.5; tab-size:4;
+}
+/* 表格 */
+.tablewrap{overflow-x:auto; margin:16px 0; border:1px solid var(--border); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{border-bottom:1px solid var(--border); padding:9px 13px; text-align:left; vertical-align:top}
+th{background:var(--sidebar-bg); font-weight:600; white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sidebar-bg)}
+/* 引用块：按内容分色 */
+blockquote{
+  margin:16px 0; padding:12px 16px; border-left:4px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0;
+}
+blockquote p{margin:6px 0}
+blockquote.warn{border-left-color:var(--warn-border); background:var(--warn-bg)}
+blockquote.danger{border-left-color:var(--danger-border); background:var(--danger-bg)}
+blockquote.ok{border-left-color:var(--ok-border); background:var(--ok-bg)}
+/* 顶部工具条 */
+.toolbar{
+  position:fixed; right:20px; bottom:20px; display:flex; gap:8px; z-index:50;
+}
+.toolbar button{
+  border:1px solid var(--border); background:var(--bg); color:var(--muted);
+  border-radius:20px; padding:8px 16px; cursor:pointer; font-size:13px;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.toolbar button:hover{color:var(--accent); border-color:var(--accent)}
+/* 进度条 */
+#progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; z-index:99}
+/* 窄屏 */
+@media (max-width:900px){
+  nav{display:none}
+  main{padding:20px 18px 100px}
+  .wrap{display:block}
+  body{font-size:15px}
+}
+@media print{
+  nav,.toolbar,#progress{display:none}
+  main{padding:0}
+  .codeblock,.tablewrap{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav>
+  <div class="navtitle">飞控术语解析手册</div>
+  <a class="h2" href="#0-先给一张-全景地图" title="0. 先给一张&quot;全景地图&quot;">0. 先给一张&quot;全景地图&quot;</a>
+  <a class="h2" href="#1-晶振-时钟树-PLL-预分频" title="1. 晶振、时钟树、PLL、预分频">1. 晶振、时钟树、PLL、预分频</a>
+  <a class="h3" href="#1-1-晶振-Crystal-Oscillator" title="1.1 晶振（Crystal / Oscillator）">1.1 晶振（Crystal / Oscillator）</a>
+  <a class="h3" href="#1-2-时钟树-Clock-Tree" title="1.2 时钟树（Clock Tree）">1.2 时钟树（Clock Tree）</a>
+  <a class="h3" href="#1-3-PLL-锁相环-Phase-Locked-Loop" title="1.3 PLL（锁相环，Phase-Locked Loop）">1.3 PLL（锁相环，Phase-Locked Loop）</a>
+  <a class="h3" href="#1-4-预分频-Prescaler" title="1.4 预分频（Prescaler）">1.4 预分频（Prescaler）</a>
+  <a class="h3" href="#1-5-为什么-时钟-这词还出现在别的地方" title="1.5 为什么&quot;时钟&quot;这词还出现在别的地方">1.5 为什么&quot;时钟&quot;这词还出现在别的地方</a>
+  <a class="h2" href="#2-中断-中断优先级-SysTick" title="2. 中断、中断优先级、SysTick">2. 中断、中断优先级、SysTick</a>
+  <a class="h3" href="#2-1-中断-Interrupt" title="2.1 中断（Interrupt）">2.1 中断（Interrupt）</a>
+  <a class="h3" href="#2-2-中断服务函数-ISR-的三条铁律" title="2.2 中断服务函数（ISR）的三条铁律">2.2 中断服务函数（ISR）的三条铁律</a>
+  <a class="h3" href="#2-3-中断打标记-主循环干活-本项目最重要的设计模式" title="2.3 &quot;中断打标记、主循环干活&quot;——本项目最重要的设计模式">2.3 &quot;中断打标记、主循环干活&quot;——本项目最重要的设计模式</a>
+  <a class="h3" href="#2-4-中断优先级-NVIC-Priority" title="2.4 中断优先级（NVIC Priority）">2.4 中断优先级（NVIC Priority）</a>
+  <a class="h3" href="#2-5-SysTick-系统节拍定时器" title="2.5 SysTick（系统节拍定时器）">2.5 SysTick（系统节拍定时器）</a>
+  <a class="h2" href="#3-板级支持包-BSP-HAL-寄存器" title="3. 板级支持包（BSP）、HAL、寄存器">3. 板级支持包（BSP）、HAL、寄存器</a>
+  <a class="h3" href="#3-1-寄存器-Register" title="3.1 寄存器（Register）">3.1 寄存器（Register）</a>
+  <a class="h3" href="#3-2-HAL-硬件抽象层-Hardware-Abstraction-Layer" title="3.2 HAL（硬件抽象层，Hardware Abstraction Layer）">3.2 HAL（硬件抽象层，Hardware Abstraction Layer）</a>
+  <a class="h3" href="#3-3-BSP-板级支持包-Board-Support-Package" title="3.3 BSP（板级支持包，Board Support Package）">3.3 BSP（板级支持包，Board Support Package）</a>
+  <a class="h3" href="#3-4-初始化顺序为什么不能乱" title="3.4 初始化顺序为什么不能乱">3.4 初始化顺序为什么不能乱</a>
+  <a class="h2" href="#4-射频-RF-信道-地址-Payload-ACK" title="4. 射频（RF）、信道、地址、Payload、ACK">4. 射频（RF）、信道、地址、Payload、ACK</a>
+  <a class="h3" href="#4-1-射频-RF-Radio-Frequency" title="4.1 射频（RF，Radio Frequency）">4.1 射频（RF，Radio Frequency）</a>
+  <a class="h3" href="#4-2-信道-Channel-Frequency" title="4.2 信道（Channel / Frequency）">4.2 信道（Channel / Frequency）</a>
+  <a class="h3" href="#4-3-原-跳频-一节-已按代码事实更正" title="4.3（原&quot;跳频&quot;一节，已按代码事实更正）">4.3（原&quot;跳频&quot;一节，已按代码事实更正）</a>
+  <a class="h3" href="#4-4-地址-Address-Pipe" title="4.4 地址（Address / Pipe）">4.4 地址（Address / Pipe）</a>
+  <a class="h3" href="#4-5-数据包-Packet-与载荷-Payload" title="4.5 数据包（Packet）与载荷（Payload）">4.5 数据包（Packet）与载荷（Payload）</a>
+  <a class="h3" href="#4-6-ACK-应答-自动重传-Auto-Retransmit" title="4.6 ACK（应答）、自动重传（Auto Retransmit）">4.6 ACK（应答）、自动重传（Auto Retransmit）</a>
+  <a class="h3" href="#4-7-收发模式与-CE-引脚" title="4.7 收发模式与 CE 引脚">4.7 收发模式与 CE 引脚</a>
+  <a class="h3" href="#4-8-软件模拟-SPI-Bit-Banging" title="4.8 软件模拟 SPI（Bit-Banging）">4.8 软件模拟 SPI（Bit-Banging）</a>
+  <a class="h2" href="#5-看门狗-Watchdog-WDG" title="5. 看门狗（Watchdog, WDG）">5. 看门狗（Watchdog, WDG）</a>
+  <a class="h3" href="#5-1-定义" title="5.1 定义">5.1 定义</a>
+  <a class="h3" href="#5-2-两种看门狗" title="5.2 两种看门狗">5.2 两种看门狗</a>
+  <a class="h3" href="#5-3-超时时间怎么算" title="5.3 超时时间怎么算">5.3 超时时间怎么算</a>
+  <a class="h3" href="#5-4-喂狗位置的选择-这里有个大坑" title="5.4 喂狗位置的选择——这里有个大坑">5.4 喂狗位置的选择——这里有个大坑</a>
+  <a class="h2" href="#6-对码-配对-Pairing" title="6. 对码 / 配对（Pairing）">6. 对码 / 配对（Pairing）</a>
+  <a class="h3" href="#6-1-为什么需要-对码" title="6.1 为什么需要&quot;对码&quot;">6.1 为什么需要&quot;对码&quot;</a>
+  <a class="h3" href="#6-2-对码流程-你工程里的实际逻辑" title="6.2 对码流程（你工程里的实际逻辑）">6.2 对码流程（你工程里的实际逻辑）</a>
+  <a class="h3" href="#6-3-对码循环-为什么是-while-1" title="6.3 &quot;对码循环&quot;为什么是 while(1)">6.3 &quot;对码循环&quot;为什么是 while(1)</a>
+  <a class="h3" href="#6-4-跳频与对码的关系" title="6.4 跳频与对码的关系">6.4 跳频与对码的关系</a>
+  <a class="h2" href="#7-心跳-软定时器-失联保护" title="7. 心跳、软定时器、失联保护">7. 心跳、软定时器、失联保护</a>
+  <a class="h3" href="#7-1-心跳-Heartbeat" title="7.1 心跳（Heartbeat）">7.1 心跳（Heartbeat）</a>
+  <a class="h3" href="#7-2-软定时器-Soft-Timer" title="7.2 软定时器（Soft Timer）">7.2 软定时器（Soft Timer）</a>
+  <a class="h3" href="#7-3-失联保护-失控保护-Failsafe" title="7.3 失联保护 / 失控保护（Failsafe）">7.3 失联保护 / 失控保护（Failsafe）</a>
+  <a class="h2" href="#8-传感器-姿态-滤波-姿态解算" title="8. 传感器、姿态、滤波、姿态解算">8. 传感器、姿态、滤波、姿态解算</a>
+  <a class="h3" href="#8-1-IMU-惯性测量单元" title="8.1 IMU（惯性测量单元）">8.1 IMU（惯性测量单元）</a>
+  <a class="h3" href="#8-2-量程-分辨率-零偏-校准" title="8.2 量程、分辨率、零偏、校准">8.2 量程、分辨率、零偏、校准</a>
+  <a class="h3" href="#8-3-姿态解算-Attitude-Estimation" title="8.3 姿态解算（Attitude Estimation）">8.3 姿态解算（Attitude Estimation）</a>
+  <a class="h3" href="#8-4-滤波-Filter" title="8.4 滤波（Filter）">8.4 滤波（Filter）</a>
+  <a class="h3" href="#8-5-气压计与定高" title="8.5 气压计与定高">8.5 气压计与定高</a>
+  <a class="h2" href="#9-其它常见术语速查" title="9. 其它常见术语速查">9. 其它常见术语速查</a>
+  <a class="h2" href="#10-三个-名词容易混-的对照表" title="10. 三个&quot;名词容易混&quot;的对照表">10. 三个&quot;名词容易混&quot;的对照表</a>
+  <a class="h3" href="#10-1-时钟类" title="10.1 时钟类">10.1 时钟类</a>
+  <a class="h3" href="#10-2-通信类" title="10.2 通信类">10.2 通信类</a>
+  <a class="h3" href="#10-3-心跳-类" title="10.3 &quot;心跳&quot;类">10.3 &quot;心跳&quot;类</a>
+  <a class="h2" href="#11-读这份代码的-避坑地图-已知的注释与代码不一致" title="11. 读这份代码的&quot;避坑地图&quot;：已知的注释与代码不一致">11. 读这份代码的&quot;避坑地图&quot;：已知的注释与代码不一致</a>
+  <a class="h3" href="#11-1-数值类的注释错误-最容易误导人" title="11.1 数值类的注释错误（最容易误导人）">11.1 数值类的注释错误（最容易误导人）</a>
+  <a class="h3" href="#11-2-逻辑类的注释错误-按注释理解会得出相反结论" title="11.2 逻辑类的注释错误（按注释理解会得出相反结论）">11.2 逻辑类的注释错误（按注释理解会得出相反结论）</a>
+  <a class="h3" href="#11-3-你在读代码时会碰到的-反直觉设计" title="11.3 你在读代码时会碰到的&quot;反直觉设计&quot;">11.3 你在读代码时会碰到的&quot;反直觉设计&quot;</a>
+  <a class="h3" href="#11-4-这份手册里我写错-后来核实更正的地方" title="11.4 这份手册里我写错、后来核实更正的地方">11.4 这份手册里我写错、后来核实更正的地方</a>
+  <a class="h3" href="#11-5-写术语伴读时新查出来的不一致-第二批" title="11.5 写术语伴读时新查出来的不一致（第二批）">11.5 写术语伴读时新查出来的不一致（第二批）</a>
+  <a class="h3" href="#11-6-写-飞控技术演进总纲-时又查出的一批-第三批" title="11.6 写《飞控技术演进总纲》时又查出的一批（第三批）">11.6 写《飞控技术演进总纲》时又查出的一批（第三批）</a>
+  <a class="h2" href="#12-英文缩写速查表-看代码时随手查" title="12. 英文缩写速查表（看代码时随手查）">12. 英文缩写速查表（看代码时随手查）</a>
+  <a class="h3" href="#12-1-芯片与内核" title="12.1 芯片与内核">12.1 芯片与内核</a>
+  <a class="h3" href="#12-2-外设与通信" title="12.2 外设与通信">12.2 外设与通信</a>
+  <a class="h3" href="#12-3-传感器与姿态" title="12.3 传感器与姿态">12.3 传感器与姿态</a>
+  <a class="h3" href="#12-4-飞控业务" title="12.4 飞控业务">12.4 飞控业务</a>
+  <a class="h3" href="#12-5-工具链与开发" title="12.5 工具链与开发">12.5 工具链与开发</a>
+  <a class="h3" href="#12-6-常见英文术语-不是缩写-但常撞到" title="12.6 常见英文术语（不是缩写，但常撞到）">12.6 常见英文术语（不是缩写，但常撞到）</a>
+  <a class="h2" href="#13-从参考图纸里核出来的硬件事实-与代码不一致的地方" title="13. 从参考图纸里核出来的硬件事实（与代码不一致的地方）">13. 从参考图纸里核出来的硬件事实（与代码不一致的地方）</a>
+  <a class="h3" href="#13-1-飞控板的实际元件清单" title="13.1 飞控板的实际元件清单">13.1 飞控板的实际元件清单</a>
+  <a class="h3" href="#13-2-板上焊了-16MHz-晶振-但代码把-HSE-关掉了" title="13.2 ⚠ 板上焊了 16MHz 晶振，但代码把 HSE 关掉了">13.2 ⚠ 板上焊了 16MHz 晶振，但代码把 HSE 关掉了</a>
+  <a class="h3" href="#13-3-参考资料里还有什么" title="13.3 参考资料里还有什么">13.3 参考资料里还有什么</a>
+  <a class="h2" href="#附-与其它文档的关系" title="附：与其它文档的关系">附：与其它文档的关系</a>
+</nav>
+<main>
+<header class="page">
+  <h1>飞控术语解析手册</h1>
+  <div class="sub">把忘了的专有名词讲清楚 —— 每个术语都配你工程里的真实实例</div>
+  <div class="meta">PAN 飞控工程 · PY32F030 (Cortex-M0+) · 由 build-gcc/tools/md_to_html.py 生成</div>
+</header>
+<blockquote class=""><p>写给"很久没碰嵌入式、名词都忘了"的人。
+每个术语按 <strong>「一句话定义 → 打个比方 → 你工程里的实例 → 为什么重要/常见坑」</strong> 讲。
+所有代码引用都来自本工程 <code>C:\Users\y\Desktop\pan飞控代码zts(1)</code>。</p><p><strong>建议读法</strong>：先看第 1 节（晶振与时钟树）和第 2 节（中断），
+这两个是理解其它一切的基础——它们解释了"为什么代码里到处在数 1ms"。</p><p>配套文档：<code>C_KEYWORDS_GUIDE.md</code>（C 语言关键字）、<code>COMMENT_STANDARD.md</code>（注释规范）。</p></blockquote>
+<hr>
+<h2 id="0-先给一张-全景地图">0. 先给一张"全景地图"<a class="anchor" href="#0-先给一张-全景地图">#</a></h2>
+<p>飞控 = <strong>一个每 1 毫秒必须醒一次、否则飞机就掉下来的小电脑</strong>。 所有术语都在回答三个问题之一：</p>
+<div class="tablewrap"><table><thead><tr><th>问题</th><th>相关术语</th></tr></thead><tbody><tr><td><strong>它怎么知道时间？</strong></td><td>晶振、时钟树、PLL、预分频、SysTick、定时器、软定时器、心跳</td></tr><tr><td><strong>它怎么和外界说话？</strong></td><td>射频、信道、地址、payload、ACK、SPI、UART、对码、心跳包</td></tr><tr><td><strong>它怎么保证不出事？</strong></td><td>中断、优先级、volatile、看门狗、失联保护、板级初始化</td></tr></tbody></table></div>
+<p>把这棵树记住，后面每个名词都能挂上去：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">                    ┌─ 时钟树 ──→ 定时器 ──→ 中断(1ms) ──→ 姿态控制(PID)
+   HSI 校准到      ┤                                    └─→ 软定时器(10/100ms 任务)
+   24MHz ─ PLL ×2 ─┤
+   = 48MHz         └─ 外设时钟 ─→ SPI(读传感器) / UART(打印) / GPIO(驱动射频)
+                                                        │
+   遥控器 ──2.4G射频(信道/地址/payload/ACK)──→ 飞控 ───┘
+                            │
+                      对码(交换地址) ──→ 存 Flash
+                            │
+                      看门狗(兜底) ←── 喂狗(证明主循环还活着)
+   （例外：看门狗用独立的 LSI 32768Hz，不来自 48MHz）</pre></div>
+<hr>
+<h2 id="1-晶振-时钟树-PLL-预分频">1. 晶振、时钟树、PLL、预分频<a class="anchor" href="#1-晶振-时钟树-PLL-预分频">#</a></h2>
+<h3 id="1-1-晶振-Crystal-Oscillator">1.1 晶振（Crystal / Oscillator）<a class="anchor" href="#1-1-晶振-Crystal-Oscillator">#</a></h3>
+<p><strong>定义</strong>：给单片机提供"节拍"的元件。CPU 的每一条指令、每个外设的时序，都由它驱动。</p>
+<p><strong>比方</strong>：晶振 = 乐队的节拍器。没有它，所有人各弹各的。</p>
+<p><strong>两种来源</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>类型</th><th>全称</th><th>特点</th></tr></thead><tbody><tr><td><strong>HSI</strong></td><td>High Speed Internal（内部高速）</td><td>芯片自带 RC 振荡器，<strong>不用外接元件、启动快</strong>，但精度差（±1~3%）</td></tr><tr><td><strong>HSE</strong></td><td>High Speed External（外部高速）</td><td>外接晶振，精度高（±10~50ppm），但要焊元件、启动慢（ms 级）</td></tr><tr><td><strong>LSI</strong></td><td>Low Speed Internal（内部低速）</td><td>约 32kHz，<strong>专供看门狗和 RTC</strong>，因为看门狗要求"即使主时钟坏了也能跑"</td></tr></tbody></table></div>
+<p><strong>你工程里的实例</strong>：本项目用的是 <strong>HSI</strong>（内部时钟）， 所以 <code>main.c</code> 的 <code>SystemClock_Config()</code> 里把 <code>HSEState</code> 设成了 <code>RCC_HSE_OFF</code>， 也就没有"等待外部晶振起振"的代码。</p>
+<blockquote class="warn"><p>⚠ <strong>但注意别理解成"板子上没有晶振"</strong>：<strong>板上其实焊了一颗 16MHz 晶振</strong>
+（<code>XL7EL89COI-111YLC-16M</code>，±10ppm），只是<strong>代码没启用它</strong>。
+这两件事完全不同 —— 详见本手册第 13.2 节，那里有元件清单作证。
+之前这里写成"板子上没有晶振也能跑"，是与 13.2 节自相矛盾的错误说法，已更正。</p></blockquote>
+<blockquote class=""><p><strong>坑</strong>：HSI 精度差意味着<strong>串口波特率会有误差</strong>。
+115200 波特率下 ±2% 的误差就可能让某些 USB 转串口模块收错字节。
+如果调试时串口打印乱码、但换波特率就好，通常就是这个原因。</p></blockquote>
+<h3 id="1-2-时钟树-Clock-Tree">1.2 时钟树（Clock Tree）<a class="anchor" href="#1-2-时钟树-Clock-Tree">#</a></h3>
+<p><strong>定义</strong>：从晶振出发，经过倍频/分频，把不同频率送到各个外设的一整套路径。</p>
+<p><strong>比方</strong>：时钟树 = 自来水管网。总水管（晶振）→ 加压泵（PLL）→ 到厨房的水管（定时器）、到卫生间的水管（串口），各自口径不同。</p>
+<p><strong>你工程里的时钟树</strong>（这是理解全部定时逻辑的钥匙）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">① 复位后 SystemInit()：HSI 设为出厂 8MHz 档 + 向量表指向 Flash
+   │   （注意：这一步【没有】配 PLL）
+   ↓
+② main.c 的 SystemClock_Config()：把 HSI 校准到 24MHz
+   │   RCC_HSICALIBRATION_24MHz
+   ↓
+③ PLL 倍频：×2  →  SYSCLK 48MHz
+   │   （倍频系数是芯片系统文件里硬编码的 2×，见 system_py32f0xx.c 的
+   │     SystemCoreClock = 2 * HSIFreqTable[hsifs]）
+   ↓
+④ AHB 不分频、APB1 不分频
+   → HCLK = PCLK1 = 定时器/串口/SPI 的时钟源 = 48MHz
+   ↓
+        ┌──────────────┬──────────────┬──────────────┬─────────────┐
+        ↓              ↓              ↓              ↓             ↓
+   TIM16: /48     TIM17: /480     SPI1: /32     TIM3: /3      TIM1: /4
+   = 1MHz 计数    = 100kHz 计数   = 1.5MHz      再数 1000     再数 600
+   1 微秒/步      再数 100 计数                  = 16kHz       = 20kHz
+        │              │                       （四路电机）  （RGB 灯）
+        ↓              ↓
+   micros16()     每 1ms 中断一次
+   约 65ms 回绕   → 飞行控制主循环
+
+   ┌ 例外：IWDG（看门狗）不来自 48MHz，而来自独立的 LSI ≈ 32768Hz</pre></div>
+<p><strong>怎么算出来的</strong>（自己动手推一遍就懂了）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">定时器计数频率 = 外设时钟 ÷ (预分频 + 1)
+中断周期      = 1 ÷ (计数频率 ÷ 周期值)
+             = 1 ÷ (100kHz ÷ 100) = 1 ÷ 1kHz = 1ms   ← TIM17</pre></div>
+<ul><li>TIM16：预分频 <code>48-1</code> → 48MHz/48 = <strong>1MHz</strong>，即 <strong>1 步 = 1 微秒</strong>（所以叫 <code>micros16()</code>）；周期 <code>0xFFFF</code> ⇒ 约 65.5ms 回绕</li><li>TIM17：预分频 <code>480-1</code>、周期 <code>100-1</code> → 48MHz/480/100 = <strong>1kHz</strong>，即 <strong>每 1 毫秒中断一次</strong></li><li>SPI1：分频 <code>32</code> → 48MHz/32 = <strong>1.5MHz</strong>（ICM42688 有最高速率限制）</li><li>TIM3（电机 PWM）：预分频 <code>3-1</code>、周期 <code>1000-1</code> → 48MHz/3/1000 = <strong>16kHz</strong></li><li>TIM1（RGB 灯 PWM）：预分频 <code>4-1</code>、周期 <code>600-1</code> → 48MHz/4/600 = <strong>20kHz</strong></li></ul>
+<p><strong>为什么重要</strong>：项目里所有"每 1ms""每 10ms"的说法，源头都在这里。 <code>pid()</code> 能自称 1kHz，是因为 TIM17 每 1ms 调它一次。</p>
+<blockquote class=""><p><strong>注意 <code>-1</code> 的坑</strong>：预分频寄存器写 N 表示"除以 N+1"（因为从 0 开始数）。
+所以想要 48 分频，必须写 <code>48-1 = 47</code>。写 48 会得到 49 分频。
+你工程里代码写的时 <code>48 - 1</code>、<code>480 - 1</code>、<code>100 - 1</code> —— 这是对的写法，一眼看出意图。</p></blockquote>
+<blockquote class=""><p><strong>⚠ 一个极容易搞错的地方（我一开始就搞错了）</strong>：
+<strong>PLL 的倍频不是从"标称 8MHz"开始的</strong>。<code>SystemInit()</code> 里的 HSI 是 8MHz，
+但 <code>SystemClock_Config()</code> 会先把 HSI 校准到 <strong>24MHz</strong>，再经 PLL <strong>×2</strong> 得到 48MHz。
+所以"8MHz × 6 = 48MHz"这种算法<strong>虽然数值巧合正确，过程是错的</strong> ——
+正确链路是 <code>24MHz × 2 = 48MHz</code>。
+这也解释了一个连带事实：<code>py32f0xx_hal_conf.h</code> 里的 <code>HSI_VALUE = 8000000</code>
+是"HSI 的原始频率"（给 HAL 库算 PLL 输入范围用），<strong>不是</strong>最终的系统频率。
+两处必须一起理解，否则算出来的波特率/定时器周期会全错。</p></blockquote>
+<h3 id="1-3-PLL-锁相环-Phase-Locked-Loop">1.3 PLL（锁相环，Phase-Locked Loop）<a class="anchor" href="#1-3-PLL-锁相环-Phase-Locked-Loop">#</a></h3>
+<p><strong>定义</strong>：把低频时钟"倍频"成高频时钟的电路。</p>
+<p><strong>比方</strong>：齿轮组。小齿轮转 2 圈，大齿轮转 1 圈 → 用慢的输入得到快的输出。</p>
+<p><strong>你工程里</strong>：<strong>HSI 校准到 24MHz × 2 = 48MHz</strong>。</p>
+<p><strong>⚠ 倍频系数在哪里、是多少</strong>（这是个容易搞混的点）：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* startup/system_py32f0xx.c:106 —— SystemCoreClockUpdate() 里的 PLL 分支 */
+SystemCoreClock = 2 * (HSIFreqTable[hsifs]);   /* ← 系数 2 是硬编码在这里的 */</pre></div>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* startup/system_py32f0xx.c:73 —— HSI 可校准档位表 */</span></div><div class="line"><span class="ln">2</span><span class="lc">const uint32_t HSIFreqTable[8] = {4000000U, 8000000U, 16000000U, 22120000U, 24000000U, 4000000U, 4000000U, 4000000U};</span></div></pre></div>
+<ul><li>索引 4 = <strong>24MHz</strong>，正是 <code>RCC_HSICALIBRATION_24MHz</code> 对应的档位；</li><li><code>SystemCoreClock = 2 × 24MHz = 48MHz</code>。</li></ul>
+<p><strong>为什么 HSI 要校准到 24MHz 而不是直接用 8MHz</strong>： HAL 库对 PLL 输入频率有下限要求。你工程里的注释写"必须 12MHz 及以上"， 而 HAL 源码里的实际约束是 <strong>16~24MHz</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* drivers/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_rcc.c */</span></div><div class="line"><span class="ln">2</span><span class="lc">#define PLLSOURCE_FREQ_MIN         (16000000U)</span></div><div class="line"><span class="ln">3</span><span class="lc">#define PLLSOURCE_FREQ_MAX         (24000000U)</span></div></pre></div>
+<p>所以 8MHz 太低、必须抬高；而 24MHz 是<strong>贴着上限</strong>的取值。</p>
+<p><strong>为什么最终要 48MHz</strong>：这是这颗芯片的额定最高主频， 而且 48 能被 48、480、4800、32 整除，<strong>方便凑出整数微秒/毫秒</strong>（见上面的算式）。</p>
+<blockquote class=""><p><strong>设计品味</strong>：选时钟频率时优先选能被整除的值，可以避免累积误差。
+48MHz 之于 1ms，比 47.5MHz 之于 1ms 舒服得多。</p></blockquote>
+<blockquote class=""><p><strong>⚠ 顺带纠一个常见误解</strong>：<code>user/py32f0xx_hal_conf.h</code> 里<strong>没有</strong> <code>RCC_HSI_ON</code>、
+也没有任何 PLL 宏。那些全部在 <strong><code>user/main.c</code> 的 <code>SystemClock_Config()</code></strong> 里。
+hal_conf.h 只提供<strong>标称频率宏</strong>（<code>HSI_VALUE=8000000</code>、<code>HSE_VALUE=24000000</code>、
+<code>LSI_VALUE=32768</code>、<code>LSE_VALUE=32768</code>、<code>VDD_VALUE=3300</code>），
+真正的时钟配置代码一行都不在那儿。找时钟配置时别翻错文件。</p></blockquote>
+<h3 id="1-4-预分频-Prescaler">1.4 预分频（Prescaler）<a class="anchor" href="#1-4-预分频-Prescaler">#</a></h3>
+<p><strong>定义</strong>：把输入频率按整数比例降低的分频器，让下游外设跑在合适的速率。</p>
+<p><strong>比方</strong>：减速带。不是所有路都适合开 120 码。</p>
+<p><strong>你工程里的三处预分频</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>位置</th><th>值</th><th>效果</th><th>为什么要分频</th></tr></thead><tbody><tr><td>TIM16 预分频</td><td><code>48-1</code></td><td>48MHz → 1MHz（1µs/步）</td><td>16 位计数器最大 65535，1MHz 下量程 65ms 够用</td></tr><tr><td>TIM17 预分频</td><td><code>480-1</code></td><td>48MHz → 100kHz</td><td>配合周期 100 得到正好 1kHz</td></tr><tr><td>SPI 分频</td><td>见 <code>spi.c</code></td><td>48MHz → 若干 MHz</td><td>ICM42688 的 SPI 有最高速率限制，超了读不出数据</td></tr></tbody></table></div>
+<blockquote class=""><p><strong>为什么定时器要分频而不是直接用 48MHz</strong>：
+16 位计数器只能数到 65535。48MHz 下 65535 步只有 <strong>1.36 毫秒</strong>，
+量程太短；分频到 1MHz 后量程变成 <strong>65.5 毫秒</strong>，够表示"微秒时间戳"了。</p></blockquote>
+<h3 id="1-5-为什么-时钟-这词还出现在别的地方">1.5 为什么"时钟"这词还出现在别的地方<a class="anchor" href="#1-5-为什么-时钟-这词还出现在别的地方">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>说法</th><th>含义</th><th>你工程里的地方</th></tr></thead><tbody><tr><td><strong>时钟树</strong></td><td>上面讲的分频网络</td><td><code>system_py32f0xx.c</code></td></tr><tr><td><strong>使能外设时钟</strong></td><td>单片机为省电，外设默认断电，用前要开时钟</td><td><code>__HAL_RCC_TIM17_CLK_ENABLE()</code>、<code>UARTx_TX_GPIO_CLK_ENABLE()</code></td></tr><tr><td><strong>时钟校准</strong></td><td>校准传感器内部的时钟</td><td><code>icm426/helperClockCalib.c</code>（ICM42688 的时间戳换算）</td></tr><tr><td><strong>时钟极性/相位</strong></td><td>SPI 的采样边沿设置</td><td><code>spi.c</code> 的 <code>CLKPolarity</code> / <code>CLKPhase</code></td></tr></tbody></table></div>
+<blockquote class=""><p><strong>新手最常犯的错</strong>：忘了使能外设时钟。
+症状是"代码明明写对了，寄存器却读不出东西/写不进去"。
+因为外设没上电，寄存器读写全是空操作。</p></blockquote>
+<hr>
+<h2 id="2-中断-中断优先级-SysTick">2. 中断、中断优先级、SysTick<a class="anchor" href="#2-中断-中断优先级-SysTick">#</a></h2>
+<h3 id="2-1-中断-Interrupt">2.1 中断（Interrupt）<a class="anchor" href="#2-1-中断-Interrupt">#</a></h3>
+<p><strong>定义</strong>：硬件事件打断 CPU 当前工作，让 CPU 立刻跳到一段专门的代码去处理，处理完再回来。</p>
+<p><strong>比方</strong>：你在写作业（主循环），电话响了（中断），你放下笔去接电话， 接完回来接着写——而且<strong>笔还放在原来的位置</strong>（寄存器/栈由硬件自动保存）。</p>
+<p><strong>为什么飞控离不开中断</strong>：控制周期必须是<strong>精确的 1ms</strong>。 如果放在主循环里，主循环里还有灯语、串口打印等杂事， 执行时间忽长忽短，控制周期就抖了 → PID 的积分和微分全部失准 → 飞机抖。</p>
+<p><strong>你工程里的实例</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/py32f0xx_it.c —— 中断服务函数（ISR） */</span></div><div class="line"><span class="ln">2</span><span class="lc">void TIM17_IRQHandler(void)</span></div><div class="line"><span class="ln">3</span><span class="lc">{</span></div><div class="line"><span class="ln">4</span><span class="lc">    HAL_TIM_IRQHandler(&amp;TimHandle_17);      /* HAL 会再调回调 */</span></div><div class="line"><span class="ln">5</span><span class="lc">}</span></div></pre></div>
+<p>CPU 每 1ms 自动跳到这里，最终进入 <code>bsp_timer.c</code> 的 <code>HAL_TIM_PeriodElapsedCallback()</code>，把各种计数器 +1。</p>
+<h3 id="2-2-中断服务函数-ISR-的三条铁律">2.2 中断服务函数（ISR）的三条铁律<a class="anchor" href="#2-2-中断服务函数-ISR-的三条铁律">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>铁律</th><th>原因</th><th>你工程的做法</th></tr></thead><tbody><tr><td><strong>函数名不能改</strong></td><td>名字由启动文件的向量表按名字引用</td><td><code>TIM17_IRQHandler</code> 必须一字不差</td></tr><tr><td><strong>必须短、不能阻塞</strong></td><td>ISR 执行期间主循环完全停摆</td><td>中断里只做 <code>xxxTimer++</code></td></tr><tr><td><strong>共享变量要 <code>volatile</code></strong></td><td>否则编译器可能缓存到寄存器，永远读到旧值</td><td>⚠ 你工程的 <code>_cnt10ms</code> 等<strong>漏了</strong>（见 2.4）</td></tr></tbody></table></div>
+<h3 id="2-3-中断打标记-主循环干活-本项目最重要的设计模式">2.3 "中断打标记、主循环干活"——本项目最重要的设计模式<a class="anchor" href="#2-3-中断打标记-主循环干活-本项目最重要的设计模式">#</a></h3>
+<p>中断里<strong>不做重活</strong>，只改几个计数器；主循环看到"计数到了"再去做耗时的活。</p>
+<p><strong>你工程里的实例</strong>（TIM17 的 1ms 中断，简化版）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* drivers/bsp/bsp_timer.c —— 中断里只加计数，几微秒就返回 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if (htim-&gt;Instance == TIM17) {</span></div><div class="line"><span class="ln">3</span><span class="lc">    static uint8_t _cnt20ms;</span></div><div class="line"><span class="ln">4</span><span class="lc">    baroUpdateTimer++;          /* 气压计更新计时 */</span></div><div class="line"><span class="ln">5</span><span class="lc">    altitudeCtrlTimer++;        /* 高度环计时 */</span></div><div class="line"><span class="ln">6</span><span class="lc">    _cnt10ms++;                 /* 10ms 分频 */</span></div><div class="line"><span class="ln">7</span><span class="lc">    _cnt4ms++;                  /* 4ms 分频 */</span></div><div class="line"><span class="ln">8</span><span class="lc">    _cnt100ms++;                /* 100ms 分频 */</span></div><div class="line"><span class="ln">9</span><span class="lc">    _cnt1s++;                   /* 1s 分频 */</span></div><div class="line"><span class="ln">10</span><span class="lc">    if(++_cnt20ms &gt;= 20) {      /* 20ms 分频 */</span></div><div class="line"><span class="ln">11</span><span class="lc">        _cnt20ms = 0;</span></div><div class="line"><span class="ln">12</span><span class="lc">        calibrationEnbTimer++;</span></div><div class="line"><span class="ln">13</span><span class="lc">        powerupTimer++;</span></div><div class="line"><span class="ln">14</span><span class="lc">    }</span></div><div class="line"><span class="ln">15</span><span class="lc">}</span></div></pre></div>
+<p>主循环里再按这些计数决定做什么：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/main.c —— 主循环，用软定时器分派任务 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if(_cnt10ms  &gt;= 10)  { _cnt10ms  = 0; decode_pack(); annexCode(); }   /* 10ms：收解码 */</span></div><div class="line"><span class="ln">3</span><span class="lc">if(_cnt4ms   &gt;= 4)   { _cnt4ms   = 0; Mode_Controler(); }            /* 4ms：翻滚状态机 */</span></div><div class="line"><span class="ln">4</span><span class="lc">if(_cnt100ms &gt;= 100) { _cnt100ms = 0; HAL_IWDG_Refresh(&amp;hiwdg); Led_Process(); } /* 100ms：喂狗+灯 */</span></div></pre></div>
+<blockquote class=""><p><strong>为什么这样设计</strong>：<code>decode_pack()</code> 可能要跑几百微秒。
+如果放进 1ms 中断，就会挤占姿态控制的时间，导致控制周期抖动。
+放到主循环，它晚一点执行无所谓。</p></blockquote>
+<h3 id="2-4-中断优先级-NVIC-Priority">2.4 中断优先级（NVIC Priority）<a class="anchor" href="#2-4-中断优先级-NVIC-Priority">#</a></h3>
+<p><strong>定义</strong>：多个中断同时到来时，谁先执行；以及<strong>高优先级中断可以打断低优先级中断</strong>（嵌套）。</p>
+<p><strong>比方</strong>：医院分诊。心脏骤停（高优先级）能打断普通门诊（低优先级）。</p>
+<p><strong>你工程里的实例</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* drivers/bsp/TIM16.c */</span></div><div class="line"><span class="ln">2</span><span class="lc">HAL_NVIC_SetPriority(TIM17_IRQn, 0, 1);   /* 抢占优先级 0（最高）、子优先级 1 */</span></div><div class="line"><span class="ln">3</span><span class="lc">HAL_NVIC_EnableIRQ(TIM17_IRQn);</span></div></pre></div>
+<p><strong>为什么 TIM17 给最高优先级</strong>：它驱动姿态控制。如果它被别的中断延迟， 控制周期就乱了。宁可让别的中断等它。</p>
+<blockquote class=""><p><strong>Cortex-M0+ 的限制</strong>：只有 2 位优先级（0~3，共 4 级），比 M3/M4 少得多。
+所以本项目只给 TIM17 最高优先级，别的用默认值，不做复杂分级。</p></blockquote>
+<h3 id="2-5-SysTick-系统节拍定时器">2.5 SysTick（系统节拍定时器）<a class="anchor" href="#2-5-SysTick-系统节拍定时器">#</a></h3>
+<p><strong>定义</strong>：Cortex-M 内核<strong>自带</strong>的一个 24 位递减定时器，常用于产生固定节拍（典型 1ms）。</p>
+<p><strong>比方</strong>：内核自带的"秒表"，不占用外设定时器资源。</p>
+<p><strong>你工程里的实例</strong>：<code>SysTick_Handler()</code> 存在，HAL 库用它来累加 <code>HAL_GetTick()</code>（毫秒级时间戳），<code>delay_ms()</code>、超时判断都靠它。</p>
+<blockquote class=""><p><strong>容易混的点</strong>：本项目有<strong>三套</strong>计时来源，分工明确：</p><p>| | SysTick + <code>HAL_GetTick()</code> | TIM16 + <code>micros16()</code> | TIM17 + 软定时器 |
+| --- | --- | --- | --- |
+| 精度 | 毫秒 | <strong>微秒</strong> | 1ms 节拍 |
+| 用途 | HAL 超时、<code>HAL_Delay</code>、LED 闪烁、失联判断、翻转 <code>dt</code> | 精确的控制周期 <code>deltaT</code> | 派生 4/10/100ms/1s 任务（<code>_cnt*</code>） |
+| 配置在哪 | HAL 库内部（<code>HAL_Init</code>） | <code>TIM16.c: tim16_init()</code> | <code>TIM16.c: Timer17_UpdateIT_Init()</code> |
+| 中断 | 有（<code>SysTick_Handler</code>，优先级最低） | <strong>无</strong>（<code>HAL_TIM_Base_Start</code>，不开中断） | 有（<code>TIM17_IRQHandler</code>，优先级最高） |</p><p><strong>为什么控制周期不用 <code>HAL_GetTick()</code></strong>：1ms 精度不够 —— PID 的 <code>deltaT</code> 要算到微秒。
+<strong>为什么失联判断用 <code>HAL_GetTick()</code> 而不用 TIM17 的计数</strong>：失联是"秒级"判断，
+毫秒精度足够；而且 <code>HAL_Delay()</code> 阻塞时 TIM17 计数照常走，两者互不干扰（这是刻意的分工）。</p><p><strong>⚠ 命名陷阱</strong>：<strong>遥控器用的是 TIM16 做 1ms 节拍</strong>（不是 TIM17），
+而飞控用的是 TIM17。两边主频相同（都 48MHz），但节拍用的定时器不同 ——
+对照看两边代码时别搞混。飞控的 TIM16 则是"只计数、不中断"的微秒表。</p></blockquote>
+<hr>
+<h2 id="3-板级支持包-BSP-HAL-寄存器">3. 板级支持包（BSP）、HAL、寄存器<a class="anchor" href="#3-板级支持包-BSP-HAL-寄存器">#</a></h2>
+<p>这三个词描述的是<strong>同一件事的三个抽象层次</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">你的业务代码        imu/pid.c、user/main.c        ← "我要飞机保持水平"
+      ↓ 调用
+硬件抽象层 HAL      HAL_UART_Transmit()           ← "帮我发一个字节"
+      ↓ 调用
+BSP 板级支持        bsp_uart_send()               ← "本板子的串口是 USART1、PB8"
+      ↓ 调用
+寄存器操作          USART1-&gt;TDR = data;           ← 直接写硬件寄存器</pre></div>
+<h3 id="3-1-寄存器-Register">3.1 寄存器（Register）<a class="anchor" href="#3-1-寄存器-Register">#</a></h3>
+<p><strong>定义</strong>：CPU 和外设打交道的"开关面板"。每个外设有一组寄存器， 读=看状态，写=下命令。地址是固定的（由芯片设计决定）。</p>
+<p><strong>比方</strong>：寄存器和外设的关系 = 遥控器和电视机。你按"音量+"（写寄存器）， 电视执行；你想知道当前音量，读"音量寄存器"。</p>
+<p><strong>你工程里的实例</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* icm426/icm42688.c —— 手工拼字节读传感器（SPI 读时序） */</span></div><div class="line"><span class="ln">2</span><span class="lc">accRaw[0] = ((uint16_t)buffer[0] &lt;&lt; 8) | buffer[1];   /* 高字节在前（大端） */</span></div><div class="line"><span class="ln">3</span><span class="lc">&nbsp;</span></div><div class="line"><span class="ln">4</span><span class="lc">/* 位操作是寄存器编程的日常 */</span></div><div class="line"><span class="ln">5</span><span class="lc">bsp_pn298_read_reg(DEM_CAL) &amp; 0x01;      /* 只取最低位 */</span></div><div class="line"><span class="ln">6</span><span class="lc">temp |= (1 &lt;&lt; 5);                         /* 把第 5 位置 1 */</span></div><div class="line"><span class="ln">7</span><span class="lc">temp &amp;= ~(0x01);                          /* 把第 0 位清 0 */</span></div></pre></div>
+<blockquote class=""><p><strong>最重要的坑</strong>：改寄存器里某一位时<strong>必须用 <code>|=</code> / <code>&amp;=~</code></strong>，不能直接 <code>=</code>。
+<code>REG = 0x08</code> 会把同一个寄存器里其它配置全部清零。
+详见 <code>C_KEYWORDS_GUIDE.md</code> 第 12 节。</p></blockquote>
+<h3 id="3-2-HAL-硬件抽象层-Hardware-Abstraction-Layer">3.2 HAL（硬件抽象层，Hardware Abstraction Layer）<a class="anchor" href="#3-2-HAL-硬件抽象层-Hardware-Abstraction-Layer">#</a></h3>
+<p><strong>定义</strong>：芯片厂商提供的一层函数库，把"操作寄存器"包装成"调用函数"， 让你不查手册也能用外设，而且换芯片时改动小。</p>
+<p><strong>比方</strong>：HAL = 汽车的方向盘和踏板。你不用知道发动机怎么工作，踩油门就行。</p>
+<p><strong>你工程里的实例</strong>：<code>drivers/PY32F0xx_HAL_Driver/</code> 整个目录都是。</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">HAL_UART_Transmit(&amp;sUartxHandle, &amp;data, 1, 2);   /* 发 1 字节，超时 2ms */</span></div><div class="line"><span class="ln">2</span><span class="lc">HAL_TIM_Base_Start_IT(&amp;TimHandle_17);            /* 启动定时器并开中断 */</span></div><div class="line"><span class="ln">3</span><span class="lc">HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);  /* 拉高引脚 */</span></div></pre></div>
+<p><strong>HAL 的核心机制：回调（Callback）+ 弱符号（<code>__weak</code>）</strong> HAL 在事件发生时调用一个"空函数"，你在自己代码里写同名函数把它<strong>覆盖</strong>掉：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* 库里的默认实现（py32f0xx_hal_tim.c） */</span></div><div class="line"><span class="ln">2</span><span class="lc">__weak void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) { }</span></div><div class="line"><span class="ln">3</span><span class="lc">&nbsp;</span></div><div class="line"><span class="ln">4</span><span class="lc">/* 你的实现（drivers/bsp/bsp_timer.c）—— 同名即覆盖 */</span></div><div class="line"><span class="ln">5</span><span class="lc">void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) { ... }</span></div></pre></div>
+<blockquote class=""><p><strong>注意</strong>：这个函数<strong>不能加 <code>static</code></strong>，也不能改名，否则变成另一个符号，
+库就调不到你的实现，中断会"什么都不发生"——这是极难查的错误。</p></blockquote>
+<h3 id="3-3-BSP-板级支持包-Board-Support-Package">3.3 BSP（板级支持包，Board Support Package）<a class="anchor" href="#3-3-BSP-板级支持包-Board-Support-Package">#</a></h3>
+<p><strong>定义</strong>：<strong>针对你这块具体板子</strong>的驱动层。HAL 是"芯片通用"， BSP 是"本板子专用"——比如"本板子的 LED 接在 PF4""本板子的串口是 PB8/PB2"。</p>
+<p><strong>比方</strong>：HAL 是"通用汽车零件"，BSP 是"这辆车的装配图"。</p>
+<p><strong>你工程里的实例</strong>：<code>drivers/bsp/</code> 目录就是 BSP 层：</p>
+<div class="tablewrap"><table><thead><tr><th>文件</th><th>板级信息</th></tr></thead><tbody><tr><td><code>bsp_uart.c</code></td><td>本板串口 = USART1，TX=PB8，RX=PB2，115200 8N1</td></tr><tr><td><code>bsp_pn298.c</code></td><td>本板射频芯片 = PN298，接在软件 SPI 上</td></tr><tr><td><code>bsp_rfspi_sw.c</code></td><td><strong>软件模拟 SPI</strong>（因为射频芯片时序特殊，硬件 SPI 不适用）</td></tr><tr><td><code>bsp_timer.c</code></td><td>本板的 1ms 心跳中断在这里处理</td></tr><tr><td><code>bsp_delay.c</code></td><td>微秒级精确延时（用汇编循环实现）</td></tr><tr><td><code>bsp.c</code></td><td>把所有 bsp 初始化串起来的总入口</td></tr><tr><td><code>config_rf.h</code></td><td>射频参数（信道、速率、功率、地址宽度、payload 长度）</td></tr></tbody></table></div>
+<blockquote class=""><p><strong>为什么要分 BSP 和 HAL 两层</strong>：换一块板子（LED 换引脚、串口换外设），
+只改 BSP，业务代码一行不用动。这是嵌入式工程的标准分层。</p></blockquote>
+<h3 id="3-4-初始化顺序为什么不能乱">3.4 初始化顺序为什么不能乱<a class="anchor" href="#3-4-初始化顺序为什么不能乱">#</a></h3>
+<p><code>main()</code> 里的初始化顺序是有依赖关系的，<strong>不能随便调换</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">**实际顺序**（从 `user/main.c` 逐行读出来的，附行号）：
+
+  main.c:220   HAL_Init()                     ← 设 SysTick / NVIC 分组（HAL 一切功能的前提）
+  main.c:223   SystemClock_Config()           ← 配时钟树（之后外设才有时钟）
+  main.c:227   bsp_init()                     ← 板级：时钟使能 + 引脚复用
+  main.c:229   Led_Init()                     ← 灯
+  main.c:235   Timer17_UpdateIT_Init()        ← **1ms 时基中断在这里就开了**
+  main.c:239   Advanced_Timer1_PWM_Init(4-1, 600-1)    → RGB 灯 PWM = 20kHz
+  main.c:244   Advanced_Timer3_PWM_Init(3-1, 1000-1)   → 电机 PWM  = 16kHz
+  main.c:248   ADC_Init()                     ← 电池电压采样
+  main.c:251   HAL_ADC_Start()
+  main.c:255   accgyro_init()                 ← IMU
+  main.c:258   imu_init()                     ← 姿态解算初值
+  main.c:261   BMP390_init()                  ← 气压计
+  main.c:265   ch_change_arr[1] = pair_data.rf_ch   ← 此刻还是 0（见 11.6 节）
+  main.c:295   while(1) { ... }               ← **对码循环**（收到 0xDB 才跳出）
+  ── 以下在**对码成功之后**才执行 ──
+  main.c:336   flash_read()                   ← 从 Flash 读地址/信道/零偏
+  main.c:347   get_now_addr()
+  main.c:349   bsp_pn298_change_addr()        ← 切到协商好的地址与信道
+  main.c:352   tim16_init()                   ← 微秒计时
+  main.c:355   WDG_init()                     ← **看门狗最后才启动**
+  main.c:379   while(1) { 主循环 }            ← 真正的飞行主循环</pre></div>
+<blockquote class=""><p><strong>典型故障</strong>：在时钟配置之前就初始化串口 → 波特率算错 → 串口乱码。
+或在定时器中断开启后才发现某个全局变量还没赋初值 → 行为随机。</p></blockquote>
+<hr>
+<h2 id="4-射频-RF-信道-地址-Payload-ACK">4. 射频（RF）、信道、地址、Payload、ACK<a class="anchor" href="#4-射频-RF-信道-地址-Payload-ACK">#</a></h2>
+<h3 id="4-1-射频-RF-Radio-Frequency">4.1 射频（RF，Radio Frequency）<a class="anchor" href="#4-1-射频-RF-Radio-Frequency">#</a></h3>
+<p><strong>定义</strong>：用无线电波传输数据。本项目用 <strong>2.4GHz</strong> 频段（和 WiFi、蓝牙同频段）。</p>
+<p><strong>比方</strong>：射频 = 对讲机。你和遥控器约定一个"频道"（信道）和一个"暗号"（地址）， 对上了才能通话。</p>
+<p><strong>为什么飞控用 2.4G 而不是 WiFi/蓝牙</strong>：</p>
+<ul><li><strong>延迟低且稳定</strong>：WiFi 要握手、重传，延迟几十毫秒且抖动大；飞控需要稳定的几毫秒。</li><li><strong>可控</strong>：自己管理重传、跳频，不受路由器影响。</li><li><strong>配对简单</strong>：不需要网络配置。</li></ul>
+<p><strong>你工程里的芯片</strong>：<strong>PN298</strong>（普冉的 2.4G 收发芯片）。 它的寄存器布局与经典的 <strong>nRF24L01</strong> 高度相似（所以你能在网上找到大量 nRF24L01 资料对照看）。</p>
+<h3 id="4-2-信道-Channel-Frequency">4.2 信道（Channel / Frequency）<a class="anchor" href="#4-2-信道-Channel-Frequency">#</a></h3>
+<p><strong>定义</strong>：把 2.4GHz 频段切成很多窄带，每条叫一个信道。收发双方必须在同一个信道上。</p>
+<p><strong>比方</strong>：收音机的频道旋钮。调到 98.7 才能听到那个台。</p>
+<p><strong>你工程里的实例</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* drivers/bsp/config_rf.h —— 初始信道 36 */
+#define CONF_DEFAULE_CNANNEL   36    /* 注意：这个宏名疑似拼写错误（CNANNEL） */
+
+/* bsp_pn298.c —— 写寄存器时有 +64 的偏移 */
+bsp_pn298_set_channel(chn);          /* 内部 chn += 64 → 实际写 100 */</pre></div>
+<p><strong>为什么有 <code>+64</code> 偏移</strong>：<strong>已查手册核对</strong>。《PN298 用户手册 V1.0》第 34 页写明：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">05  RF_CH   15:0   0x008E   通信频道设置</span></div><div class="line"><span class="ln">2</span><span class="lc">      HIGH_RF  8   RX 高频/低频选择：0 = 高频，通道 +2M；1 = 低频，通道 −2M</span></div><div class="line"><span class="ln">3</span><span class="lc">      RF_CH  7:0   设置 TX 使用频道为 Channel = RF_CH + 2336</span></div></pre></div>
+<p>也就是<strong>实际频率(MHz) = RF_CH 寄存器低字节 + 2336</strong>。代入工程代码验证：</p>
+<div class="tablewrap"><table><thead><tr><th>代码调用</th><th>写入 RF_CH</th><th>按手册算实际频率</th></tr></thead><tbody><tr><td><code>bsp_pn298_set_channel(36)</code></td><td>36 + 64 = <strong>100</strong></td><td>100 + 2336 = <strong>2436 MHz = 2.436 GHz</strong> ✅</td></tr></tbody></table></div>
+<p>这与工程注释里写的"36 = 2.436GHz"<strong>完全吻合</strong>，也落在手册标明的 ISM 频段 （2400~2483MHz）内。所以 <strong><code>+64</code> 这个偏移让"代码里的 36"对应到了 2.436GHz</strong>。</p>
+<blockquote class=""><p><strong>但要留意两点</strong>（手册核对出来的）：
+1. <strong>手册里并没有"信道号要加 64"这条规定</strong> —— 它是驱动沿用的常量（很可能来自
+   XN297L 兼容系列的经验值），偏移本身没有手册依据。工程注释说"是芯片的信道编码要求"，
+   严格讲<strong>不够准确</strong>：真正的手册依据是上面那条 <code>+2336</code>。
+2. <strong>RF_CH 寄存器是 16 位</strong>（低 8 位频道 + 高位 HIGH_RF 选择 ±2MHz）。
+   而 <code>set_channel()</code> 只写 1 个字节，也就是只改了低 8 位、没动 HIGH_RF 位。
+   想用"−2MHz"那一档（HIGH_RF=1）必须写 16 位。</p><p><strong>实用结论</strong>：改信道时只要保证<strong>收发两端用同一个 <code>+64</code> 偏移</strong>，
+链路就能通；换算实际频率用 <code>寄存器值 + 2336</code>。</p></blockquote>
+<blockquote class=""><p><strong>为什么选 36</strong>：2.4GHz 里 WiFi 常用 1/6/11 信道（2.412/2.437/2.462GHz）。
+36 附近与它们重叠较少，属于相对"干净"的频点。
+但周围如果有一堆 WiFi，还是可能被干扰——这也是<strong>跳频</strong>存在的原因。</p></blockquote>
+<h3 id="4-3-原-跳频-一节-已按代码事实更正">4.3（原"跳频"一节，已按代码事实更正）<a class="anchor" href="#4-3-原-跳频-一节-已按代码事实更正">#</a></h3>
+<p><strong>定义</strong>：不断切换信道发送，避开被干扰的频点。</p>
+<p><strong>比方</strong>：两个人约定"每隔一句话换个频道说"，偷听者跟不上。</p>
+<p><strong>你工程里的实际行为（这里我一开始判断错了，已核实更正）</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/main.c:81 —— 候选信道表的初值 */</span></div><div class="line"><span class="ln">2</span><span class="lc">uint8_t ch_change_arr[2] = {36,36};</span></div><div class="line"><span class="ln">3</span><span class="lc">&nbsp;</span></div><div class="line"><span class="ln">4</span><span class="lc">/* user/main.c:265 —— 进入对码循环【之前】，第 2 个元素被改掉了！ */</span></div><div class="line"><span class="ln">5</span><span class="lc">ch_change_arr[1] = pair_data.rf_ch;</span></div></pre></div>
+<p>对码循环里每 500ms 在这两个元素间交替：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/main.c 对码循环内 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if(HAL_GetTick()-ch_change_time&gt;500) {</span></div><div class="line"><span class="ln">3</span><span class="lc">    ch_change_count = !ch_change_count;</span></div><div class="line"><span class="ln">4</span><span class="lc">    bsp_pn298_set_channel(ch_change_arr[ch_change_count]);</span></div><div class="line"><span class="ln">5</span><span class="lc">    ch_change_time = HAL_GetTick();</span></div><div class="line"><span class="ln">6</span><span class="lc">}</span></div></pre></div>
+<p><strong>结论（更正）</strong>：</p>
+<ul><li><code>ch_change_arr[1]</code> 在对码前被赋值成 <strong>Flash 里存过的信道 <code>pair_data.rf_ch</code></strong>；</li><li>所以只要<strong>以前对过码</strong>（Flash 里有值），这段代码就是<strong>真的在"信道 36"与"上次的信道"之间每 500ms 交替扫描</strong> —— <strong>它确实在跳频</strong>；</li><li>只有当<strong>从未对过码</strong>（Flash 为 0xFF）时，两个元素才都是 36，表现为"原地重设同一信道"。</li></ul>
+<blockquote class=""><p><strong>⚠ 但代码注释写的是"两个元素都是 36，实际不换频，但代码结构保留了跳频能力"——
+这个注释是错的</strong>（它只看了初值，没注意到 <code>main.c:265</code> 的覆盖）。
+这正好是一个"注释不可信、要以代码为准"的实例。
+读这类扫描逻辑时，一定要往<strong>进入循环之前</strong>多看几行，看初值有没有被改过。</p></blockquote>
+<h3 id="4-4-地址-Address-Pipe">4.4 地址（Address / Pipe）<a class="anchor" href="#4-4-地址-Address-Pipe">#</a></h3>
+<p><strong>定义</strong>：射频包的"收件人暗号"。只有地址匹配的接收方才理会这个包。</p>
+<p><strong>比方</strong>：信封上的收件人姓名。名字不对，你就不拆。</p>
+<p><strong>你工程里的实例</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* 5 字节地址，来自对码时遥控器发过来的 paircode */</span></div><div class="line"><span class="ln">2</span><span class="lc">uint8_t pair_addr_arr[5];        /* user/deal_pack.c 定义 */</span></div><div class="line"><span class="ln">3</span><span class="lc">...</span></div><div class="line"><span class="ln">4</span><span class="lc">extern uint8_t pair_addr_arr[];  /* user/main.c、bsp_pn298.c 声明 */</span></div><div class="line"><span class="ln">5</span><span class="lc">/* 初始化时写进 RX_ADDR_P0，这样飞机只认这一台遥控器 */</span></div></pre></div>
+<p><strong>"多机同场"问题</strong>：如果两台飞机用同一个地址，就会互相串控。 所以对码时要交换一个唯一的 5 字节地址（通常含芯片 ID 或随机数）。</p>
+<h3 id="4-5-数据包-Packet-与载荷-Payload">4.5 数据包（Packet）与载荷（Payload）<a class="anchor" href="#4-5-数据包-Packet-与载荷-Payload">#</a></h3>
+<p><strong>定义</strong>：一次无线传输的完整数据结构。 <strong>Payload（载荷）</strong> = 包里"真正要传的数据"部分（不含包头/校验）。</p>
+<p><strong>比方</strong>：快递 = Packet，包裹里的东西 = Payload，面单上的信息 = 包头。</p>
+<p><strong>你工程里的 payload 结构（12 字节）</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">字节 0     : 帧头（0xAA = 正常数据包；0xDB = 对码包）</span></div><div class="line"><span class="ln">2</span><span class="lc">字节 1     : device_ID（本机设备号，用于二次过滤）</span></div><div class="line"><span class="ln">3</span><span class="lc">字节 2~3   : 通道 0 = 横滚（大端：高字节在前）</span></div><div class="line"><span class="ln">4</span><span class="lc">字节 4~5   : 通道 1 = 俯仰</span></div><div class="line"><span class="ln">5</span><span class="lc">字节 6~7   : 通道 2 = 油门</span></div><div class="line"><span class="ln">6</span><span class="lc">字节 8~9   : 通道 3 = 偏航</span></div><div class="line"><span class="ln">7</span><span class="lc">字节 10    : 按键位（一个字节装 6 个按键，用 union+位域拆）</span></div><div class="line"><span class="ln">8</span><span class="lc">字节 11    : 翻滚方向（低 4 位）</span></div></pre></div>
+<p><strong>"大端"（Big-Endian）</strong>：高位字节在前。 16 位数据 <code>0x1234</code> 先发 <code>0x12</code> 再发 <code>0x34</code>。 组装代码：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">ch_value[i] = ((uint16_t)rx_buff[index] &lt;&lt; 8) | ((uint16_t)(rx_buff[index+1]));</span></div><div class="line"><span class="ln">2</span><span class="lc">/*            高字节左移 8 位            或上 低字节                     */</span></div></pre></div>
+<blockquote class=""><p><strong>Cortex-M 内部是小端</strong>，但无线/网络协议惯例是大端。
+所以收发两端都要显式"拼/拆"字节，不能直接把内存里的多字节变量丢过去。</p></blockquote>
+<h3 id="4-6-ACK-应答-自动重传-Auto-Retransmit">4.6 ACK（应答）、自动重传（Auto Retransmit）<a class="anchor" href="#4-6-ACK-应答-自动重传-Auto-Retransmit">#</a></h3>
+<p><strong>定义</strong>：</p>
+<ul><li><strong>ACK</strong>：接收方收到包后自动回一个确认包，发送方据此知道"送到了"。</li><li><strong>ARD / ARC</strong>：自动重传的<strong>间隔</strong>（Auto Retransmit Delay）和<strong>次数</strong>（Auto Retransmit Count）。</li></ul>
+<p><strong>比方</strong>：ACK = 对方说"收到"；重传 = 你没听到"收到"就再说一遍。</p>
+<p><strong>为什么必须开</strong>：2.4GHz 环境干扰多，单次发送成功率不是 100%。 不做确认和重传，遥控指令就会丢，表现为"偶尔不响应"。</p>
+<p><strong>你工程里的实例</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* bsp_pn298.c 的 set_mode 里配置 SETUP_RETR(0x04) = 0x03 */
+/* 这个值的含义曾经有歧义（作者注释写"若失败不自动重传"），
+ * 现已查《PN298 用户手册 V1.0》第 33 页确认：
+ *     04  SETUP_RETR  7:0  默认 0x03   自动传输设置
+ *           ARD 7:4 = 0000 → 自动传输延时 250µs
+ *           ARC 3:0 = 0011 → 自动传输次数 3 次
+ * 写成 0x03 = ARD 0、ARC 3，即"失败后每 250µs 重传一次、最多 3 次"。
+ * → 作者注释是错的，实际是"重传 3 次"，对 ACK 可靠性有利。 */</pre></div>
+<h3 id="4-7-收发模式与-CE-引脚">4.7 收发模式与 CE 引脚<a class="anchor" href="#4-7-收发模式与-CE-引脚">#</a></h3>
+<p><strong>定义</strong>：射频芯片有"发射/接收"两种模式，用 <strong>CE（Chip Enable）</strong>引脚切换。</p>
+<p><strong>比方</strong>：对讲机上的"按住说话"按钮——按住是发射，松开是接收。</p>
+<p><strong>你工程里的实例</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* 典型的模式切换：改 CONFIG 寄存器的 bit0（PRIM_RX） */</span></div><div class="line"><span class="ln">2</span><span class="lc">temp |= 0x01;      /* 进接收模式 */</span></div><div class="line"><span class="ln">3</span><span class="lc">temp &amp;= ~(0x01);   /* 进发送模式（清掉 PRIM_RX） */</span></div></pre></div>
+<p><strong>时序要点</strong>：CE 拉高/拉低之后要<strong>等一小段时间</strong>模式才真正生效（芯片内部要起振、稳定）。 所以你会在代码里看到 <code>delay_us(20)</code>、<code>delay_us(200)</code> 这类等待。</p>
+<blockquote class=""><p><strong>你工程里一个已知的不精确处</strong>（<code>drivers/bsp/bsp_delay.c</code> 与 <code>bsp_delay.h</code>）：
+- <code>delay_ms(x)</code> 按 7980 次循环凑 1ms，与 48MHz 吻合，<strong>是准的</strong>；
+- <code>delay_us(x)</code> 用 <code>x&lt;&lt;4</code>（16 次循环/微秒）标定，实际<strong>约为请求值的 2 倍</strong>，
+  另加约 30~40µs 固定开销。
+这在射频时序里反而"歪打正着"——延时宁长勿短，链路仍能工作。
+但如果哪天需要精确定时，应该改用 TIM16 的 <code>micros16()</code> 来等。</p></blockquote>
+<h3 id="4-8-软件模拟-SPI-Bit-Banging">4.8 软件模拟 SPI（Bit-Banging）<a class="anchor" href="#4-8-软件模拟-SPI-Bit-Banging">#</a></h3>
+<p><strong>定义</strong>：不用硬件 SPI 外设，而是<strong>用普通 GPIO 手动翻转时钟和数据线</strong>来模拟 SPI 时序。</p>
+<p><strong>比方</strong>：硬件 SPI = 自动挡；软件 SPI = 手动挡，你自己控制每一次换挡时机。</p>
+<p><strong>为什么需要</strong>：有些芯片的 SPI 时序不标准（比如要求 CS 拉低后延迟特定时间、 或时钟空闲电平特殊），硬件 SPI 外设无法满足。射频芯片经常是这种情况。</p>
+<p><strong>你工程里的实例</strong>：<code>drivers/bsp/bsp_rfspi_sw.c</code> 就是干这个的。 代价是<strong>慢且吃 CPU</strong>（每次翻转都要几条指令），而且<strong>必须在中断外或极短时间内完成</strong>。</p>
+<hr>
+<h2 id="5-看门狗-Watchdog-WDG">5. 看门狗（Watchdog, WDG）<a class="anchor" href="#5-看门狗-Watchdog-WDG">#</a></h2>
+<h3 id="5-1-定义">5.1 定义<a class="anchor" href="#5-1-定义">#</a></h3>
+<p><strong>一个独立运行的倒计时器：如果程序在超时前没有"喂"它，它就强制复位整个单片机。</strong></p>
+<p><strong>比方</strong>：一个定时炸弹，你必须每隔一段时间按一下"解除"按钮。 如果你卡住了（程序跑飞、死循环），按不了按钮 → 炸弹爆炸 → 设备重启。</p>
+<p><strong>为什么必须有</strong>：飞控如果卡死，飞机会失控坠落。看门狗是<strong>最后一道防线</strong>： 宁可重启（重启后电机停转、飞机掉下来但不会飞走），也不要带着错误状态继续飞。</p>
+<h3 id="5-2-两种看门狗">5.2 两种看门狗<a class="anchor" href="#5-2-两种看门狗">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>类型</th><th>全称</th><th>特点</th><th>你工程里</th></tr></thead><tbody><tr><td><strong>IWDG</strong></td><td>Independent WDG（独立看门狗）</td><td>用<strong>独立的 LSI 时钟</strong>（约 32kHz），主时钟坏了它照样工作。<strong>一旦启动无法关闭</strong></td><td>✅ 本工程用这个</td></tr><tr><td><strong>WWDG</strong></td><td>Window WDG（窗口看门狗）</td><td>用主时钟。必须在<strong>一个时间窗口内</strong>喂狗：太早喂也算错！（防止程序跑太快跳过关键逻辑）</td><td>见 <code>py32f0xx_hal_conf.h</code> 的使能宏</td></tr></tbody></table></div>
+<h3 id="5-3-超时时间怎么算">5.3 超时时间怎么算<a class="anchor" href="#5-3-超时时间怎么算">#</a></h3>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">超时 = 预分频系数 × 重装载值 ÷ LSI时钟频率</span></div></pre></div>
+<p><strong>你工程里的实际配置</strong>（<code>user/WDG.c</code>）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">IwdgHandle.Instance      = IWDG;</span></div><div class="line"><span class="ln">2</span><span class="lc">IwdgHandle.Init.Prescaler = IWDG_PRESCALER_32;   /* 预分频 32 */</span></div><div class="line"><span class="ln">3</span><span class="lc">IwdgHandle.Init.Reload    = (512);               /* 重装载 512 */</span></div></pre></div>
+<p>代入公式（LSI = <strong>32768Hz</strong>，已由数据手册确认）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">超时 = 32 × 512 ÷ 32768 = 16384 / 32768 = 0.5 秒（精确值 0.5s）</span></div></pre></div>
+<p><strong>LSI 频率的来源</strong>（工程定义 + 数据手册双重确认）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/py32f0xx_hal_conf.h:139 */</span></div><div class="line"><span class="ln">2</span><span class="lc">#define LSI_VALUE               ((uint32_t)32768)    /*!&lt; LSI Typical Value in Hz */</span></div></pre></div>
+<p>《PY32F030 datasheet Rev.1.4》第 1 页产品特性也明确写着：</p>
+<blockquote class=""><p>— 内部 <strong>32.768KHz</strong> RC 振荡器(LSI)</p></blockquote>
+<p><strong>LSI 的实际精度（数据手册表 6-16）—— 这决定看门狗的余量</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>参数</th><th>条件</th><th>偏差</th></tr></thead><tbody><tr><td>fLSI 频率</td><td>TA=25°C, VCC=3.3V</td><td><strong>±3%</strong></td></tr><tr><td>频率温度漂移</td><td>VCC=1.6~5.5V，TJ=0~85°C</td><td><strong>±10%</strong></td></tr><tr><td>频率温度漂移</td><td>VCC=1.6~5.5V，TJ=−40~85°C</td><td><strong>±20%</strong></td></tr></tbody></table></div>
+<p>所以实际超时时间：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">常温：     0.5s × (1 ± 3%)   ≈ 0.485 ~ 0.515 秒</span></div><div class="line"><span class="ln">2</span><span class="lc">全温区：   0.5s × (1 ± 20%)  ≈ 0.40  ~ 0.60  秒</span></div></pre></div>
+<p>而喂狗周期约 101ms，所以<strong>最坏情况下仍有 4 倍余量</strong>（0.4s / 101ms ≈ 4）。</p>
+<blockquote class=""><p><strong>这修正了一个常见误解</strong>：很多人以为内部 RC 振荡器精度很差（±50% 那种）。
+这颗芯片的 LSI 在常温下只有 ±3%，全温区 ±20% —— 对手表、看门狗这类应用足够。
+<strong>但绝不能用它做精确计时</strong>（比如串口波特率），那需要外部晶振。
+想测真实值，只能实测（写一个"只喂一次狗然后死循环"的程序，用串口计时看多久复位）。</p></blockquote>
+<p><strong>为什么选 0.5 秒</strong>：主循环每约 100ms 喂一次狗，0.5s 给了 <strong>5 倍余量</strong>。 余量太小（比如 120ms）会因为偶发的长任务误复位； 余量太大（比如 10s）则卡死后要等很久才恢复，飞机已经掉下来了。</p>
+<blockquote class=""><p><strong>发现一处注释与代码不一致</strong>（只记录，未改动）：
+<code>WDG.c</code> 里原作者注释写的是"Set IWDG counter reload value to 1024, 1s"，
+而代码实际值是 <code>512</code>、约 0.5 秒。疑似改过参数没同步改注释。
+<strong>读代码时以代码为准，不要相信注释里的数字。</strong></p></blockquote>
+<h3 id="5-4-喂狗位置的选择-这里有个大坑">5.4 喂狗位置的选择——这里有个大坑<a class="anchor" href="#5-4-喂狗位置的选择-这里有个大坑">#</a></h3>
+<p><strong>你工程里的实例</strong>：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/main.c 主循环 —— 真正的喂狗位置 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if(_cnt100ms &gt;= 100)</span></div><div class="line"><span class="ln">3</span><span class="lc">{</span></div><div class="line"><span class="ln">4</span><span class="lc">    _cnt100ms = 0;</span></div><div class="line"><span class="ln">5</span><span class="lc">    HAL_IWDG_Refresh(&amp;IwdgHandle);   //喂狗</span></div><div class="line"><span class="ln">6</span><span class="lc">    Led_Process();                   /* 灯语刷新 */</span></div><div class="line"><span class="ln">7</span><span class="lc">}</span></div></pre></div>
+<p><strong>⚠ 大坑</strong>：<strong>绝对不要在主循环以外的地方喂狗</strong>，尤其不要在定时器中断里喂。</p>
+<p><strong>为什么</strong>：中断是由硬件独立触发的。就算主循环<strong>彻底卡死</strong>（比如某个 <code>while</code> 死等）， 中断依然会照常发生。如果在中断里喂狗，看门狗就永远不会触发—— <strong>你花钱买的安全网，被自己剪断了</strong>。</p>
+<p><strong>正确的判断标准</strong>：喂狗的位置必须是"<strong>只有程序正常推进时才会执行到</strong>"的地方。 主循环末尾（或主循环里某个必须经过的分支）就是标准答案。</p>
+<blockquote class=""><p><strong>反面教材在你工程里是存在的</strong>（只记录未改动）：
+<code>bsp_pn298_tx_data()</code> / <code>tx_data_ack()</code> 里有
+<code>while(!(状态 &amp; TX_DS_FLAG));</code> 这种<strong>无超时的死等</strong>。
+对端不在时会卡死主循环 —— 这时<strong>全靠看门狗复位来救</strong>。
+这也反过来说明：喂狗点选在主循环是对的，否则这里卡死就没人救了。</p></blockquote>
+<hr>
+<h2 id="6-对码-配对-Pairing">6. 对码 / 配对（Pairing）<a class="anchor" href="#6-对码-配对-Pairing">#</a></h2>
+<h3 id="6-1-为什么需要-对码">6.1 为什么需要"对码"<a class="anchor" href="#6-1-为什么需要-对码">#</a></h3>
+<p>射频通信需要三个约定：<strong>信道（频点）、地址（暗号）、速率、地址宽度</strong>。 两台设备必须完全一致才能通信。</p>
+<p><strong>如果写死</strong>：所有人的飞机都用一个地址 → 同一个场地多台飞机就互相串控， 而且旁边有人用同款遥控器就能控制你的飞机。</p>
+<p><strong>如果对码</strong>：遥控器和飞机现场协商一组地址，写进各自的 Flash。 既解决多机冲突，又带有"只有配过对的遥控器才能控制"的安全性。</p>
+<p><strong>比方</strong>：对码 = 蓝牙配对。不配对连不上，配过之后就记住了。</p>
+<h3 id="6-2-对码流程-你工程里的实际逻辑">6.2 对码流程（你工程里的实际逻辑）<a class="anchor" href="#6-2-对码流程-你工程里的实际逻辑">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">【遥控器侧】按对码键
+   ↓ 发"对码包"：send_pn298_pack[0]=0xDB（0xDB = 对码帧头，区别于 0xAA 数据帧）
+   ↓ 包里带上自己的 paircode[5]（5 字节地址）和 device_id
+【飞控侧】开机后进入对码循环，等待 0xDB 包
+   ↓ 收到后把地址存进 pair_addr_arr[5]，写进射频芯片的 RX_ADDR_P0
+   ↓ 同时把整个参数结构写进 Flash 最后一页（0x0800F000）
+   ↓ 点亮 LED 提示"对码成功"，退出对码循环，进入正常飞行模式
+【之后】飞机只认这个地址的包，其他遥控器的包直接丢弃</pre></div>
+<p><strong>你工程里的关键代码位置</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>环节</th><th>位置</th></tr></thead><tbody><tr><td>飞控开机对码循环</td><td><code>user/main.c</code> 的 <code>while(1)</code>（对码阶段，<code>main.c:279</code>）</td></tr><tr><td>帧头区分（0xAA 数据 / 0xDB 对码）</td><td><code>user/deal_pack.c:154</code> 与 <code>:274</code></td></tr><tr><td>地址存取</td><td><code>pair_addr_arr[5]</code>、<code>pair_data.paircode[5]</code></td></tr><tr><td>存储结构</td><td><code>user/flash.h</code> 的 <code>Pair_Code_Config</code>（内存布局 = Flash 格式）</td></tr><tr><td>Flash 地址</td><td><code>FLASH_USER_START_ADDR = 0x800F000</code>（64KB 的最后一页）</td></tr><tr><td>跳出对码循环的标志</td><td><code>pair_over_flag</code>（RAM 标志，<code>deal_pack.c:82</code>）</td></tr><tr><td>收到正常包也置对码标志</td><td><code>user/deal_pack.c:155</code>（含义是"通信链路已建立"）</td></tr></tbody></table></div>
+<blockquote class=""><p><strong>⚠ 一个必须澄清的点：<code>Pair_Code_Config.pairflag</code> 是"死字段"。</strong>
+<code>flash.h:111</code> 声明了 <code>uint16_t pairflag;</code> 并注释"是否第一次写入"，
+但<strong>全工程没有任何一处代码读它或写它</strong>（我逐文件搜过，只在注释和文档里出现）。
+所以：
+- <strong>"是否已配对"不是靠 pairflag 判断的</strong>；
+- 实际表达"通信已建立"的是 <strong><code>pair_over_flag</code>（RAM 里的标志）</strong>，
+  以及 Flash 里 <code>paircode</code>/<code>device_id</code> 是否为 0xFF（隐式表达）。
+文档和注释里若写"pairflag 标记为已配对"，那是<strong>设计意图</strong>，不是代码事实。
+这又是一个"注释/字段名会误导人"的例子。</p></blockquote>
+<h3 id="6-3-对码循环-为什么是-while-1">6.3 "对码循环"为什么是 <code>while(1)</code><a class="anchor" href="#6-3-对码循环-为什么是-while-1">#</a></h3>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* user/main.c 结构（示意） */
+while(1) {                       /* ← 对码循环：一直等到对码成功才出去 */
+    Led_Process();               /* 灯语提示"正在等待对码" */
+    if (收到 0xDB 对码包) {
+        /* 存地址、写 Flash、亮灯 */
+        break;                   /* ← 跳出对码循环 */
+    }
+}
+/* ...进入正常飞行主循环... */</pre></div>
+<p><strong>理解要点</strong>：这是一个<strong>阻塞式状态</strong>。 飞机在对码期间<strong>不做任何飞行控制</strong>（因为还没有可用的遥控链路）。 所以放在这里死等是合理的 —— 但<strong>必须保证看门狗不被饿死</strong>， 或者对码期间干脆不启动看门狗。</p>
+<blockquote class=""><p><strong>读代码时的检查点</strong>：对码循环里如果既没有喂狗、看门狗又已经启动，
+那么对码超过看门狗超时时间就会不断复位，表现为"对码对不上、灯一直闪"。
+这类问题排查时，要同时看<strong>对码循环</strong>和<strong>看门狗启动时机</strong>。</p></blockquote>
+<h3 id="6-4-跳频与对码的关系">6.4 跳频与对码的关系<a class="anchor" href="#6-4-跳频与对码的关系">#</a></h3>
+<p>对码阶段常常顺便做<strong>频点扫描</strong>：在几个候选信道上轮流发对码包， 找到一个能通的就定下来。这样能避开被占用的频点。</p>
+<p><strong>你工程里的现状</strong>：<code>ch_change_arr[2] = {36, 36}</code> —— 两个值相同， 所以实际上<strong>没有扫描</strong>（见 4.3 节）。这不算 bug（功能仍能用）， 但如果现场干扰严重，扫描两个不同频点会明显更可靠。</p>
+<hr>
+<h2 id="7-心跳-软定时器-失联保护">7. 心跳、软定时器、失联保护<a class="anchor" href="#7-心跳-软定时器-失联保护">#</a></h2>
+<h3 id="7-1-心跳-Heartbeat">7.1 心跳（Heartbeat）<a class="anchor" href="#7-1-心跳-Heartbeat">#</a></h3>
+<p><strong>定义</strong>：周期性的信号，用来证明"我还活着、还在正常工作"。 在飞控里有两层含义，<strong>别搞混</strong>：</p>
+<div class="tablewrap"><table><thead><tr><th>层面</th><th>含义</th><th>你工程里的地方</th></tr></thead><tbody><tr><td><strong>硬件心跳</strong></td><td>定时器每 1ms 产生的中断，是整个系统的时间基准</td><td>TIM17 的 1ms 中断</td></tr><tr><td><strong>通信心跳</strong></td><td>遥控器周期性发数据包，飞机据此判断链路是否还在</td><td>数据帧头 0xAA 的正常包</td></tr><tr><td><strong>视觉心跳</strong></td><td>LED 周期性闪烁，给用户看"工作正常"</td><td><code>user/led.c</code> 的 <code>Led_Process()</code></td></tr></tbody></table></div>
+<h3 id="7-2-软定时器-Soft-Timer">7.2 软定时器（Soft Timer）<a class="anchor" href="#7-2-软定时器-Soft-Timer">#</a></h3>
+<p><strong>定义</strong>：<strong>用"计数中断次数"来实现多个不同周期的任务</strong>， 而不必为每个周期单独占用一个硬件定时器。</p>
+<p><strong>比方</strong>：你只有一块表（1ms 心跳），但你要做"每 10ms 收一次信""每 100ms 喂一次狗"。 你就在纸上记：收到 1 次划一道，划满 10 道就收信。</p>
+<p><strong>你工程里的实例</strong>（这是理解主循环结构的钥匙，取自 <code>user/main.c</code> 与 <code>drivers/bsp/bsp_timer.c</code>）：</p>
+<div class="tablewrap"><table><thead><tr><th>计数器</th><th>类型</th><th>中断里怎么加</th><th>主循环里怎么用</th><th>实际周期</th><th>做的事</th></tr></thead><tbody><tr><td><code>_cnt4ms</code></td><td><code>uint8_t</code></td><td>每 1ms +1</td><td><code>if(_cnt4ms &gt;= 4)</code> → 清零</td><td>≈5ms</td><td>翻滚状态机 <code>Mode_Controler()</code></td></tr><tr><td><code>_cnt10ms</code></td><td><code>uint8_t</code></td><td>每 1ms +1</td><td><code>if(_cnt10ms &gt;= 10)</code> → 清零</td><td>≈11ms</td><td>收遥控数据 <code>decode_pack()</code> + 按键解释 <code>annexCode()</code></td></tr><tr><td><code>_cnt100ms</code></td><td><code>uint8_t</code></td><td>每 1ms +1</td><td><code>if(_cnt100ms &gt;= 100)</code> → 清零</td><td>≈101ms</td><td><strong>喂狗</strong> <code>HAL_IWDG_Refresh()</code> + 灯语 <code>Led_Process()</code></td></tr><tr><td><code>_cnt1s</code></td><td><code>uint16_t</code></td><td>每 1ms +1</td><td><code>if(_cnt1s &gt;= 1000)</code> → 清零</td><td>≈1.001s</td><td>电池电压检测 <code>get_voltage()</code></td></tr><tr><td><code>_cnt20ms</code></td><td><code>uint8_t</code></td><td>中断内 <code>if(++_cnt20ms &gt;= 20)</code> 自清</td><td><strong>不加到主循环</strong></td><td>20ms</td><td>在中断里直接给 <code>calibrationEnbTimer</code>、<code>powerupTimer</code> 提供节拍</td></tr><tr><td><code>baroUpdateTimer</code></td><td>—</td><td>每 1ms +1</td><td>由 <code>altitude.c</code> / <code>common.c</code> 内部读</td><td>1ms 基数</td><td>气压计更新节奏</td></tr><tr><td><code>altitudeCtrlTimer</code></td><td>—</td><td>每 1ms +1</td><td>由高度环内部读</td><td>1ms 基数</td><td>高度控制节奏</td></tr></tbody></table></div>
+<p><strong>中断里的原文</strong>（<code>bsp_timer.c</code>，极短）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">if (htim-&gt;Instance == TIM17) {</span></div><div class="line"><span class="ln">2</span><span class="lc">    static uint8_t _cnt20ms;</span></div><div class="line"><span class="ln">3</span><span class="lc">    baroUpdateTimer++;</span></div><div class="line"><span class="ln">4</span><span class="lc">    altitudeCtrlTimer++;</span></div><div class="line"><span class="ln">5</span><span class="lc">    _cnt10ms++;</span></div><div class="line"><span class="ln">6</span><span class="lc">    _cnt4ms++;</span></div><div class="line"><span class="ln">7</span><span class="lc">    _cnt100ms++;</span></div><div class="line"><span class="ln">8</span><span class="lc">    _cnt1s++;</span></div><div class="line"><span class="ln">9</span><span class="lc">    if(++_cnt20ms &gt;= 20) {          /* 20ms 分频，注意是 ++ 前缀自增 */</span></div><div class="line"><span class="ln">10</span><span class="lc">        _cnt20ms = 0;</span></div><div class="line"><span class="ln">11</span><span class="lc">        calibrationEnbTimer++;      //校准时间</span></div><div class="line"><span class="ln">12</span><span class="lc">        powerupTimer++;</span></div><div class="line"><span class="ln">13</span><span class="lc">    }</span></div><div class="line"><span class="ln">14</span><span class="lc">}</span></div></pre></div>
+<blockquote class=""><p><strong>注意"实际周期是 N+1 ms"</strong>：因为判断和清零的顺序，
+<code>if(_cnt4ms &gt;= 4) { _cnt4ms = 0; ... }</code> 实际是第 5 次中断才触发。
+工程注释自己也承认了这点（<code>main.c</code>：
+"_cnt4ms&gt;=4 实际约 5ms、_cnt100ms&gt;=100 实际约 101ms、_cnt1s&gt;=1000 实际约 1.001s"）。
+对灯语、喂狗这类任务无所谓；<strong>但这也正是 <code>flip.c</code> 里 <code>dt</code> 按"两次调用间隔"实测取值、
+而不是写死 4ms 的原因</strong> —— 时间敏感的地方要实测，不要假设。</p></blockquote>
+<blockquote class=""><p><strong>为什么不全用硬件定时器</strong>：芯片只有有限的定时器（TIM1/16/17 等）。
+用软定时器，一个硬件 1ms 中断就能"虚拟"出任意多个周期任务 —— 这是标准做法。</p></blockquote>
+<h3 id="7-3-失联保护-失控保护-Failsafe">7.3 失联保护 / 失控保护（Failsafe）<a class="anchor" href="#7-3-失联保护-失控保护-Failsafe">#</a></h3>
+<p><strong>定义</strong>：当飞机检测到"一段时间没收到遥控数据"时，主动采取安全动作 （通常是<strong>降低油门/停转电机/自动降落</strong>），避免飞机飞走或伤人。</p>
+<p><strong>为什么必须做</strong>：遥控器没电、超出距离、天线被挡住 → 数据断了。 如果飞机继续按最后的油门飞，就会飞走（"放风筝"）。</p>
+<p><strong>你工程里的实例</strong>（⚠ 注意实际阈值是 <strong>5 秒</strong>，不是 1 秒）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/main.c —— 用 HAL_GetTick() 做毫秒级超时判断 */</span></div><div class="line"><span class="ln">2</span><span class="lc">if (HAL_GetTick() - connection_nowtime &gt; 5000) {   /* 超过 5000ms 没收到合法包 */</span></div><div class="line"><span class="ln">3</span><span class="lc">    /* ...失联处理... */</span></div><div class="line"><span class="ln">4</span><span class="lc">}</span></div></pre></div>
+<p>其中 <code>connection_nowtime</code> 只在<strong>解析出合法数据包</strong>时被刷新：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* user/deal_pack.c 的 decode_pack() 里 */</span></div><div class="line"><span class="ln">2</span><span class="lc">connection_nowtime = HAL_GetTick();</span></div></pre></div>
+<p><strong>这个细节很关键</strong>：判据不是"收到任意字节"，而是"收到<strong>校验通过的完整包</strong>"。 收到噪声字节不算，所以不会因为干扰而误判为"链路正常"。</p>
+<p><strong>读代码时的检查点</strong>：</p>
+<ol><li>超时阈值是多少（这里是 <strong>5000ms = 5 秒</strong>，对飞控来说偏长，</li></ol>
+<p>意味着遥控器关掉后飞机还会按最后指令飞 5 秒 —— 值得你评估是否符合预期）；</p>
+<ol><li>触发后具体做什么（闪灯只是提示，关键是有没有<strong>动油门</strong>）；</li><li>恢复通信后能不能自动解除（否则一次干扰就永久告警）。</li></ol>
+<blockquote class=""><p><strong><code>HAL_GetTick()</code> 相减写法的坑</strong>：它内部是 32 位毫秒计数，
+约 49.7 天回绕一次。<code>当前 - 上次</code> 用无符号相减，只要间隔小于 49 天结果就是对的 ——
+<strong>不要改成 <code>if (now &gt; last + 1000)</code></strong>，那样回绕瞬间会失效。</p></blockquote>
+<hr>
+<h2 id="8-传感器-姿态-滤波-姿态解算">8. 传感器、姿态、滤波、姿态解算<a class="anchor" href="#8-传感器-姿态-滤波-姿态解算">#</a></h2>
+<h3 id="8-1-IMU-惯性测量单元">8.1 IMU（惯性测量单元）<a class="anchor" href="#8-1-IMU-惯性测量单元">#</a></h3>
+<p><strong>定义</strong>：把<strong>加速度计 + 陀螺仪</strong>（有时还有磁力计）封装在一起的芯片。 本工程用 <strong>ICM42688</strong>（6 轴：3 轴加速度 + 3 轴陀螺仪，无磁力计）。</p>
+<div class="tablewrap"><table><thead><tr><th>传感器</th><th>测什么</th><th>单位的直观理解</th><th>优缺点</th></tr></thead><tbody><tr><td><strong>加速度计</strong></td><td>加速度（含重力）</td><td>静止水平时 Z 轴 ≈ 1g</td><td>长期准（不会漂），但<strong>噪声大、对振动敏感</strong></td></tr><tr><td><strong>陀螺仪</strong></td><td>角速度（转多快）</td><td>单位 °/s</td><td>短期准、响应快，但<strong>积分会漂移</strong></td></tr></tbody></table></div>
+<p><strong>关键洞察</strong>：两者互补！</p>
+<ul><li>陀螺仪积分得到角度，短期准、长期漂（几分钟就漂几十度）；</li><li>加速度计能算出绝对倾角，长期准、短期抖。</li></ul>
+<p>→ 所以要把两者<strong>融合</strong>（见 8.3）。</p>
+<h3 id="8-2-量程-分辨率-零偏-校准">8.2 量程、分辨率、零偏、校准<a class="anchor" href="#8-2-量程-分辨率-零偏-校准">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>术语</th><th>含义</th><th>你工程里的体现</th></tr></thead><tbody><tr><td><strong>量程 / FSR</strong>（Full Scale Range）</td><td>传感器能测的最大值。选小了会饱和削顶，选大了分辨率变差</td><td><code>accgyro.c</code> / ICM42688 配置</td></tr><tr><td><strong>分辨率 / LSB</strong></td><td>每个数字量对应的物理量。<strong>本工程是 ±8g 档 → <code>acc_1G = 4096</code></strong>（即 4096 LSB/g，<code>imu/accgyro.c:35</code>）；陀螺是 ±2000dps → <strong>16.4 LSB/(°/s)</strong>（<code>accgyro.c:36</code>）</td><td>换算原始值 → 物理量</td></tr><tr><td><strong>零偏（Bias / Offset）</strong></td><td>静止时输出不为 0 的那部分。陀螺仪零偏会让角度持续漂移</td><td><code>accRaw_offset[]</code>、<code>gyroRaw_offset[]</code></td></tr><tr><td><strong>校准（Calibration）</strong></td><td>测量并记录零偏，之后从原始值里减掉</td><td><code>accgyro.c</code> 的校准流程、<code>fc.flags.bAccGyroCalibrationEnb</code></td></tr><tr><td><strong>噪声密度</strong></td><td>传感器本底噪声，决定滤波参数怎么选</td><td>决定了 PT1/双二阶滤波器的截止频率</td></tr></tbody></table></div>
+<p><strong>校准的物理前提</strong>：校准时飞机必须<strong>静止且水平</strong>。 所以代码里要先判断"是否静止"（看陀螺仪输出是否足够小）， 静止判定阈值就是个典型的"魔法数字"：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">#define GYRO_CALI_DIFF_LIMIT    50      /* imu/accgyro.c:222 —— 代码里这一行原本没有注释 */</span></div></pre></div>
+<h3 id="8-3-姿态解算-Attitude-Estimation">8.3 姿态解算（Attitude Estimation）<a class="anchor" href="#8-3-姿态解算-Attitude-Estimation">#</a></h3>
+<p><strong>定义</strong>：把传感器原始数据变成<strong>姿态角</strong>（俯仰/横滚/偏航）的过程。</p>
+<p><strong>你工程里用的算法</strong>：<strong>Mahony 互补滤波</strong>（<code>imu/imu.c</code> 的 <code>imuMahonyAHRSupdate</code>）。 原理一句话：<strong>用加速度计"慢慢纠正"陀螺仪的漂移</strong>。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">陀螺仪积分 → 得到角度（快，但会漂）
+加速度计   → 算出重力方向（慢，但不会漂）
+两者做差 → 得到一个"误差" → 用这个误差去修正陀螺仪的积分</pre></div>
+<p><strong>四元数（Quaternion）</strong>：姿态的数学表示法，用 4 个数 (w,x,y,z) 表示旋转。 <strong>为什么不用欧拉角</strong>：欧拉角在俯仰 ±90° 附近有<strong>万向节死锁</strong>（gimbal lock）， 数学上会退化；四元数没有这个问题，且计算量小（无三角函数）。 <strong>欧拉角</strong>：最终给人看的"俯仰/横滚/偏航"角度。<strong>注意它是由旋转矩阵 <code>rMat</code> 算出来的</strong>， 不是直接由四元数换算：<code>imuUpdateEulerAngles()</code>（<code>imu/imu.c:372-387</code>）用的是 <code>atan2_approx(rMat[2][1], rMat[2][2])</code> 这类式子。 （<code>imu.c</code> 里另有一个 <code>to_euler()</code>（<code>:161-185</code>）确实做四元数→欧拉角， 但它只被内部使用，<strong>不产生全局 <code>angle[]</code></strong>。） 全局 <code>angle[]</code> 的单位是"度×100"（<code>imu/imu.h:48</code>）。</p>
+<h3 id="8-4-滤波-Filter">8.4 滤波（Filter）<a class="anchor" href="#8-4-滤波-Filter">#</a></h3>
+<p><strong>定义</strong>：去掉信号里的噪声。飞控里滤波是<strong>能不能飞稳</strong>的关键。</p>
+<p><strong>为什么必须滤</strong>：PID 的 D 项（微分）对噪声极其敏感， 一点噪声经过微分就被放大成电机的高频抖动 → 飞机嗡嗡响、电机发热。</p>
+<div class="tablewrap"><table><thead><tr><th>滤波器</th><th>特点</th><th>你工程里的地方</th></tr></thead><tbody><tr><td><strong>PT1 一阶低通</strong></td><td>简单、快、相位滞后小</td><td><code>imu/filter.c</code> 的 <code>pt1FilterApply()</code>，用于陀螺仪</td></tr><tr><td><strong>双二阶（Biquad）</strong></td><td>衰减陡（-40dB/十倍频），可做陷波</td><td><code>biquadFilterApply()</code>，用于加速度计</td></tr><tr><td><strong>陷波（Notch）</strong></td><td>只掐掉某个窄频段（如电机转速对应的振动）</td><td>⚠ <strong>本工程实现了但没在用</strong>：<code>FILTER_NOTCH</code> 分支存在（<code>imu/filter.c:160-169</code>），但<strong>全工程没有任何调用者</strong>；唯一的 biquad 初始化点是 <code>biquadFilterInitLPF(&amp;accFilter[axis], 30, 1250)</code>（<code>accgyro.c:71</code>，固定低通 30Hz）</td></tr><tr><td><strong>中值滤波</strong></td><td>取中间值，抗突发野值</td><td><code>mlib.c</code> 的 <code>quickMedianFilter3/5/7</code>，用于气压计</td></tr></tbody></table></div>
+<p><strong>截止频率（Cutoff Frequency）</strong>：低于它通过、高于它衰减。 选大了噪声滤不干净，选小了响应变慢（相位滞后）→ 飞机"发飘"。 这是<strong>调参的核心取舍</strong>。</p>
+<h3 id="8-5-气压计与定高">8.5 气压计与定高<a class="anchor" href="#8-5-气压计与定高">#</a></h3>
+<p><strong>定义</strong>：气压计测大气压，气压随高度降低 → 反推高度。 <strong>你工程里</strong>：BMP390（<code>user/bmp3.c</code>）+ <code>imu/altitude.c</code> 的高度解算。</p>
+<p><strong>为什么用国际标准大气模型</strong>：气压 → 高度不是线性的，标准公式是</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">高度 = 44330000 × (1 - (P / 101325)^0.190295)   /* 单位毫米 */</span></div></pre></div>
+<p>你工程里的实现（注意这里用了<strong>自研的窄区间幂函数</strong>替代 <code>powf</code>， 因为链接 <code>powf</code> 会带入 4KB+ 的 libm 代码，Flash 装不下）：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">c</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">/* imu/altitude.c */</span></div><div class="line"><span class="ln">2</span><span class="lc">baroGroundAltitude = (1.0f - baro_pow_0p295((baroGroundPressure / 10.0f) / 101325.0f)) * 44330000.0f; //in mm</span></div></pre></div>
+<p><strong>定高的控制结构</strong>：注意这里有<strong>两条独立的串级</strong>，不是一条嵌套的（容易看错）：</p>
+<ul><li><strong>高度通道</strong>：位置环 → 速度环（<code>imu/altitude.c:312</code> → <code>:367</code>）</li><li><strong>姿态通道</strong>：角度环 → 角速度环（<code>imu/pid.c:259</code> → <code>:304</code>）</li></ul>
+<p>两者在混控 <code>PIDMIX</code>（<code>pid.c:118-127</code>）处<strong>相加</strong>，而不是谁套在谁里面。</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图</span><button class="copy">复制</button></div><pre class="artpre">目标高度 ─[高度环 PID]→ 目标垂直速度 ─→ 油门修正量(BaroPID)
+                                              ↓
+遥控器摇杆 ─────────────────────────→ PIDMIX 里叠加到 1500 中位油门上</pre></div>
+<p>你工程里 <code>altitude_mode</code> 决定用哪种油门基准（手动 1500+BaroPID / 定高用摇杆值）。</p>
+<blockquote class=""><p><strong>气压计的固有难点</strong>：气流、开关舱盖、手挡住都会让气压突变。
+所以要<strong>中值滤波去野值</strong> + 低通滤波平滑，而且要用"起飞点气压作为基准"
+（<code>baroGroundPressure</code>），算<strong>相对高度</strong>而不是绝对海拔。</p></blockquote>
+<hr>
+<h2 id="9-其它常见术语速查">9. 其它常见术语速查<a class="anchor" href="#9-其它常见术语速查">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>术语</th><th>一句话解释</th><th>你工程里的地方</th></tr></thead><tbody><tr><td><strong>PID</strong></td><td>比例-积分-微分控制器。P 管"反应力度"、I 管"消除稳态偏差"、D 管"抑制超调"</td><td><code>imu/pid.c</code></td></tr><tr><td><strong>串级 PID</strong></td><td>两个 PID 串联：外环（角度）输出给内环（角速度）当目标</td><td><code>pid()</code> 的角度环 + 角速度环</td></tr><tr><td><strong>积分饱和 / windup</strong></td><td>积分项累积过大导致"甩不回来"</td><td>限幅 <code>_imaxYaw=228</code>、<code>_imaxPR=350</code></td></tr><tr><td><strong>死区（Deadband）</strong></td><td>摇杆中位附近的小抖动直接当 0 处理</td><td><code>mlib.c</code> 的 <code>applyDeadband()</code></td></tr><tr><td><strong>PWM</strong></td><td>脉宽调制。用占空比控制电机转速（<strong>本工程是 16kHz 固定频率 + 0~1000 千分比占空比</strong>（不是 1000~2000µs 的舵机信号））</td><td><code>user/bsp_pwm.c</code>、<code>motorPWMValue[]</code></td></tr><tr><td><strong>电调 / ESC</strong></td><td>电子调速器，把 PWM 信号变成电机的三相电流</td><td>未在代码里，是外部硬件</td></tr><tr><td><strong>混控 / Mixing</strong></td><td>把三个轴的 PID 修正量分配到四个电机</td><td><code>pid.c</code> 的 <code>PIDMIX()</code></td></tr><tr><td><strong>解锁 / Arm</strong></td><td>允许电机转动的安全开关（防止上电就转）</td><td><code>fc.flags.motorArmed</code></td></tr><tr><td><strong>怠速 / Idle</strong></td><td>电机低速空转（起飞前/降落后维持）</td><td><code>fc.flags.motorIdle</code></td></tr><tr><td><strong>帧头 / Header</strong></td><td>数据包开头的固定字节，用来对齐包的边界</td><td>0xAA（数据）、0xDB（对码）</td></tr><tr><td><strong>校验和 / CRC</strong></td><td>检测数据在传输中是否出错</td><td>本工程<strong>无软件校验和</strong>，靠射频芯片硬件 CRC</td></tr><tr><td><strong>union + 位域拆包</strong></td><td>一个字节既当整字节收、又按位读多个按键</td><td><code>KeyBitStatus_t</code>（<code>deal_pack.h</code>）</td></tr><tr><td><strong>大端 / 小端</strong></td><td>多字节数据的高低字节顺序</td><td>协议用大端，Cortex-M 内部小端</td></tr><tr><td><strong>HAL 回调 + <code>__weak</code></strong></td><td>库给空实现，工程写同名函数覆盖</td><td><code>HAL_TIM_PeriodElapsedCallback</code></td></tr><tr><td><strong>位带 / BSRR</strong></td><td>某些寄存器支持"只写 1 不改其它位"</td><td><code>bsp_rfspi_sw.h</code> 里 BSRR/BRR 的用法</td></tr><tr><td><strong>开漏 / 推挽</strong></td><td>GPIO 输出级的两种形式：开漏需要上拉</td><td>GPIO 初始化配置</td></tr><tr><td><strong>上拉 / 下拉 / 浮空</strong></td><td>引脚默认电平。<strong>浮空引脚读值不确定</strong></td><td>⚠ MISO(PF3) 配成输入时是 <code>NOPULL</code>，CS 无效期间高阻浮空</td></tr><tr><td><strong>重映射 / 复用（AF）</strong></td><td>一个引脚可以有多种功能（普通 IO / 串口 / SPI）</td><td><code>GPIO_AF8_USART1</code></td></tr><tr><td><strong>看门狗喂狗</strong></td><td>定期复位看门狗计数器，证明程序还活着</td><td><code>HAL_IWDG_Refresh()</code></td></tr></tbody></table></div>
+<hr>
+<h2 id="10-三个-名词容易混-的对照表">10. 三个"名词容易混"的对照表<a class="anchor" href="#10-三个-名词容易混-的对照表">#</a></h2>
+<h3 id="10-1-时钟类">10.1 时钟类<a class="anchor" href="#10-1-时钟类">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>名词</th><th>是什么</th><th>用途</th></tr></thead><tbody><tr><td>HSI / HSE</td><td>时钟<strong>来源</strong>（内部 RC / 外部晶振）</td><td>提供基准节拍</td></tr><tr><td>PLL</td><td>频率<strong>倍频</strong>器</td><td>把 8MHz 变 48MHz</td></tr><tr><td>预分频</td><td>频率<strong>分频</strong>器</td><td>给不同外设合适的速率</td></tr><tr><td>SysTick</td><td>内核自带定时器</td><td>HAL 的毫秒计时</td></tr><tr><td>TIM16/17</td><td>外设定时器</td><td>微秒计数 / 1ms 控制中断</td></tr></tbody></table></div>
+<h3 id="10-2-通信类">10.2 通信类<a class="anchor" href="#10-2-通信类">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>名词</th><th>层次</th><th>你工程里的地方</th></tr></thead><tbody><tr><td>射频 / 2.4G</td><td><strong>无线</strong>物理层</td><td>PN298</td></tr><tr><td>信道 / 频点</td><td>射频的"频道"</td><td>信道 36（寄存器里写 100）</td></tr><tr><td>地址 / 管道</td><td>射频的"收件人"</td><td>5 字节 <code>pair_addr_arr</code></td></tr><tr><td>对码 / 配对</td><td>协商并保存地址的过程</td><td>开机 <code>while(1)</code> 对码循环</td></tr><tr><td>SPI</td><td><strong>有线</strong>板内总线（接传感器）</td><td><code>user/spi.c</code>（硬件）、<code>bsp_rfspi_sw.c</code>（软件）</td></tr><tr><td>UART</td><td><strong>有线</strong>串口（接电脑看日志）</td><td><code>bsp_uart.c</code>，115200 8N1</td></tr></tbody></table></div>
+<h3 id="10-3-心跳-类">10.3 "心跳"类<a class="anchor" href="#10-3-心跳-类">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>说法</th><th>谁产生的</th><th>作用</th></tr></thead><tbody><tr><td>1ms 心跳</td><td>TIM17 硬件中断</td><td>整个系统的时间基准</td></tr><tr><td>软定时器</td><td>在中断里数心跳次数</td><td>派生 4/10/100ms 任务</td></tr><tr><td>通信心跳</td><td>遥控器周期发数据包</td><td>飞机据此判断链路是否正常</td></tr><tr><td>心跳包</td><td>遥控器发的正常数据帧（0xAA）</td><td>也是失联检测的依据</td></tr><tr><td>LED 心跳</td><td><code>Led_Process()</code></td><td>给人看的"工作正常"提示</td></tr></tbody></table></div>
+<hr>
+<h2 id="11-读这份代码的-避坑地图-已知的注释与代码不一致">11. 读这份代码的"避坑地图"：已知的注释与代码不一致<a class="anchor" href="#11-读这份代码的-避坑地图-已知的注释与代码不一致">#</a></h2>
+<p><strong>先说结论：这份工程的注释不能全信，涉及具体数值时必须回代码核对。</strong></p>
+<p>这不是挑刺 —— 原作者在几处自己都写明了"疑似笔误，未改动"。下面这张表是 把全工程核对过一遍的结果，<strong>对你"看懂代码"极有用</strong>：因为按注释理解会得出错误结论的地方， 都在这里了。</p>
+<h3 id="11-1-数值类的注释错误-最容易误导人">11.1 数值类的注释错误（最容易误导人）<a class="anchor" href="#11-1-数值类的注释错误-最容易误导人">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>位置</th><th>注释写的</th><th>代码实际是</th><th>后果</th></tr></thead><tbody><tr><td><code>WDG.c</code></td><td>"reload value to 1024, 1s"</td><td><strong>512，约 0.5s</strong></td><td>以为超时 1 秒，实际 0.5 秒</td></tr><tr><td><code>TIM16.c</code></td><td>"Prescaler of 1000-1"</td><td><strong>48-1</strong></td><td>以为 TIM16 是 1kHz，实际 1MHz</td></tr><tr><td><code>TIM16.c</code></td><td>"预分频为1000-1"</td><td><strong>480-1</strong></td><td>同上</td></tr><tr><td><code>TIM16.c</code></td><td>三处写 "TIM1" / "TIM16"</td><td><strong>都是 TIM17</strong></td><td>找错外设</td></tr><tr><td><code>main.c</code></td><td>"配置HSI输出时钟为16MHz"</td><td><strong><code>RCC_HSICALIBRATION_24MHz</code></strong></td><td>算错时钟树（这条最坑）</td></tr><tr><td><code>main.c</code></td><td>"PLL 输入必须 ≥12MHz"</td><td>HAL 实际要求 <strong>16~24MHz</strong></td><td>以为有选择余地，其实 24MHz 贴着上限</td></tr><tr><td><code>main.c</code> vs <code>adc.c</code></td><td>一处说 PCLK1=48MHz、一处说 24MHz</td><td><strong>48MHz</strong>（<code>RCC_HCLK_DIV1</code>）</td><td>ADC/SPI 分频算错</td></tr><tr><td><code>bsp_pwm.h</code></td><td>"3-1, 1000-1 → 8kHz"</td><td><strong>16kHz</strong></td><td>PWM 频率算错一倍</td></tr><tr><td><code>adc.c</code></td><td>"单次转换模式"</td><td><strong><code>ContinuousConvMode = ENABLE</code></strong></td><td>对结果无害，但理解会错</td></tr><tr><td><code>adc.c</code></td><td>"循环周期 10ms，持续 3 秒"</td><td>实际约 1 秒/次 ⇒ <strong>约 6 秒</strong></td><td>低压告警时机算错</td></tr><tr><td><code>flip.c</code></td><td>"80是240~320的角度差"</td><td>实际宏是 <strong>300-180=120</strong></td><td>降速曲线理解错</td></tr></tbody></table></div>
+<h3 id="11-2-逻辑类的注释错误-按注释理解会得出相反结论">11.2 逻辑类的注释错误（按注释理解会得出相反结论）<a class="anchor" href="#11-2-逻辑类的注释错误-按注释理解会得出相反结论">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>位置</th><th>注释写的</th><th>代码实际行为</th></tr></thead><tbody><tr><td><code>main.c</code> 对码段</td><td>"<code>ch_change_arr</code> 两个元素都是 36，实际不换频"</td><td><strong><code>main.c:265</code> 会把 <code>[1]</code> 覆盖成 Flash 信道 ⇒ 确实在跳频</strong></td></tr><tr><td><code>flash.h</code> <code>pairflag</code></td><td>"是否第一次写入"</td><td><strong>全工程从未读写，是死字段</strong></td></tr><tr><td><code>py32f0xx_it.c</code></td><td>"<code>TimHandle_17</code> 定义在 <code>bsp_timer.c</code>"</td><td>实际定义在 <strong><code>TIM16.c:68</code></strong></td></tr><tr><td><code>bsp.c</code></td><td>"spi_init() 接 ICM42688 与 BMP390"</td><td>BMP390 走的是<strong>软件 SPI</strong>（<code>bsp_rfspi_sw.c</code> 那套）</td></tr><tr><td><code>bsp_pn298.h</code></td><td><code>AW_RXADDR(0x02)</code> 名字像"地址宽度"</td><td>实际是<strong>接收通道使能</strong>（<code>EN_RXADDR</code>）</td></tr></tbody></table></div>
+<h3 id="11-3-你在读代码时会碰到的-反直觉设计">11.3 你在读代码时会碰到的"反直觉设计"<a class="anchor" href="#11-3-你在读代码时会碰到的-反直觉设计">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>现象</th><th>真实原因</th></tr></thead><tbody><tr><td><code>bsp_timer.c</code> 里<strong>没有</strong> <code>bsp_timer_init()</code></td><td>定时器初始化实际在 <code>TIM16.c</code> 的 <code>Timer17_UpdateIT_Init()</code>；<code>bsp.c</code> 里那句调用被注释掉了</td></tr><tr><td><code>delay_us(x)</code> 实际约 <strong>2x</strong> 还有 30~40µs 固定开销</td><td>按 16 周期/µs（16MHz）标定，而内核跑 48MHz。射频时序"宁长勿短"所以没暴露问题</td></tr><tr><td>键盘中断/串口中断都配了，但没在跑</td><td>那些在<strong>未被 Keil 工程引用</strong>的厂商例程 <code>py32f030xx_Start_Kit.c</code> 里</td></tr><tr><td>飞控只有 <strong>2 个中断</strong>真正生效</td><td>TIM17（抢占优先级 0，最高）+ SysTick（最低 3）；M0+ 只支持 2 位优先级，<strong>子优先级参数被忽略</strong></td></tr><tr><td><code>HardFault_Handler</code> 是 <code>while(1)</code> 死循环</td><td><strong>故意的</strong>：卡死 → 不喂狗 → 约 0.5s 后看门狗复位。这是"失败要安全"的设计</td></tr><tr><td><code>SETUP_RETR = 0x03</code> 注释说"不自动重传"</td><td><strong>已查手册确认：注释是错的。</strong> 《PN298 用户手册 V1.0》第 33 页寄存器表写明 <code>04 SETUP_RETR</code> 的 <code>ARD 7:4 = 0000</code>（自动传输延时 <strong>250µs</strong>）、<code>ARC 3:0 = 0011</code>（自动传输次数 <strong>3 次</strong>）→ 即 <strong>"重传 3 次"</strong>。手册第 17 页还说明 PTX 收不到 ACK 会自动重传，直到超出 ARC 值才产生 MAX_RT 中断</td></tr><tr><td>地址宽度宏写 5，但 <code>SETUP_AW</code> 的写入<strong>被注释掉了</strong></td><td>实际宽度由 <code>0x03</code> 起的 3 字节配置块决定，5 只是"约定值"</td></tr><tr><td>飞控失联阈值 <strong>5 秒</strong>，遥控器 <strong>1 秒</strong></td><td>两侧判据不同（飞控 <code>user/main.c:462</code>、遥控器 <code>user_driver/tim16.c:79</code>）。遥控器更敏感，因为它还要负责重连</td></tr></tbody></table></div>
+<h3 id="11-4-这份手册里我写错-后来核实更正的地方">11.4 这份手册里我写错、后来核实更正的地方<a class="anchor" href="#11-4-这份手册里我写错-后来核实更正的地方">#</a></h3>
+<p>诚实起见也列出来（说明"看代码"这一步不可省）：</p>
+<div class="tablewrap"><table><thead><tr><th>我原先写的</th><th>实际</th></tr></thead><tbody><tr><td>"HSI 8MHz × PLL ×6 = 48MHz"</td><td><strong>PLL 是 ×2，且 HSI 先被校准到 24MHz</strong>：24MHz × 2 = 48MHz</td></tr><tr><td>"时钟在 <code>system_py32f0xx.c</code> 里配"</td><td><code>SystemInit()</code> <strong>只设 HSI 8MHz 档 + 向量表</strong>；48MHz 在 <strong><code>main.c</code> 的 <code>SystemClock_Config()</code></strong></td></tr><tr><td>"工程里没定义 LSI 频率"</td><td><strong><code>py32f0xx_hal_conf.h:139</code> 有 <code>LSI_VALUE = 32768</code></strong></td></tr><tr><td>"跳频实际停在同频点、没换频"</td><td><strong>确实在跳频</strong>（<code>main.c:265</code> 覆盖了第二个元素）</td></tr><tr><td>"<code>pairflag</code> 标记已配对"</td><td><strong>死字段，从未读写</strong></td></tr><tr><td>"SPI 用 48MHz"</td><td><strong>SPI1 分频 32 ⇒ 1.5MHz</strong></td></tr></tbody></table></div>
+<hr>
+<h3 id="11-5-写术语伴读时新查出来的不一致-第二批">11.5 写术语伴读时新查出来的不一致（第二批）<a class="anchor" href="#11-5-写术语伴读时新查出来的不一致-第二批">#</a></h3>
+<p>下面这些是写《术语伴读》时逐行对着代码读出来的，<strong>全部带行号</strong>， 每条都影响"调参时的判断"，所以单独列出来。</p>
+<p><strong>A. 注释写错了数值（注释与代码不一致）</strong></p>
+<div class="tablewrap"><table><thead><tr><th>位置</th><th>注释写的</th><th>代码实际</th></tr></thead><tbody><tr><td><code>imu/accgyro.c:234</code>、<code>:288</code></td><td>"256 次"</td><td><strong>512</strong></td></tr><tr><td><code>common.c:397-398</code></td><td>"16X / 8X"</td><td>宏是 <strong>8X / 2X</strong></td></tr><tr><td><code>imu/altitude.c:258</code>、<code>:267</code></td><td>权重 0.965 / 0.035、0.987 / 0.013</td><td><strong>0.985 / 0.015、0.995 / 0.005</strong></td></tr><tr><td><code>imu/altitude.c:168</code></td><td>低通系数 α = 0.7</td><td><strong>α = 0.1 / 0.9</strong></td></tr><tr><td><code>imu/imu.c:389</code></td><td>"每 2ms 调用"</td><td><code>imu/fc.c:82</code> 实际是 <strong>1.25ms</strong></td></tr></tbody></table></div>
+<blockquote class=""><p>这一批的共同点：<strong>数值差得不多，但足以让调参方向反掉</strong>。
+例如低通系数 α 从 0.7 改成 0.1，滤波强度差了 7 倍；权重 0.965 与 0.985
+看着接近，但那是"新旧数据保留多少"的比例。</p></blockquote>
+<p><strong>B. 参数与假设不一致（不是注释错，而是设计上的疑点，未改动）</strong></p>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>现象</th><th>位置</th><th>影响</th></tr></thead><tbody><tr><td>1</td><td><strong>ODR 配 200Hz，但两个滤波器按 1250µs（=800Hz）设计</strong></td><td>ODR：<code>accgyro.c:65-66</code>；滤波：<code>:71-72</code></td><td>同一份采样被重复滤波，<strong>等效截止频率偏离标称的 30Hz / 240Hz</strong></td></tr><tr><td>2</td><td><strong>串级 PID 外环输出量纲（度×100）与内环反馈量纲（陀螺 LSB）不一致</strong></td><td><code>pid.c:259</code>/<code>:261</code> vs <code>:304</code></td><td>内环增益里隐含了单位换算，<strong>改量程或改角度表示时会静默失配</strong></td></tr></tbody></table></div>
+<blockquote class=""><p>第 1 条值得注意：它意味着<strong>滤波器实际截止频率不是注释里写的那个值</strong>。
+想确认真实值，要么改 ODR 与滤波器参数一致，要么实测频响。
+第 2 条在"改传感器量程"或"改 <code>angle[]</code> 表示法"时会咬人 ——
+内环 P 增益看着是个纯数字，其实里面藏着 度→LSB 的换算。</p></blockquote>
+<p><strong>C. 顺带查明的一处"实现了但没用"</strong></p>
+<ul><li><strong>陷波器（Notch）</strong>：<code>imu/filter.c:160-169</code> 有 <code>FILTER_NOTCH</code> 分支，</li></ul>
+<p>但<strong>全工程没有调用者</strong>；唯一的 biquad 初始化是 <code>biquadFilterInitLPF(&amp;accFilter[axis], 30, 1250)</code>（<code>accgyro.c:71</code>）。 所以"本工程用了陷波器"是<strong>不成立的</strong> —— 见 8.4 节的更正。</p>
+<ul><li>另有一个 <code>calGyroVariance()</code>（<code>imu/imu.c:29-71</code>）<strong>同样没有调用者</strong>，</li></ul>
+<p>用途不明（不猜）。</p>
+<p><strong>D. 本工程实际用的滤波与姿态算法（一次列清，便于对照）</strong></p>
+<div class="tablewrap"><table><thead><tr><th>环节</th><th>实际实现</th><th>位置</th></tr></thead><tbody><tr><td>陀螺滤波</td><td><strong>PT1 一阶低通，240Hz</strong></td><td><code>accgyro.c:72</code> 初始化、<code>:127</code> 应用</td></tr><tr><td>加速度滤波</td><td><strong>biquad 二阶低通，30Hz</strong>（sampleDeltaUs=1250，Q=1/√2）</td><td><code>accgyro.c:71</code>、<code>:126</code></td></tr><tr><td>气压滤波</td><td><strong>中值 5 点</strong> + <strong>滑动平均 6 点</strong></td><td><code>altitude.c:19</code>/<code>:88-90</code>、<code>:18</code>/<code>:123-139</code></td></tr><tr><td>高度/速度滤波</td><td>高度低通 α=0.1；速度低通 3/4；死区 100mm/s</td><td><code>altitude.c:169</code>、<code>:174</code>、<code>:180</code></td></tr><tr><td>PID 的 D 项</td><td>另有 3 点滑动和</td><td><code>pid.c:335-338</code></td></tr><tr><td>姿态算法</td><td><strong>Mahony</strong>，Kp=0.25 / Ki=0.0025</td><td><code>imu.c:261</code>、<code>:457-458</code></td></tr><tr><td>上电快收敛</td><td>2 秒内 Kp×10</td><td><code>imu.c:239-256</code> + <code>bsp_timer.c:185-190</code></td></tr><tr><td>无磁力计</td><td>强制 <code>angle[2] = 0</code>（偏航不可信）</td><td><code>pid.c:247</code></td></tr></tbody></table></div>
+<blockquote class=""><p><strong>注意"采样率一致"这件事</strong>：滤波器的系数是按<strong>采样率</strong>算的。
+改了 ODR、或改了调用周期，<strong>必须回来复核滤波参数</strong>，否则截止频率就跑偏了
+（B 组第 1 条就是这种情况）。</p></blockquote>
+<h3 id="11-6-写-飞控技术演进总纲-时又查出的一批-第三批">11.6 写《飞控技术演进总纲》时又查出的一批（第三批）<a class="anchor" href="#11-6-写-飞控技术演进总纲-时又查出的一批-第三批">#</a></h3>
+<p>来源：<code>飞控技术演进总纲.md</code>。全部已用代码行号核实。</p>
+<p><strong>A. 🔴 最重要的一条：控制环不在 1ms 中断里，而在主循环</strong></p>
+<p>这是<strong>理解整个工程时序的关键</strong>，之前手册和相关注释都写错了。</p>
+<div class="tablewrap"><table><thead><tr><th>原来的说法</th><th>代码事实</th></tr></thead><tbody><tr><td>"<code>flight_ctrl()</code> 每 1 毫秒执行一次，由 TIM17 的 1ms 更新中断调用"</td><td><strong>唯一调用点是 <code>user/main.c:410</code>，在主循环里</strong></td></tr><tr><td>"TIM17 中断 → flight_ctrl()"</td><td>TIM17 中断回调（<code>drivers/bsp/bsp_timer.c:168-194</code>）<strong>只做计数器自增</strong>，不调用任何控制函数</td></tr></tbody></table></div>
+<p><strong>核实依据</strong>：</p>
+<ol><li>全工程搜 <code>flight_ctrl</code> 的非注释调用点，只有 <code>user/main.c:410</code> 一处；</li><li><code>bsp_timer.c:48-51</code> 自己写着"中断里调用 <code>flight_ctrl()</code> 这类耗时函数会破坏 1ms 节拍"</li></ol>
+<p>—— 说明设计上就没打算放中断里；</p>
+<ol><li><code>main.c:410</code> 的注释本身就标了耗时 <strong>2.493ms~3.446ms</strong>，紧邻的</li></ol>
+<p><code>altitude_ctrl()</code>（<code>main.c:407</code>）标 <strong>2.1ms~3.873ms</strong> ⇒ <strong>主循环一圈约 4.6ms 量级</strong>，控制环频率远低于 1kHz。</p>
+<blockquote class=""><p><strong>为什么这条重要</strong>：1ms 是<strong>时基与计数器</strong>的节拍，不是控制环周期。
+把两者混淆，会导致对"PID 该按多快调"、"滤波器系数按什么采样率算"、
+"失联判据为什么用 5 秒"这些问题的判断全线偏移。
+（<code>imu/fc.c:82</code> 的 <code>deltaT &gt;= 0.00125f</code> 是个<strong>下限门槛</strong>，不是实际周期。）</p></blockquote>
+<p><strong>已修正的错误注释</strong>（只改注释，代码未动）：<code>imu/fc.c:6</code>、<code>imu/fc.c:10</code>、 <code>imu/fc.h:10</code>、<code>imu/pid.c:28</code>、<code>imu/pid.c:46</code>、<code>imu/pid.c:166</code>、<code>imu/pid.h:48</code>。</p>
+<p><strong>B. 电机 PWM 的规格写成了通用电调标准</strong></p>
+<div class="tablewrap"><table><thead><tr><th>原来的说法</th><th>代码事实</th></tr></thead><tbody><tr><td>"<strong>本工程是 16kHz 固定频率 + 0~1000 千分比占空比</strong>（不是 1000~2000µs 的舵机信号）"</td><td>本工程是 <strong>16kHz 固定频率 + 0~1000 千分比占空比</strong></td></tr></tbody></table></div>
+<p>依据：<code>user/main.c:244</code> 的 <code>Advanced_Timer3_PWM_Init(3-1, 1000-1)</code> → 48MHz / 3 / 1000 = <strong>16kHz</strong>；<code>drivers/bsp/bsp_pwm.c:150-185</code> 直接写 CCR， 占空比量程是 0~1000（千分比），<strong>不是 1000~2000µs 的舵机信号</strong>。</p>
+<p><strong>C. 用错了论证依据：<code>bsp_pn298.c</code> 的死等循环不在飞机侧主路径上</strong></p>
+<p>手册 5.4 节曾引用 <code>bsp_pn298.c:965</code> 的 <code>while(!(状态 &amp; TX_DS_FLAG));</code> 来论证"飞机侧会卡死在这里"。<strong>死等确实存在，但飞机侧主路径不调用它</strong>： 飞机侧走的是 <code>bsp_pn298_rx_data_ack_fix()</code>，<code>drivers/bsp/config_rf.h:72</code> 是<strong>轮询收包模式</strong>（飞机侧从不主动发数据，只回 ACK）。 所以那条论证虽然结论（"喂狗点必须在主循环"）没错，<strong>但举的例子不对</strong>。</p>
+<p><strong>D. 一个被漏收的时钟错误</strong></p>
+<p><code>drivers/bsp/bsp_pwm.c:33</code>、<code>:69-70</code> 的注释也写成 <strong>"PCLK1 = 24MHz"</strong>， 与 <code>user/main.c:166</code> 的 <code>RCC_HCLK_DIV1</code>（实际 <strong>48MHz</strong>）矛盾。 11.1 节的纠错表原先漏了这个文件，现已补上。</p>
+<p><strong>E. 软定时器那条要补一个同量级因素</strong></p>
+<p>7.2 节写的"实际周期是 N+1 ms"<strong>是对的</strong>，但漏了一句： <strong>主循环一圈本身就要 4.6ms 量级</strong>，所以任何挂在主循环上的任务， 其真实抖动是"主循环周期"这个量级 —— 比 N+1 那个 +1 影响大得多。 换句话说：<strong>软定时器的精度上限由主循环一圈的耗时决定</strong>，不是由 1ms 时基决定。</p>
+<h2 id="12-英文缩写速查表-看代码时随手查">12. 英文缩写速查表（看代码时随手查）<a class="anchor" href="#12-英文缩写速查表-看代码时随手查">#</a></h2>
+<blockquote class=""><p>这份表按"你在哪里会撞到它"分类。表中 <strong>英文全称</strong> 一列可以帮你记住缩写是怎么来的，
+<strong>中文说明</strong> 一列是这个东西在工程里到底干什么。
+遇到不认识的缩写，先在这里查；查不到再问我。</p></blockquote>
+<h3 id="12-1-芯片与内核">12.1 芯片与内核<a class="anchor" href="#12-1-芯片与内核">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>缩写</th><th>英文全称</th><th>中文说明</th></tr></thead><tbody><tr><td><strong>MCU</strong></td><td>Microcontroller Unit</td><td>单片机（本项目就是 PY32F030 这一颗）</td></tr><tr><td><strong>CPU</strong></td><td>Central Processing Unit</td><td>中央处理器（M0+ 是内核，MCU 是整颗芯片）</td></tr><tr><td><strong>ARM</strong></td><td>（公司名 Arm Ltd.）</td><td>设计内核的公司；"ARM 内核"指它授权的 CPU 设计</td></tr><tr><td><strong>M0+</strong></td><td>Cortex-M0 Plus</td><td>Arm 的入门级内核系列。<strong>没有 FPU、没有硬件除法、只有 Thumb-1 指令</strong></td></tr><tr><td><strong>CM0 / CM3 / CM4 / CM7</strong></td><td>Cortex-M0 / M3 / M4 / M7</td><td>同一系列的其他内核（越往后越强）。工程里出现是因为 CMSIS 头文件要兼容整个系列</td></tr><tr><td><strong>FPU</strong></td><td>Floating Point Unit</td><td>硬件浮点运算单元。<strong>M0+ 没有</strong>，所以本工程尽量用整数/定点</td></tr><tr><td><strong>DSP</strong></td><td>Digital Signal Processing</td><td>数字信号处理（指令集扩展或算法）</td></tr><tr><td><strong>SIMD</strong></td><td>Single Instruction Multiple Data</td><td>一条指令算多个数据（M0+ 不支持）</td></tr><tr><td><strong>NVIC</strong></td><td>Nested Vectored Interrupt Controller</td><td>嵌套向量中断控制器。管"谁能打断谁"（见第 2 节）</td></tr><tr><td><strong>SysTick</strong></td><td>System Tick timer</td><td>内核自带的 1ms 节拍定时器（喂 <code>HAL_GetTick()</code>）</td></tr><tr><td><strong>ISR</strong></td><td>Interrupt Service Routine</td><td>中断服务函数（见第 2 节）</td></tr><tr><td><strong>IRQ</strong></td><td>Interrupt ReQuest</td><td>中断请求（"谁发的请求"）</td></tr><tr><td><strong>NMI</strong></td><td>Non-Maskable Interrupt</td><td>不可屏蔽中断（关中断也挡不住它）</td></tr><tr><td><strong>HardFault</strong></td><td>（硬件错误异常）</td><td>严重错误异常（本工程里是 <code>while(1)</code> 等看门狗复位）</td></tr><tr><td><strong>SP / MSP / PSP</strong></td><td>Stack Pointer / Main SP / Process SP</td><td>栈指针 / 主栈 / 进程栈（裸机只用主栈）</td></tr><tr><td><strong>PC</strong></td><td>Program Counter</td><td>程序计数器（下一条指令的地址）。<strong>注意与"个人电脑"同缩写</strong></td></tr><tr><td><strong>LR</strong></td><td>Link Register</td><td>链接寄存器（存函数返回地址）</td></tr><tr><td><strong>PLL</strong></td><td>Phase-Locked Loop</td><td>锁相环，倍频电路（24MHz → 48MHz）</td></tr><tr><td><strong>HSI / HSE</strong></td><td>High Speed Internal / External</td><td>内部 / 外部高速时钟源（本项目用内部 HSI）</td></tr><tr><td><strong>LSI / LSE</strong></td><td>Low Speed Internal / External</td><td>内部 / 外部低速时钟源（LSI≈32768Hz，<strong>看门狗专用</strong>）</td></tr><tr><td><strong>RC</strong></td><td>Resistor-Capacitor</td><td>阻容振荡器（精度差但便宜、不用外接元件）。<strong>注意 RC 有歧义</strong>：在芯片手册里指这个，在飞控里指遥控器 —— 见 12.4 节。《PN298 用户手册》的缩略语表就把它列为"电阻电容振荡器"</td></tr><tr><td><strong>SYSCLK / HCLK</strong></td><td>System Clock / AHB Clock</td><td>系统时钟 / 总线时钟（本项目都是 48MHz）</td></tr><tr><td><strong>PCLK1</strong></td><td>Peripheral Clock 1</td><td>APB1 外设时钟（定时器/串口/SPI 都用它，48MHz）</td></tr><tr><td><strong>AHB / APB</strong></td><td>Advanced High-perf. Bus / Advanced Peripheral Bus</td><td>高速总线 / 外设总线（分频就在这两级上做）</td></tr><tr><td><strong>RCC</strong></td><td>Reset and Clock Control</td><td>复位与时钟控制外设（配时钟树就是操作它）</td></tr><tr><td><strong>FLASH / RAM</strong></td><td>（闪存 / 随机存储器）</td><td>程序存储（64KB，掉电不丢） / 运行内存（8KB，掉电丢失）</td></tr><tr><td><strong>SRAM</strong></td><td>Static RAM</td><td>静态随机存储器（就是上面那个 RAM 的具体类型）</td></tr><tr><td><strong>ROM / OTP</strong></td><td>Read-Only Memory / One-Time Programmable</td><td>只读存储器 / 一次性可编程（出厂信息、UID 存这里）</td></tr><tr><td><strong>UID</strong></td><td>Unique ID</td><td>芯片唯一序列号（<strong>对码时用它生成随机地址</strong>）</td></tr><tr><td><strong>POR</strong></td><td>Power-On Reset</td><td>上电复位</td></tr><tr><td><strong>WDG / IWDG / WWDG</strong></td><td>Watchdog / Independent / Window</td><td>看门狗 / 独立看门狗 / 窗口看门狗（见第 5 节）</td></tr><tr><td><strong>RTC</strong></td><td>Real-Time Clock</td><td>实时时钟（走日历的，本项目没用到）</td></tr><tr><td><strong>MPU</strong></td><td>Memory Protection Unit</td><td>内存保护单元（M0+ 没有）</td></tr><tr><td><strong>CMSIS</strong></td><td>Cortex Microcontroller Software Interface Standard</td><td>Arm 定的内核访问标准（<code>core_cm0plus.h</code> 那套）</td></tr><tr><td><strong>SCB</strong></td><td>System Control Block</td><td>内核的系统控制寄存器组（<code>SCB-&gt;VTOR</code> 设向量表位置）</td></tr><tr><td><strong>VTOR</strong></td><td>Vector Table Offset Register</td><td>向量表偏移寄存器（把中断表放到别处）</td></tr><tr><td><strong>DWT / ITM / TPI</strong></td><td>Data Watchpoint / Instrumentation Trace / Trace Port</td><td>调试追踪相关（本项目不用）</td></tr><tr><td><strong>DAP</strong></td><td>Debug Access Port</td><td>调试访问端口（<strong>DAP-Link 调试器</strong>的名字来源）</td></tr><tr><td><strong>SWD / SWDIO / SWCLK</strong></td><td>Serial Wire Debug / Data / Clock</td><td>串行调试接口 / 数据线 / 时钟线（烧录就靠这两根）</td></tr><tr><td><strong>JTAG / J-Link</strong></td><td>（调试接口标准 / Segger 的调试器）</td><td>另一种调试接口标准 / 一款调试器品牌</td></tr></tbody></table></div>
+<h3 id="12-2-外设与通信">12.2 外设与通信<a class="anchor" href="#12-2-外设与通信">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>缩写</th><th>英文全称</th><th>中文说明</th></tr></thead><tbody><tr><td><strong>GPIO</strong></td><td>General Purpose Input/Output</td><td>通用输入输出引脚（能读电平、能输出高低）</td></tr><tr><td><strong>AF</strong></td><td>Alternate Function</td><td>引脚复用功能（同一个引脚可以是普通 IO，也可以是串口/SPI）</td></tr><tr><td><strong>SPI</strong></td><td>Serial Peripheral Interface</td><td>串行外设接口，板内高速总线（接传感器）。四线：SCK/MOSI/MISO/CS</td></tr><tr><td><strong>SCK / CLK</strong></td><td>Serial CLocK</td><td>时钟线（有的芯片手册写成 CLK）</td></tr><tr><td><strong>MOSI / MISO</strong></td><td>Master Out Slave In / Master In Slave Out</td><td>主出从入 / 主入从出（数据线。"主"是 MCU，"从"是传感器）</td></tr><tr><td><strong>CS / NSS / CSN</strong></td><td>Chip Select / Not Slave Select / Chip Select Not</td><td>片选（拉低表示"我在跟你说话"。"N"表示低电平有效）</td></tr><tr><td><strong>I2C</strong></td><td>Inter-Integrated Circuit</td><td>两线总线（SDA+SCL），比 SPI 慢但省引脚</td></tr><tr><td><strong>SDA / SCL</strong></td><td>Serial Data / Serial Clock</td><td>I2C 的数据线 / 时钟线</td></tr><tr><td><strong>UART / USART</strong></td><td>Universal (Synchronous/)Asynchronous Receiver-Transmitter</td><td>串口（异步）/ 通用同步异步串口</td></tr><tr><td><strong>RX / TX</strong></td><td>Receive / Transmit</td><td>接收 / 发送（<strong>接线的铁律：RX 接对方 TX</strong>）</td></tr><tr><td><strong>CTS / RTS</strong></td><td>Clear To Send / Request To Send</td><td>硬件流控信号（本项目不用）</td></tr><tr><td><strong>DMA</strong></td><td>Direct Memory Access</td><td>直接存储器访问（不占 CPU 搬数据，本项目没用）</td></tr><tr><td><strong>ADC</strong></td><td>Analog-to-Digital Converter</td><td>模数转换器（把电压变成数字，用来测电池电压）</td></tr><tr><td><strong>DAC</strong></td><td>Digital-to-Analog Converter</td><td>数模转换器（本项目没有）</td></tr><tr><td><strong>PWM</strong></td><td>Pulse Width Modulation</td><td>脉宽调制（用占空比控制电机转速、LED 亮度）</td></tr><tr><td><strong>CCR</strong></td><td>Capture/Compare Register</td><td>捕获/比较寄存器（<strong>改 PWM 占空比就是改它</strong>）</td></tr><tr><td><strong>TIM</strong></td><td>Timer</td><td>定时器（TIM1/TIM3/TIM16/TIM17 是具体编号，<strong>编号不同功能也不同</strong>）</td></tr><tr><td><strong>CNT / ARR / PSC</strong></td><td>Counter / Auto-Reload Register / Prescaler</td><td>计数器 / 自动重装载值 / 预分频</td></tr><tr><td><strong>EXTI</strong></td><td>External Interrupt</td><td>外部中断（引脚电平变化触发中断）</td></tr><tr><td><strong>CRC</strong></td><td>Cyclic Redundancy Check</td><td>循环冗余校验（查数据有没有传错）</td></tr><tr><td><strong>FIFO</strong></td><td>First In First Out</td><td>先进先出缓冲队列（芯片内部的收/发缓冲）</td></tr><tr><td><strong>BSRR / BRR / ODR / IDR</strong></td><td>Bit Set/Reset Reg. / Bit Reset Reg. / Output Data Reg. / Input Data Reg.</td><td>GPIO 的置位 / 复位 / 输出数据 / 输入数据寄存器</td></tr><tr><td><strong>DEBUG / SWO</strong></td><td>（调试 / Serial Wire Output）</td><td>调试口 / 单线调试输出（printf 的另一种出口）</td></tr></tbody></table></div>
+<h3 id="12-3-传感器与姿态">12.3 传感器与姿态<a class="anchor" href="#12-3-传感器与姿态">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>缩写</th><th>英文全称</th><th>中文说明</th></tr></thead><tbody><tr><td><strong>IMU</strong></td><td>Inertial Measurement Unit</td><td>惯性测量单元（加速度计+陀螺仪，本项目是 ICM42688）</td></tr><tr><td><strong>ICM42688</strong></td><td>（芯片型号）</td><td>InvenSense 的 6 轴 IMU（3 轴加速度 + 3 轴陀螺仪）</td></tr><tr><td><strong>BMP390</strong></td><td>（芯片型号）</td><td>Bosch 的气压计（测大气压 → 换算高度）</td></tr><tr><td><strong>MEMS</strong></td><td>Micro-Electro-Mechanical System</td><td>微机电系统（传感器芯片内部的机械结构）</td></tr><tr><td><strong>ODR</strong></td><td>Output Data Rate</td><td>输出数据速率（每秒采样多少次，如 1kHz）</td></tr><tr><td><strong>FSR</strong></td><td>Full Scale Range</td><td>满量程（能测的最大值，如 ±4g、±2000dps）</td></tr><tr><td><strong>LSB</strong></td><td>Least Significant Bit</td><td>最低有效位（分辨率单位，如 2048 LSB/g）</td></tr><tr><td><strong>dps</strong></td><td>degrees per second</td><td>度/秒（陀螺仪角速度单位）</td></tr><tr><td><strong>g</strong></td><td>（gravity）</td><td>重力加速度（加速度计单位，1g≈9.8m/s²）</td></tr><tr><td><strong>Pa / hPa</strong></td><td>Pascal / hectoPascal</td><td>帕斯卡 / 百帕（气压单位；标准大气压 101325 Pa）</td></tr><tr><td><strong>Bias / Offset</strong></td><td>（偏置 / 偏移）</td><td>零偏：静止时输出不为 0 的那部分</td></tr><tr><td><strong>AHRS</strong></td><td>Attitude and Heading Reference System</td><td>姿态航向参考系统（本项目就是一套简化的 AHRS）</td></tr><tr><td><strong>DMP</strong></td><td>Digital Motion Processor</td><td>数字运动处理器（IMU 内部协处理器，<strong>本项目未用</strong>）</td></tr><tr><td><strong>APEX</strong></td><td>（InvenSense 的功能集名）</td><td>计步/敲击/跌倒检测等功能（<strong>本项目未用</strong>）</td></tr><tr><td><strong>WOM</strong></td><td>Wake On Motion</td><td>运动唤醒（有运动才唤醒，省电）</td></tr><tr><td><strong>SMD</strong></td><td>Significant Motion Detection</td><td>显著运动检测（也是省电功能）</td></tr><tr><td><strong>FSYNC</strong></td><td>Frame Synchronization</td><td>帧同步（多传感器对齐采样时刻）</td></tr><tr><td><strong>CLKIN</strong></td><td>Clock Input</td><td>外部时钟输入（可接 32.768kHz 提高精度）</td></tr></tbody></table></div>
+<h3 id="12-4-飞控业务">12.4 飞控业务<a class="anchor" href="#12-4-飞控业务">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>缩写</th><th>英文全称</th><th>中文说明</th></tr></thead><tbody><tr><td><strong>FC</strong></td><td>Flight Controller</td><td>飞行控制器（本工程 <code>飞控/</code> 目录）</td></tr><tr><td><strong>RC</strong></td><td>Remote Control</td><td>遥控器 / 遥控（本工程 <code>遥控器/</code> 目录）</td></tr><tr><td><strong>PID</strong></td><td>Proportional-Integral-Derivative</td><td>比例-积分-微分控制器（见第 8 节）</td></tr><tr><td><strong>BSP</strong></td><td>Board Support Package</td><td>板级支持包（"本板子专用"的驱动层，见第 3 节）</td></tr><tr><td><strong>HAL</strong></td><td>Hardware Abstraction Layer</td><td>硬件抽象层（厂商提供的库，见第 3 节）</td></tr><tr><td><strong>API</strong></td><td>Application Programming Interface</td><td>应用程序接口（"别人给你的可调用函数"）</td></tr><tr><td><strong>ACC / GYR</strong></td><td>Accelerometer / Gyroscope</td><td>加速度计 / 陀螺仪</td></tr><tr><td><strong>MAG</strong></td><td>Magnetometer</td><td>磁力计（<strong>本项目没有</strong>，所以偏航角会漂）</td></tr><tr><td><strong>YAW / PITCH / ROLL</strong></td><td>（偏航 / 俯仰 / 横滚）</td><td>三个姿态角：左右转头 / 抬头低头 / 左右侧倾</td></tr><tr><td><strong>THR / THROTTLE</strong></td><td>Throttle</td><td>油门</td></tr><tr><td><strong>TRI / TRIM</strong></td><td>Trim</td><td>微调（修正机械/重心偏差）</td></tr><tr><td><strong>ARM / DISARM</strong></td><td>Arm / Disarm</td><td>解锁 / 上锁（允许电机转动的安全开关）</td></tr><tr><td><strong>IDLE</strong></td><td>Idle</td><td>怠速（电机低速空转）</td></tr><tr><td><strong>ESC</strong></td><td>Electronic Speed Controller</td><td>电子调速器（把 PWM 变成电机三相电流，外部硬件）</td></tr><tr><td><strong>RX / TX（射频语境）</strong></td><td>Receive / Transmit</td><td>接收 / 发送（<strong>注意与串口的 RX/TX 同缩写但不同事</strong>）</td></tr><tr><td><strong>ACK</strong></td><td>ACKnowledgement</td><td>应答确认（接收方回一个"收到了"）</td></tr><tr><td><strong>ARC / ARD</strong></td><td>Auto Retransmit Count / Delay</td><td>自动重传次数 / 重传间隔</td></tr><tr><td><strong>CRC（射频语境）</strong></td><td>Cyclic Redundancy Check</td><td>硬件 CRC：射频芯片自动查错</td></tr><tr><td><strong>CE</strong></td><td>Chip Enable</td><td>芯片使能（射频芯片的收发模式切换脚）</td></tr><tr><td><strong>PA / LNA</strong></td><td>Power Amplifier / Low Noise Amplifier</td><td>功率放大器 / 低噪声放大器（决定发射功率与接收灵敏度）</td></tr><tr><td><strong>RF</strong></td><td>Radio Frequency</td><td>射频（本项目是 2.4GHz）</td></tr><tr><td><strong>CH / CHN</strong></td><td>Channel</td><td>信道 / 频点</td></tr><tr><td><strong>AGC</strong></td><td>Automatic Gain Control</td><td>自动增益控制</td></tr><tr><td><strong>DEM_CAL</strong></td><td>Demodulator Calibration</td><td>解调器校准（换速率时要跟着改的寄存器）</td></tr><tr><td><strong>PN298 / PAN7420</strong></td><td>（芯片型号）</td><td>普冉的 2.4G 射频收发芯片（寄存器与 nRF24L01 高度相似）</td></tr><tr><td><strong>XN297L</strong></td><td>（芯片型号）</td><td>另一款兼容的 2.4G 芯片（工程注释里提到的"增强型模式"来源）</td></tr></tbody></table></div>
+<h3 id="12-5-工具链与开发">12.5 工具链与开发<a class="anchor" href="#12-5-工具链与开发">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>缩写</th><th>英文全称</th><th>中文说明</th></tr></thead><tbody><tr><td><strong>IDE</strong></td><td>Integrated Development Environment</td><td>集成开发环境（Keil uVision、VS Code）</td></tr><tr><td><strong>MDK</strong></td><td>Microcontroller Development Kit</td><td>Keil 的 ARM 开发工具包（<strong>注意 Keil C51 是 8051 用的，不能编 ARM</strong>）</td></tr><tr><td><strong>AC5 / AC6</strong></td><td>Arm Compiler 5 / 6</td><td>Keil 的两代编译器（<strong>本工程用 AC5</strong>，AC6 需要改配置）</td></tr><tr><td><strong>ARMCC</strong></td><td>ARM C Compiler</td><td>AC5 里的 C 编译器（命令名 <code>armcc.exe</code>）</td></tr><tr><td><strong>GCC</strong></td><td>GNU Compiler Collection</td><td>开源编译器套件（本项目用它做"免费路线"）</td></tr><tr><td><strong>UV4 / UV5</strong></td><td>uVision 4 / 5</td><td>Keil 的 IDE 可执行文件（命令行编译烧录靠它）</td></tr><tr><td><strong>DFP</strong></td><td>Device Family Pack</td><td>器件支持包（装 <code>Puya.PY32F0xx_DFP</code> 才有下载算法）</td></tr><tr><td><strong>FLM</strong></td><td>FLash Algorithm Module</td><td>Flash 烧写算法（<code>PY32F030xx_64.FLM</code>，Keil 用它写芯片）</td></tr><tr><td><strong>UL2CM3</strong></td><td>ULINK2 Cortex-M3</td><td>Keil 的调试器驱动名（本工程仿真器配置里用的就是它）</td></tr><tr><td><strong>CMake / Ninja</strong></td><td>（构建工具名）</td><td>跨平台构建系统 / 快速构建执行器（GCC 路线用）</td></tr><tr><td><strong>VS Code</strong></td><td>Visual Studio Code</td><td>微软的编辑器（本项目用它一体化编辑+编译+烧录）</td></tr><tr><td><strong>DAP-Link</strong></td><td>Debug Access Port Link</td><td>基于 CMSIS-DAP 的开源调试器（十几块钱，推荐）</td></tr><tr><td><strong>pyOCD</strong></td><td>Python On-Chip Debugger</td><td>Python 写的调试工具（配合 VS Code 的 Cortex-Debug）</td></tr><tr><td><strong>ST-Link / J-Link</strong></td><td>（调试器品牌型号）</td><td>ST / Segger 的调试器（对 PY32 支持需额外配置）</td></tr><tr><td><strong>LTO / GC</strong></td><td>Link Time Optimization / Garbage Collection</td><td>链接期优化 / 无用代码回收（<code>--gc-sections</code> 就是回收）</td></tr><tr><td><strong>ELF / HEX / BIN</strong></td><td>Executable and Linkable Format / （十六进制）/ （二进制）</td><td>三种固件文件格式：调试用 / 烧录用 / 量产用</td></tr><tr><td><strong>BOM</strong></td><td>Byte Order Mark</td><td>字节顺序标记（UTF-8 文件开头那 3 个字节，用来说明"我是 UTF-8"）</td></tr><tr><td><strong>GBK / UTF-8</strong></td><td>（中文编码标准 / Unicode 编码）</td><td>两种文字编码（本项目源码统一为 UTF-8 with BOM）</td></tr><tr><td><strong>LF / CRLF</strong></td><td>Line Feed / Carriage Return + LF</td><td>两种换行风格（Linux 用 LF，Windows 用 CRLF）</td></tr></tbody></table></div>
+<h3 id="12-6-常见英文术语-不是缩写-但常撞到">12.6 常见英文术语（不是缩写，但常撞到）<a class="anchor" href="#12-6-常见英文术语-不是缩写-但常撞到">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>英文</th><th>中文</th><th>说明</th></tr></thead><tbody><tr><td><strong>register</strong></td><td>寄存器</td><td>读写硬件的地方</td></tr><tr><td><strong>mask</strong></td><td>掩码</td><td>用来只取某几位的值</td></tr><tr><td><strong>bitfield</strong></td><td>位域</td><td>一个字节里划分出的几段</td></tr><tr><td><strong>flush</strong></td><td>清空</td><td>清 FIFO（<code>flush_tx_fifo</code> = 清发送队列）</td></tr><tr><td><strong>burst</strong></td><td>连续（传输）</td><td>一次传多个字节</td></tr><tr><td><strong>bias</strong></td><td>偏置 / 零偏</td><td>静止时不为零的偏移量</td></tr><tr><td><strong>offset</strong></td><td>偏移</td><td>同上；也指地址偏移</td></tr><tr><td><strong>polarity / phase</strong></td><td>极性 / 相位</td><td>SPI 时钟的空闲电平和采样边沿</td></tr><tr><td><strong>idle</strong></td><td>空闲</td><td>无数据、待机状态</td></tr><tr><td><strong>handshake</strong></td><td>握手</td><td>通信双方确认彼此就绪</td></tr><tr><td><strong>timeout</strong></td><td>超时</td><td>等太久了，放弃</td></tr><tr><td><strong>rollover / wrap</strong></td><td>回绕</td><td>计数器数满后归零</td></tr><tr><td><strong>little / big endian</strong></td><td>小端 / 大端</td><td>多字节数据的高低字节存放顺序</td></tr><tr><td><strong>pull-up / pull-down</strong></td><td>上拉 / 下拉</td><td>给引脚一个默认电平（<strong>浮空引脚读值不确定</strong>）</td></tr><tr><td><strong>open-drain / push-pull</strong></td><td>开漏 / 推挽</td><td>GPIO 输出级的两种形式</td></tr><tr><td><strong>deadband / dead zone</strong></td><td>死区</td><td>中间一小段当 0 处理（消除摇杆抖动）</td></tr><tr><td><strong>saturation / windup</strong></td><td>饱和 / 积分饱和</td><td>累加过头导致"甩不回来"</td></tr><tr><td><strong>overshoot</strong></td><td>超调</td><td>调节过头（PID 里要抑制的现象）</td></tr><tr><td><strong>calibration</strong></td><td>校准</td><td>测量并记住零偏</td></tr><tr><td><strong>self-test</strong></td><td>自检</td><td>芯片自己验证功能是否正常</td></tr><tr><td><strong>whoami</strong></td><td>（芯片身份寄存器）</td><td>读它确认"你确实是我以为的那颗芯片"</td></tr><tr><td><strong>watchdog</strong></td><td>看门狗</td><td>卡死就复位（见第 5 节）</td></tr><tr><td><strong>failsafe</strong></td><td>失控保护</td><td>失联时的自动安全动作（见第 7 节）</td></tr><tr><td><strong>pairing</strong></td><td>对码 / 配对</td><td>协商并保存通信地址的过程（见第 6 节）</td></tr><tr><td><strong>heartbeat</strong></td><td>心跳</td><td>周期性"我还活着"的信号（见第 7 节）</td></tr><tr><td><strong>timestamp</strong></td><td>时间戳</td><td>某一时刻的时间值</td></tr><tr><td><strong>resolution</strong></td><td>分辨率</td><td>能区分的最小变化量</td></tr><tr><td><strong>prescaler</strong></td><td>预分频</td><td>把时钟按比例降低</td></tr><tr><td><strong>clock tree</strong></td><td>时钟树</td><td>从晶振到各外设的时钟分配路径（见第 1 节）</td></tr></tbody></table></div>
+<hr>
+<h2 id="13-从参考图纸里核出来的硬件事实-与代码不一致的地方">13. 从参考图纸里核出来的硬件事实（与代码不一致的地方）<a class="anchor" href="#13-从参考图纸里核出来的硬件事实-与代码不一致的地方">#</a></h2>
+<blockquote class=""><p>资料来源：<code>C:\Users\y\Desktop\pan7420其他资料\</code>
+—— 里面有芯片数据手册、用户手册，以及两块的 EasyEDA 工程与 Altium 原理图/BOM。
+下面这些是"看代码看不出来、必须对着硬件才能发现"的东西。</p></blockquote>
+<h3 id="13-1-飞控板的实际元件清单">13.1 飞控板的实际元件清单<a class="anchor" href="#13-1-飞控板的实际元件清单">#</a></h3>
+<p>从 <code>PAN742_feikong.eprj2</code>（EasyEDA Pro 工程，SQLite 数据库）里读出的元件：</p>
+<div class="tablewrap"><table><thead><tr><th>元件</th><th>型号/说明</th></tr></thead><tbody><tr><td>主控+射频</td><td><strong>PAN742</strong>（SSOP24 封装，2.4G 收发 + MCU 二合一模块）</td></tr><tr><td>姿态传感器</td><td><strong>ICM-42688-P</strong></td></tr><tr><td>气压计</td><td><strong>BMP390</strong></td></tr><tr><td><strong>高速晶振</strong></td><td><strong><code>XL7EL89COI-111YLC-16M</code>：16MHz 贴片晶振，±10ppm，负载电容 12pF</strong></td></tr><tr><td>低速晶振</td><td><strong>无</strong>（工程里搜不到 32.768kHz 晶振）</td></tr><tr><td>电源</td><td><code>CL9193A28L3M</code>（LDO）、<code>1N5819WS</code>（肖特基）</td></tr><tr><td>其他</td><td>4 脚 RGB 灯、红色 LED、MOS 管、若干 0603 阻容</td></tr></tbody></table></div>
+<p>遥控器板（<code>7420遥控器_V1.1.xlsx</code> BOM）也是同样格局： <strong>PAN742 + 16MHz 晶振 + 无 32.768kHz 晶振</strong>，另有 2 个摇杆、8+2 个按键、蜂鸣器。</p>
+<h3 id="13-2-板上焊了-16MHz-晶振-但代码把-HSE-关掉了">13.2 ⚠ <strong>板上焊了 16MHz 晶振，但代码把 HSE 关掉了</strong><a class="anchor" href="#13-2-板上焊了-16MHz-晶振-但代码把-HSE-关掉了">#</a></h3>
+<p>这是对照硬件后发现的<strong>最值得注意的一处</strong>：</p>
+<div class="codeblock art"><div class="cbhead"><span class="lang">示意图 · c</span><button class="copy">复制</button></div><pre class="artpre">/* user/main.c 的 SystemClock_Config() —— 代码里明确关闭外部晶振 */
+RCC_OscInitStruct.HSEState = RCC_HSE_OFF;                /* 本板无外部高速晶振 ← 【这句错了】 */
+RCC_OscInitStruct.LSEState = RCC_LSE_OFF;                /* 无外部低速晶振 ← 这句是对的（板上确实没有 32.768kHz） */</pre></div>
+<p><strong>但硬件证据表明板上是有 16MHz 晶振的</strong>：</p>
+<ul><li>EasyEDA 元件清单里有 <code>xl7el89coi-111ylc-16m</code>，参数描述明确写"频率:16MHz;常温频差:±10ppm;负载电容:12pF"；</li><li>遥控器板的 BOM 也写着 <code>16MHz</code> / <code>X1</code> / <code>CRYSTAL-SMD_4P-L2.0-W1.6-BL</code>。</li></ul>
+<p><strong>如果要把 HSE 用起来，有三件事必须一起改（缺一不可）</strong>：</p>
+<ol><li><code>main.c</code>：<code>HSEState</code> 改成 <code>RCC_HSE_ON</code>；</li><li><code>py32f0xx_hal_conf.h</code>：<strong><code>HSE_VALUE</code> 目前写的是 24000000（24MHz），而板上是 16MHz</strong></li></ol>
+<p>—— 不改这个，HAL 算出来的分频/波特率全会错；</p>
+<ol><li>PLL 源可以改用 HSE（<code>RCC_PLLSOURCE_HSE</code>），这样系统时钟不再依赖内部 RC 的精度。</li></ol>
+<p><strong>为什么值得改</strong>：现在系统时钟来自 <strong>HSI（内部 RC）</strong>，而内部 RC 的频率偏差 （datasheet 里 HSI 常温 ±1% 量级）会直接体现在<strong>串口波特率</strong>上 —— 115200 波特率下偏差过大会让某些 USB 转串口模块收到乱码。 换成外部 16MHz 晶振（±10ppm）就几乎没这个问题。</p>
+<blockquote class=""><p><strong>这是"只理解、先不改"的范围</strong>：代码没动，仅记录。
+如果你以后要动时钟，记得<strong>先确认真实晶振频率</strong>（板上丝印或 BOM），
+再把 <code>HSE_VALUE</code> 和 <code>HSEState</code> 一起改 —— 只改一处会得到一个"看起来能跑但时序全错"的固件。</p></blockquote>
+<h3 id="13-3-参考资料里还有什么">13.3 参考资料里还有什么<a class="anchor" href="#13-3-参考资料里还有什么">#</a></h3>
+<div class="tablewrap"><table><thead><tr><th>文件</th><th>内容</th><th>对你的用处</th></tr></thead><tbody><tr><td><code>PN298用户手册V1.0.pdf</code></td><td>46 页，PN298 寄存器/时序/模式全说明</td><td>查寄存器位定义（<strong>已用它解决了 <code>SETUP_RETR</code> 的疑问</strong>）</td></tr><tr><td><code>PAN742x产品说明书V1.5.pdf</code></td><td>26 页，PAN742 模块说明</td><td>弄清"PAN742 与 PN298 的关系"</td></tr><tr><td><code>PY32F030 datasheet Rev.1.4.pdf</code></td><td>58 页，电气特性/引脚/封装</td><td>查 LSI 精度、引脚复用、电气参数</td></tr><tr><td><code>PY32F030 Reference manual v0.7.pdf</code></td><td>430 页，外设寄存器手册</td><td>查任意外设寄存器的位定义（<strong>最厚也最有用</strong>）</td></tr><tr><td><code>PY32F0xx_Firmware_V1.5.0.zip</code></td><td>70MB，官方固件库与例程</td><td>对照 HAL 库源码、找官方写法</td></tr><tr><td><code>PAN742_feikong.eprj2</code></td><td>EasyEDA 飞控原理图/PCB 工程</td><td>查引脚连接、元件型号</td></tr><tr><td><code>7420遥控器_V1.1</code>（Altium 工程）</td><td>遥控器原理图 + PCB + BOM + Gerber</td><td>查遥控器硬件设计</td></tr></tbody></table></div>
+<p><strong>查找建议</strong>：<code>PY32F030 Reference manual</code> 那 430 页是<strong>寄存器字典</strong>， 不要通读，用 PDF 阅读器的"查找"功能定位寄存器名（如 <code>TIM16_CR1</code>、<code>IWDG_RLR</code>）即可。 本工程留下了一个搜索脚本可以帮忙：</p>
+<div class="codeblock"><div class="cbhead"><span class="lang">text</span><button class="copy">复制</button></div><pre><div class="line"><span class="ln">1</span><span class="lc">python build-gcc/tools/pdf_grep.py &lt;手册.pdf&gt; &lt;关键词1&gt; [关键词2 ...]</span></div><div class="line"><span class="ln">2</span><span class="lc">python build-gcc/tools/pdf_grep.py &lt;手册.pdf&gt; --info      # 看页数/能否提取文字</span></div><div class="line"><span class="ln">3</span><span class="lc">python build-gcc/tools/pdf_grep.py &lt;手册.pdf&gt; --dump 33   # 打印第 33 页全文</span></div></pre></div>
+<hr>
+<h2 id="附-与其它文档的关系">附：与其它文档的关系<a class="anchor" href="#附-与其它文档的关系">#</a></h2>
+<div class="tablewrap"><table><thead><tr><th>文档</th><th>内容</th></tr></thead><tbody><tr><td><strong>本文档</strong></td><td><strong>术语与概念</strong>：那些忘了的名词到底是什么意思</td></tr><tr><td><code>传感器驱动API中文对照.md</code></td><td><strong>原厂驱动</strong>：ICM42688 / BMP390 的英文接口翻译成中文</td></tr><tr><td><code>C_KEYWORDS_GUIDE.md</code></td><td><strong>语言层面</strong>：C 关键字的用法与变式</td></tr><tr><td><code>COMMENT_STANDARD.md</code></td><td><strong>注释规范</strong>：给代码写注释的格式与纪律</td></tr><tr><td><code>VSCODE_使用说明.md</code></td><td><strong>工具链</strong>：怎么在 VS Code 里编译、烧录、调试</td></tr></tbody></table></div>
+</main>
+</div>
+<div class="toolbar">
+  <button id="totop">↑ 回到顶部</button>
+</div>
+<script>
+// 代码复制按钮
+document.querySelectorAll('.codeblock').forEach(function(box){
+  var btn = box.querySelector('.copy');
+  var code = box.querySelector('pre');
+  if(!btn || !code) return;
+  btn.addEventListener('click', function(){
+    // 代码块：逐行取 .lc（去掉行号）；示意图：直接取 pre 的文本
+    var rows = code.querySelectorAll('.lc');
+    var text = rows.length
+      ? Array.prototype.map.call(rows, function(l){ return l.textContent; }).join('\n')
+      : code.textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = '复制'; }, 1200);
+    }).catch(function(){ btn.textContent = '复制失败'; setTimeout(function(){ btn.textContent='复制'; }, 1200); });
+  });
+});
+// 滚动高亮当前目录项
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 120, best = 0;
+    for(var i=0;i<targets.length;i++){ if(targets[i] && targets[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+    var h = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+// 回到顶部
+document.getElementById('totop').addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+</script>
+</body>
+</html>
